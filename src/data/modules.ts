@@ -5,8 +5,8 @@ export const MODULES: ModuleDef[] = [
     id: 'allergens',
     title: 'Allergens',
     description: 'Learn to recognise and name the 14 major allergens',
-    dataUrl: '/cafefluent/content/allergens/data.json',
-    imageBase: '/cafefluent/content/allergens/images/',
+    dataUrl: '/content/allergens/data.json',
+    imageBase: '/content/allergens/images/',
     tasks: [
       {
         id: 'task1',
