@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background -->
+  <rect width="100" height="100" rx="20" fill="#1a1a2e"/>
+
+  <!-- Steam wisps -->
+  <g stroke="white" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.45">
+    <path d="M 37 42 Q 33 36 37 29 Q 41 22 37 16"/>
+    <path d="M 50 40 Q 46 34 50 27 Q 54 20 50 14"/>
+    <path d="M 63 42 Q 59 36 63 29 Q 67 22 63 16"/>
+  </g>
+
+  <!-- Saucer -->
+  <ellipse cx="50" cy="82" rx="33" ry="5" fill="#f0e6d3"/>
+
+  <!-- Cup body (wider at top, rounded at base) -->
+  <path d="M 19 44 L 81 44 L 73 79 Q 73 82 69 82 L 31 82 Q 27 82 27 79 Z" fill="#f0e6d3"/>
+
+  <!-- Handle -->
+  <path d="M 73 56 C 92 56 92 73 73 73" stroke="#f0e6d3" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+
+  <!-- CF on cup face -->
+  <text x="49" y="72" font-family="Georgia, serif" font-size="22" font-weight="bold"
+        fill="#1a1a2e" text-anchor="middle">CF</text>
+</svg>

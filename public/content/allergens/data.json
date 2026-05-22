@@ -1,0 +1,90 @@
+{
+  "id": "allergens",
+  "title": "Allergens",
+  "items": [
+    {
+      "id": "celery",
+      "name": "Celery",
+      "description": "Celery is used in food in various forms, including celery sticks, leaves, seeds and root (celeriac).",
+      "image": "celery.jpg"
+    },
+    {
+      "id": "gluten",
+      "name": "Cereals containing gluten",
+      "description": "'Cereals containing gluten' includes wheat, which is a common cause of food allergy.",
+      "image": "gluten.jpg"
+    },
+    {
+      "id": "crustaceans",
+      "name": "Crustaceans",
+      "description": "Crustaceans include crab, lobster, crayfish, and prawns.",
+      "image": "crustaceans.jpg"
+    },
+    {
+      "id": "eggs",
+      "name": "Egg",
+      "description": "Egg can be found in a wide range of foods including cakes, pastries, desserts, meat products, mayonnaise, and many more.",
+      "image": "eggs.jpg"
+    },
+    {
+      "id": "fish",
+      "name": "Fish",
+      "description": "Fish allergy refers to fish that have fins such as cod, plaice, haddock, herring, trout, salmon and tuna.",
+      "image": "fish.jpg"
+    },
+    {
+      "id": "lupin",
+      "name": "Lupin",
+      "description": "The lupin is well-known as a popular garden flower. The seeds from certain lupin species are also cultivated as food.",
+      "image": "lupin.png"
+    },
+    {
+      "id": "milk",
+      "name": "Milk",
+      "description": "Cow's milk is used to make many foods including butter, cheese, cream, yogurt and more.",
+      "image": "milk.jpg"
+    },
+    {
+      "id": "molluscs",
+      "name": "Molluscs",
+      "description": "Molluscs include mussels, oysters, scallops, snails, squid, octopus and many more.",
+      "image": "molluscs.jpg"
+    },
+    {
+      "id": "mustard",
+      "name": "Mustard",
+      "description": "Mustard plants have seeds that can be white, yellow, brown or black. They can be used to make different types of mustard.",
+      "image": "mustard.jpg"
+    },
+    {
+      "id": "nuts",
+      "name": "Tree nuts",
+      "description": "Tree nuts include almonds, Brazil nuts, cashew nuts, hazelnuts, walnuts, pecans, pistachios and macadamia nuts.",
+      "image": "nuts.jpg"
+    },
+    {
+      "id": "peanuts",
+      "name": "Peanuts",
+      "description": "The peanut is a legume and is in the same plant family as peas, beans and lentils.",
+      "image": "peanuts.jpg"
+    },
+    {
+      "id": "sesame",
+      "name": "Sesame",
+      "description": "Sesame seeds can be black, white, brown or red. Foods made with sesame include tahini, hummus and halvah.",
+      "image": "sesame.jpg"
+    },
+    {
+      "id": "soya",
+      "name": "Soya",
+      "description": "'Soya' or 'soy' is made from the soya bean, which is a legume. Soya is used to make soy sauce and tofu and is used as an ingredient in many food products.",
+      "image": "soya.jpg"
+    },
+    {
+      "id": "sulphites",
+      "name": "Sulphites/Sulphur Dioxide",
+      "description": "Sulphites are preservatives added to food and drinks to extend their shelf life.",
+      "image": "sulphites.jpg"
+    }
+  ]
+}
