@@ -4,6 +4,7 @@ import { MODULES } from '../../data/modules'
 import { saveProgress } from '../../hooks/useProgress'
 import type { ModuleData } from '../../types'
 import ImageMatch from './ImageMatch'
+import AudioMatch from './AudioMatch'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -51,10 +52,17 @@ export default function QuizShell() {
       <main style={styles.main}>
         {phase === 'loading' && <p style={styles.status}>Loading…</p>}
         {phase === 'error' && <ErrorScreen onBack={() => navigate(`/${moduleId}`)} message="Could not load quiz data." />}
-        {phase === 'quiz' && data && (
+        {phase === 'quiz' && data && task.type === 'image-match' && (
           <ImageMatch
             items={data.items}
             imageBase={mod.imageBase}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'audio-match' && (
+          <AudioMatch
+            items={data.items}
+            audioBase={mod.audioBase ?? '/content/allergens/audio/'}
             onComplete={handleComplete}
           />
         )}

@@ -51,11 +51,86 @@ The 14 major food allergens (EU/UK regulation).
 
 Task 3 will vary the phrasing: *I'm allergic to / I'm intolerant to / I must not eat / I can't eat / I have an allergy to.*
 
-Tasks 2 and 3 require audio files — format, hosting and naming convention to be decided.
+Audio files are pre-generated offline and committed to `public/content/<module>/audio/`. See [Generating audio](#generating-audio) below.
 
 ### Future modules
 
 Further topics following the course curriculum — to be defined as the course develops.
+
+---
+
+## Generating audio
+
+Audio clips are generated once using AWS Polly and committed alongside the content. The app serves them as static files — no API calls at runtime.
+
+### Setup
+
+AWS credentials must be available (either `~/.aws/credentials` or environment variables) and `AWS_REGION` must be set:
+
+```bash
+export AWS_REGION=eu-west-1
+```
+
+### Running the generator
+
+```bash
+# Generate missing clips for all modules
+npm run generate:audio
+
+# One module only
+npm run generate:audio -- --module=allergens
+
+# Force-regenerate everything (e.g. after changing voice settings)
+npm run generate:audio -- --force
+```
+
+The script skips any file that already exists, so re-running is safe and only produces new clips.
+
+### Output
+
+For each item in `data.json`, the script writes:
+
+```
+public/content/<module>/audio/<id>_<variant>.mp3
+public/content/<module>/audio/manifest.json
+```
+
+`manifest.json` records every generated clip — its item id, variant name, the exact text that was synthesised, and the filename. The app reads this to know what audio is available.
+
+### Voice settings
+
+Configured at the top of [scripts/generate-audio.mjs](scripts/generate-audio.mjs):
+
+| Setting | Value | Notes |
+|---|---|---|
+| Voice | Amy | British English female |
+| Engine | standard | Lower cost; neural is higher quality |
+| Sample rate | 8 kHz | Telephone quality — keeps file sizes small |
+
+### Adding sentence variants (Task 3)
+
+Add entries to the `VARIANTS` object in the script:
+
+```js
+allergic:    (name) => `I'm allergic to ${name}`,
+intolerant:  (name) => `I'm intolerant to ${name}`,
+'must-not-eat': (name) => `I must not eat ${name}`,
+```
+
+Re-running will generate only the new variants; existing files are untouched.
+
+### Overriding the spoken name
+
+If an allergen name contains characters that synthesise poorly (e.g. `Sulphites/Sulphur Dioxide`), add an `audioName` field to the item in `data.json`:
+
+```json
+{
+  "id": "sulphites",
+  "name": "Sulphites/Sulphur Dioxide",
+  "audioName": "Sulphites and Sulphur Dioxide",
+  ...
+}
+```
 
 ---
 
@@ -65,8 +140,12 @@ Further topics following the course curriculum — to be defined as the course d
 public/
   content/
     allergens/
-      data.json         ← names, descriptions, image filenames
+      data.json         ← names, descriptions, image filenames, optional audioName overrides
       images/           ← one image per allergen
+      audio/            ← generated MP3s + manifest.json (run npm run generate:audio)
+
+scripts/
+  generate-audio.mjs    ← AWS Polly TTS generator (offline, run manually)
 
 src/
   data/modules.ts       ← module registry (add new modules here)

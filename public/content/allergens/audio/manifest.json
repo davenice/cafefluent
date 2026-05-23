@@ -1,0 +1,91 @@
+{
+  "voice": "Amy",
+  "engine": "standard",
+  "sampleRate": "8000",
+  "items": [
+    {
+      "id": "celery",
+      "variant": "name",
+      "text": "Celery",
+      "file": "celery_name.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "name",
+      "text": "Cereals containing gluten",
+      "file": "gluten_name.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "name",
+      "text": "Crustaceans",
+      "file": "crustaceans_name.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "name",
+      "text": "Egg",
+      "file": "eggs_name.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "name",
+      "text": "Fish",
+      "file": "fish_name.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "name",
+      "text": "Lupin",
+      "file": "lupin_name.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "name",
+      "text": "Milk",
+      "file": "milk_name.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "name",
+      "text": "Molluscs",
+      "file": "molluscs_name.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "name",
+      "text": "Mustard",
+      "file": "mustard_name.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "name",
+      "text": "Tree nuts",
+      "file": "nuts_name.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "name",
+      "text": "Peanuts",
+      "file": "peanuts_name.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "name",
+      "text": "Sesame",
+      "file": "sesame_name.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "name",
+      "text": "Soya",
+      "file": "soya_name.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "name",
+      "text": "Sulphites and Sulphur Dioxide",
+      "file": "sulphites_name.mp3"
+    }
+  ]
+}
