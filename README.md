@@ -21,9 +21,19 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
 ### Adding a new task type
 
 1. Add the type name to `TaskType` in `src/types/index.ts`
-2. Create a component in `src/components/quiz/` — it receives `items`, `imageBase`, and `onComplete(score, total)`
-3. Register it in `QuizShell.tsx` (currently dispatches on `task.type === 'image-match'`)
+2. Create a component in `src/components/quiz/` — quiz types receive `items`, `imageBase`, and `onComplete(score, total)`; study types (like `revision`) receive `items`, `imageBase`, and `onDone`
+3. Register it in `QuizShell.tsx` (dispatches on `task.type`)
 4. Add the task entry to the module in `src/data/modules.ts`
+
+### Deploying changes
+
+After any code or content change, update the PWA version so returning users get the new content:
+
+```json
+// public/manifest.json  →  bump "version" (e.g. "1.0.0" → "1.1.0")
+```
+
+The service worker caches aggressively; without a version bump, users may see stale content until they manually clear the cache.
 
 ### Adding content
 
@@ -45,11 +55,12 @@ The 14 major food allergens (EU/UK regulation).
 
 | Task | Type | Status |
 |---|---|---|
+| 0 | Study guide — browse all allergens with images and descriptions | **Done** |
 | 1 | Match allergen name + description → image (multiple choice) | **Done** |
-| 2 | Hear the word spoken → choose the written word | Planned |
-| 3 | Hear a sentence ("I'm allergic to…") → choose the correct image | Planned |
+| 2 | Hear the word spoken → choose the written word | **Done** |
+| 3 | Hear a sentence ("I'm allergic to…") → choose the correct image | **Done** |
 
-Task 3 will vary the phrasing: *I'm allergic to / I'm intolerant to / I must not eat / I can't eat / I have an allergy to.*
+Task 3 varies the phrasing: *I'm allergic to / I'm intolerant to / I must not eat / I can't eat / I have an allergy to.*
 
 Audio files are pre-generated offline and committed to `public/content/<module>/audio/`. See [Generating audio](#generating-audio) below.
 
@@ -154,8 +165,11 @@ src/
     HomePage.tsx        ← module list
     ModulePage.tsx      ← task list for a module
     quiz/
-      QuizShell.tsx     ← loads data, manages quiz lifecycle
-      ImageMatch.tsx    ← Task 1 question type
+      QuizShell.tsx         ← loads data, manages quiz lifecycle
+      AllergenRevision.tsx  ← Task 0 study guide (all allergens, images, descriptions)
+      ImageMatch.tsx        ← Task 1 question type
+      AudioMatch.tsx        ← Task 2 question type
+      SentenceMatch.tsx     ← Task 3 question type
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle
 
