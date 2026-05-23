@@ -36,7 +36,14 @@ const SAMPLE_RATE = '22050';
 // Each key becomes the variant name and determines the output filename suffix.
 // Add sentence variants here when Tasks 3+ are implemented.
 const VARIANTS = {
-  name: (audioName) => audioName,
+  name:           (audioName) => audioName,
+  // Sentence variants for Task 3 — keep in sync with DISPLAY_TEMPLATES in src/components/quiz/SentenceMatch.tsx
+  allergic:       (audioName) => `I'm allergic to ${audioName}`,
+  intolerant:     (audioName) => `I'm intolerant to ${audioName}`,
+  'must-not-eat': (audioName) => `I must not eat ${audioName}`,
+  'cant-eat':     (audioName) => `I can't eat ${audioName}`,
+  'allergy-to':   (audioName) => `I have an allergy to ${audioName}`,
+  'cant-have':    (audioName) => `I can't have ${audioName}`,
 };
 
 async function generateModule(moduleId, force) {

@@ -5,6 +5,7 @@ import { saveProgress } from '../../hooks/useProgress'
 import type { ModuleData } from '../../types'
 import ImageMatch from './ImageMatch'
 import AudioMatch from './AudioMatch'
+import SentenceMatch from './SentenceMatch'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -63,6 +64,14 @@ export default function QuizShell() {
           <AudioMatch
             items={data.items}
             audioBase={mod.audioBase ?? '/content/allergens/audio/'}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'sentence-match' && (
+          <SentenceMatch
+            items={data.items}
+            audioBase={mod.audioBase ?? '/content/allergens/audio/'}
+            imageBase={mod.imageBase}
             onComplete={handleComplete}
           />
         )}

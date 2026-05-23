@@ -19,6 +19,11 @@ export const MODULES: ModuleDef[] = [
         type: 'audio-match',
         title: 'Listen and match the allergen name',
       },
+      {
+        id: 'task3',
+        type: 'sentence-match',
+        title: 'Listen and find the allergen',
+      },
     ],
   },
 ]

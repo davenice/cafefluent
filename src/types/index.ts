@@ -12,7 +12,7 @@ export interface ModuleData {
   items: AllergenItem[]
 }
 
-export type TaskType = 'image-match' | 'audio-match'
+export type TaskType = 'image-match' | 'audio-match' | 'sentence-match'
 
 export interface TaskDef {
   id: string

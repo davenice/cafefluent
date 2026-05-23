@@ -86,6 +86,510 @@
       "variant": "name",
       "text": "Sulphites and Sulphur Dioxide",
       "file": "sulphites_name.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "allergic",
+      "text": "I'm allergic to Celery",
+      "file": "celery_allergic.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Celery",
+      "file": "celery_intolerant.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "must-not-eat",
+      "text": "I must not eat Celery",
+      "file": "celery_must-not-eat.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "cant-eat",
+      "text": "I can't eat Celery",
+      "file": "celery_cant-eat.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Celery",
+      "file": "celery_allergy-to.mp3"
+    },
+    {
+      "id": "celery",
+      "variant": "cant-have",
+      "text": "I can't have Celery",
+      "file": "celery_cant-have.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "allergic",
+      "text": "I'm allergic to Cereals containing gluten",
+      "file": "gluten_allergic.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Cereals containing gluten",
+      "file": "gluten_intolerant.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "must-not-eat",
+      "text": "I must not eat Cereals containing gluten",
+      "file": "gluten_must-not-eat.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "cant-eat",
+      "text": "I can't eat Cereals containing gluten",
+      "file": "gluten_cant-eat.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Cereals containing gluten",
+      "file": "gluten_allergy-to.mp3"
+    },
+    {
+      "id": "gluten",
+      "variant": "cant-have",
+      "text": "I can't have Cereals containing gluten",
+      "file": "gluten_cant-have.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "allergic",
+      "text": "I'm allergic to Crustaceans",
+      "file": "crustaceans_allergic.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Crustaceans",
+      "file": "crustaceans_intolerant.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "must-not-eat",
+      "text": "I must not eat Crustaceans",
+      "file": "crustaceans_must-not-eat.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "cant-eat",
+      "text": "I can't eat Crustaceans",
+      "file": "crustaceans_cant-eat.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Crustaceans",
+      "file": "crustaceans_allergy-to.mp3"
+    },
+    {
+      "id": "crustaceans",
+      "variant": "cant-have",
+      "text": "I can't have Crustaceans",
+      "file": "crustaceans_cant-have.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "allergic",
+      "text": "I'm allergic to Egg",
+      "file": "eggs_allergic.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Egg",
+      "file": "eggs_intolerant.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "must-not-eat",
+      "text": "I must not eat Egg",
+      "file": "eggs_must-not-eat.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "cant-eat",
+      "text": "I can't eat Egg",
+      "file": "eggs_cant-eat.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Egg",
+      "file": "eggs_allergy-to.mp3"
+    },
+    {
+      "id": "eggs",
+      "variant": "cant-have",
+      "text": "I can't have Egg",
+      "file": "eggs_cant-have.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "allergic",
+      "text": "I'm allergic to Fish",
+      "file": "fish_allergic.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Fish",
+      "file": "fish_intolerant.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "must-not-eat",
+      "text": "I must not eat Fish",
+      "file": "fish_must-not-eat.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "cant-eat",
+      "text": "I can't eat Fish",
+      "file": "fish_cant-eat.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Fish",
+      "file": "fish_allergy-to.mp3"
+    },
+    {
+      "id": "fish",
+      "variant": "cant-have",
+      "text": "I can't have Fish",
+      "file": "fish_cant-have.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "allergic",
+      "text": "I'm allergic to Lupin",
+      "file": "lupin_allergic.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Lupin",
+      "file": "lupin_intolerant.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "must-not-eat",
+      "text": "I must not eat Lupin",
+      "file": "lupin_must-not-eat.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "cant-eat",
+      "text": "I can't eat Lupin",
+      "file": "lupin_cant-eat.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Lupin",
+      "file": "lupin_allergy-to.mp3"
+    },
+    {
+      "id": "lupin",
+      "variant": "cant-have",
+      "text": "I can't have Lupin",
+      "file": "lupin_cant-have.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "allergic",
+      "text": "I'm allergic to Milk",
+      "file": "milk_allergic.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Milk",
+      "file": "milk_intolerant.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "must-not-eat",
+      "text": "I must not eat Milk",
+      "file": "milk_must-not-eat.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "cant-eat",
+      "text": "I can't eat Milk",
+      "file": "milk_cant-eat.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Milk",
+      "file": "milk_allergy-to.mp3"
+    },
+    {
+      "id": "milk",
+      "variant": "cant-have",
+      "text": "I can't have Milk",
+      "file": "milk_cant-have.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "allergic",
+      "text": "I'm allergic to Molluscs",
+      "file": "molluscs_allergic.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Molluscs",
+      "file": "molluscs_intolerant.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "must-not-eat",
+      "text": "I must not eat Molluscs",
+      "file": "molluscs_must-not-eat.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "cant-eat",
+      "text": "I can't eat Molluscs",
+      "file": "molluscs_cant-eat.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Molluscs",
+      "file": "molluscs_allergy-to.mp3"
+    },
+    {
+      "id": "molluscs",
+      "variant": "cant-have",
+      "text": "I can't have Molluscs",
+      "file": "molluscs_cant-have.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "allergic",
+      "text": "I'm allergic to Mustard",
+      "file": "mustard_allergic.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Mustard",
+      "file": "mustard_intolerant.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "must-not-eat",
+      "text": "I must not eat Mustard",
+      "file": "mustard_must-not-eat.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "cant-eat",
+      "text": "I can't eat Mustard",
+      "file": "mustard_cant-eat.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Mustard",
+      "file": "mustard_allergy-to.mp3"
+    },
+    {
+      "id": "mustard",
+      "variant": "cant-have",
+      "text": "I can't have Mustard",
+      "file": "mustard_cant-have.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "allergic",
+      "text": "I'm allergic to Tree nuts",
+      "file": "nuts_allergic.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Tree nuts",
+      "file": "nuts_intolerant.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "must-not-eat",
+      "text": "I must not eat Tree nuts",
+      "file": "nuts_must-not-eat.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "cant-eat",
+      "text": "I can't eat Tree nuts",
+      "file": "nuts_cant-eat.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Tree nuts",
+      "file": "nuts_allergy-to.mp3"
+    },
+    {
+      "id": "nuts",
+      "variant": "cant-have",
+      "text": "I can't have Tree nuts",
+      "file": "nuts_cant-have.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "allergic",
+      "text": "I'm allergic to Peanuts",
+      "file": "peanuts_allergic.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Peanuts",
+      "file": "peanuts_intolerant.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "must-not-eat",
+      "text": "I must not eat Peanuts",
+      "file": "peanuts_must-not-eat.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "cant-eat",
+      "text": "I can't eat Peanuts",
+      "file": "peanuts_cant-eat.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Peanuts",
+      "file": "peanuts_allergy-to.mp3"
+    },
+    {
+      "id": "peanuts",
+      "variant": "cant-have",
+      "text": "I can't have Peanuts",
+      "file": "peanuts_cant-have.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "allergic",
+      "text": "I'm allergic to Sesame",
+      "file": "sesame_allergic.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Sesame",
+      "file": "sesame_intolerant.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "must-not-eat",
+      "text": "I must not eat Sesame",
+      "file": "sesame_must-not-eat.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "cant-eat",
+      "text": "I can't eat Sesame",
+      "file": "sesame_cant-eat.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Sesame",
+      "file": "sesame_allergy-to.mp3"
+    },
+    {
+      "id": "sesame",
+      "variant": "cant-have",
+      "text": "I can't have Sesame",
+      "file": "sesame_cant-have.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "allergic",
+      "text": "I'm allergic to Soya",
+      "file": "soya_allergic.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Soya",
+      "file": "soya_intolerant.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "must-not-eat",
+      "text": "I must not eat Soya",
+      "file": "soya_must-not-eat.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "cant-eat",
+      "text": "I can't eat Soya",
+      "file": "soya_cant-eat.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Soya",
+      "file": "soya_allergy-to.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "cant-have",
+      "text": "I can't have Soya",
+      "file": "soya_cant-have.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "allergic",
+      "text": "I'm allergic to Sulphites and Sulphur Dioxide",
+      "file": "sulphites_allergic.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "intolerant",
+      "text": "I'm intolerant to Sulphites and Sulphur Dioxide",
+      "file": "sulphites_intolerant.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "must-not-eat",
+      "text": "I must not eat Sulphites and Sulphur Dioxide",
+      "file": "sulphites_must-not-eat.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "cant-eat",
+      "text": "I can't eat Sulphites and Sulphur Dioxide",
+      "file": "sulphites_cant-eat.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "allergy-to",
+      "text": "I have an allergy to Sulphites and Sulphur Dioxide",
+      "file": "sulphites_allergy-to.mp3"
+    },
+    {
+      "id": "sulphites",
+      "variant": "cant-have",
+      "text": "I can't have Sulphites and Sulphur Dioxide",
+      "file": "sulphites_cant-have.mp3"
     }
   ]
 }
