@@ -76,6 +76,7 @@ export default function AudioMatch({ items, audioBase, onComplete }: Props) {
 
   useEffect(() => {
     if (answerState === 'unanswered') return
+    const delay = answerState === 'correct' ? 1200 : 2500
     const timer = setTimeout(() => {
       if (index + 1 < questions.length) {
         setIndex((i) => i + 1)
@@ -84,7 +85,7 @@ export default function AudioMatch({ items, audioBase, onComplete }: Props) {
       } else {
         onComplete(score + (answerState === 'correct' ? 1 : 0), questions.length)
       }
-    }, 1200)
+    }, delay)
     return () => clearTimeout(timer)
   }, [answerState, index, questions.length, score, onComplete])
 

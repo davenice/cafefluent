@@ -44,6 +44,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
 
   useEffect(() => {
     if (answerState === 'unanswered') return
+    const delay = answerState === 'correct' ? 1200 : 2500
     const timer = setTimeout(() => {
       if (index + 1 < questions.length) {
         setIndex((i) => i + 1)
@@ -52,7 +53,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
       } else {
         onComplete(score + (answerState === 'correct' ? 1 : 0), questions.length)
       }
-    }, 1200)
+    }, delay)
     return () => clearTimeout(timer)
   }, [answerState, index, questions.length, score, onComplete])
 
@@ -61,6 +62,21 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
     if (option.id === question.answer.id) return 'var(--color-correct)'
     if (option.id === selected) return 'var(--color-wrong)'
     return 'var(--color-border)'
+  }
+
+  function overlay(option: AllergenItem): React.ReactNode {
+    if (answerState === 'unanswered') return null
+    if (option.id === question.answer.id) {
+      return (
+        <span style={{ ...styles.overlay, background: 'rgba(45,106,79,0.5)' }}>✓</span>
+      )
+    }
+    if (option.id === selected) {
+      return (
+        <span style={{ ...styles.overlay, background: 'rgba(193,18,31,0.75)' }}>✗</span>
+      )
+    }
+    return null
   }
 
   return (
@@ -77,7 +93,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
             style={{
               ...styles.optionBtn,
               borderColor: borderColor(option),
-              opacity: answerState !== 'unanswered' && option.id !== question.answer.id && option.id !== selected ? 0.5 : 1,
+              opacity: answerState !== 'unanswered' && option.id !== question.answer.id && option.id !== selected ? 0.45 : 1,
             }}
             onClick={() => handleSelect(option.id)}
             disabled={answerState !== 'unanswered'}
@@ -87,6 +103,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
               alt={option.name}
               style={styles.optionImg}
             />
+            {overlay(option)}
           </button>
         ))}
       </div>
@@ -125,6 +142,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
   },
   optionBtn: {
+    position: 'relative',
     background: 'var(--color-surface)',
     border: '3px solid',
     borderRadius: 'var(--radius)',
@@ -133,6 +151,17 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'border-color 0.2s, opacity 0.2s',
     aspectRatio: '1',
     overflow: 'hidden',
+  },
+  overlay: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 48,
+    color: '#fff',
+    borderRadius: 'var(--radius-sm)',
+    pointerEvents: 'none',
   },
   optionImg: {
     width: '100%',
