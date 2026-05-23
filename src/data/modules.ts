@@ -10,6 +10,11 @@ export const MODULES: ModuleDef[] = [
     audioBase: '/content/allergens/audio/',
     tasks: [
       {
+        id: 'task0',
+        type: 'revision',
+        title: 'Meet the allergens',
+      },
+      {
         id: 'task1',
         type: 'image-match',
         title: 'Match the allergen to its image',
