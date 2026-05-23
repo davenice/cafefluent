@@ -2,13 +2,13 @@
 
 A self-study PWA quiz app for people learning the language and vocabulary needed to work in a cafe. Designed to accompany an in-person course, with a structured curriculum of modules and quiz types.
 
-Hosted on GitHub Pages — fully client-side, no backend required.
+Hosted at **cafefluent.dandr.org** via GitHub Pages — fully client-side, no backend required.
 
 ## Development
 
 ```bash
 npm install
-npm run dev        # dev server at http://localhost:5173/cafefluent/
+npm run dev        # dev server at http://localhost:5173/
 npm run build      # production build to dist/
 ```
 
@@ -17,6 +17,13 @@ Deployment is automatic: push to `main` and GitHub Actions builds and deploys to
 ## Architecture
 
 React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Pages compatibility. `vite-plugin-pwa` for offline support via a service worker.
+
+### Adding a new task type
+
+1. Add the type name to `TaskType` in `src/types/index.ts`
+2. Create a component in `src/components/quiz/` — it receives `items`, `imageBase`, and `onComplete(score, total)`
+3. Register it in `QuizShell.tsx` (currently dispatches on `task.type === 'image-match'`)
+4. Add the task entry to the module in `src/data/modules.ts`
 
 ### Adding content
 
@@ -43,6 +50,8 @@ The 14 major food allergens (EU/UK regulation).
 | 3 | Hear a sentence ("I'm allergic to…") → choose the correct image | Planned |
 
 Task 3 will vary the phrasing: *I'm allergic to / I'm intolerant to / I must not eat / I can't eat / I have an allergy to.*
+
+Tasks 2 and 3 require audio files — format, hosting and naming convention to be decided.
 
 ### Future modules
 
