@@ -51,7 +51,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
         setSelected(null)
         setAnswerState('unanswered')
       } else {
-        onComplete(score + (answerState === 'correct' ? 1 : 0), questions.length)
+        onComplete(score, questions.length)
       }
     }, delay)
     return () => clearTimeout(timer)
@@ -101,7 +101,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
             <img
               src={`${imageBase}${option.image}`}
               alt={option.name}
-              style={styles.optionImg}
+              style={{ ...styles.optionImg, objectPosition: option.imagePosition ?? 'center' }}
             />
             {overlay(option)}
           </button>

@@ -3,23 +3,23 @@ import type { AllergenItem } from '../../types'
 interface Props {
   items: AllergenItem[]
   imageBase: string
+  intro?: string
   onDone: () => void
 }
 
-export default function AllergenRevision({ items, imageBase, onDone }: Props) {
+const DEFAULT_INTRO = 'There are 14 major allergens that must be declared on food labels. Learn their names and what they include.'
+
+export default function RevisionTask({ items, imageBase, intro = DEFAULT_INTRO, onDone }: Props) {
   return (
     <div style={styles.container}>
-      <p style={styles.intro}>
-        There are 14 major allergens that must be declared on food labels.
-        Learn their names and what they include.
-      </p>
+      <p style={styles.intro}>{intro}</p>
       <div style={styles.grid}>
         {items.map((item) => (
           <div key={item.id} style={styles.card}>
             <img
               src={`${imageBase}${item.image}`}
               alt={item.name}
-              style={styles.image}
+              style={{ ...styles.image, objectPosition: item.imagePosition ?? 'center' }}
             />
             <div style={styles.body}>
               <h2 style={styles.name}>{item.name}</h2>
@@ -29,7 +29,7 @@ export default function AllergenRevision({ items, imageBase, onDone }: Props) {
         ))}
       </div>
       <button style={styles.doneBtn} onClick={onDone}>
-        Back to module
+        Mark revision complete
       </button>
     </div>
   )

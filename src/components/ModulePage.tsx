@@ -27,7 +27,7 @@ export default function ModulePage() {
       <main style={styles.main}>
         {mod.tasks.map((task, i) => {
           const isRevision = task.type === 'revision'
-          const progress = isRevision ? null : getProgress(mod.id, task.id)
+          const progress = getProgress(mod.id, task.id)
           return (
             <Link key={task.id} to={`/${mod.id}/${task.id}`} style={styles.card}>
               <div style={{ ...styles.taskNumber, ...(isRevision ? styles.taskNumberRevision : {}) }}>
@@ -35,8 +35,9 @@ export default function ModulePage() {
               </div>
               <div style={styles.taskBody}>
                 <h2 style={styles.taskTitle}>{task.title}</h2>
-                {isRevision && <p style={styles.taskSub}>Study guide</p>}
-                {progress && (
+                {isRevision && !progress && <p style={styles.taskSub}>Study guide</p>}
+                {isRevision && progress && <p style={styles.taskScore}>✓ Complete</p>}
+                {!isRevision && progress && (
                   <p style={styles.taskScore}>
                     Best: {progress.score}/{progress.total}
                   </p>

@@ -6,7 +6,7 @@ import type { ModuleData } from '../../types'
 import ImageMatch from './ImageMatch'
 import AudioMatch from './AudioMatch'
 import SentenceMatch from './SentenceMatch'
-import AllergenRevision from './AllergenRevision'
+import RevisionTask from './RevisionTask'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -55,10 +55,14 @@ export default function QuizShell() {
         {phase === 'loading' && <p style={styles.status}>Loading…</p>}
         {phase === 'error' && <ErrorScreen onBack={() => navigate(`/${moduleId}`)} message="Could not load quiz data." />}
         {phase === 'quiz' && data && task.type === 'revision' && (
-          <AllergenRevision
+          <RevisionTask
             items={data.items}
             imageBase={mod.imageBase}
-            onDone={() => navigate(`/${moduleId}`)}
+            intro={mod.revisionIntro}
+            onDone={() => {
+              if (mod && task) saveProgress(mod.id, task.id, { score: 1, total: 1, completedAt: new Date().toISOString() })
+              navigate(`/${moduleId}`)
+            }}
           />
         )}
         {phase === 'quiz' && data && task.type === 'image-match' && (
@@ -72,6 +76,7 @@ export default function QuizShell() {
           <AudioMatch
             items={data.items}
             audioBase={mod.audioBase ?? '/content/allergens/audio/'}
+            variants={task.audioVariants}
             onComplete={handleComplete}
           />
         )}

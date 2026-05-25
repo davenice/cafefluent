@@ -108,7 +108,7 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
         setSelected(null)
         setAnswerState('unanswered')
       } else {
-        onComplete(score + (answerState === 'correct' ? 1 : 0), questions.length)
+        onComplete(score, questions.length)
       }
     }, delay)
     return () => clearTimeout(timer)

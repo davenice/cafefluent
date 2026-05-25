@@ -3,6 +3,7 @@ export interface AllergenItem {
   name: string
   description: string
   image: string
+  imagePosition?: string
   audio?: string
 }
 
@@ -18,12 +19,14 @@ export interface TaskDef {
   id: string
   type: TaskType
   title: string
+  audioVariants?: string[]
 }
 
 export interface ModuleDef {
   id: string
   title: string
   description: string
+  revisionIntro?: string
   dataUrl: string
   imageBase: string
   audioBase?: string

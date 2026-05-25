@@ -1,0 +1,71 @@
+{
+  "id": "bread",
+  "title": "Bread",
+  "variants": ["name"],
+  "items": [
+    {
+      "id": "baguette",
+      "name": "Baguette",
+      "description": "A long, thin French loaf with a golden, crispy crust and soft, airy inside.",
+      "image": "baguette.jpg"
+    },
+    {
+      "id": "ciabatta",
+      "name": "Ciabatta",
+      "description": "An Italian flatbread with a crispy crust and light, open texture with large holes.",
+      "image": "ciabatta.jpg"
+    },
+    {
+      "id": "gluten-free",
+      "name": "Gluten-free",
+      "description": "Made without wheat or other gluten-containing grains. Suitable for customers with coeliac disease or a gluten intolerance.",
+      "image": "gluten-free.jpg",
+      "imagePosition": "center 70%"
+    },
+    {
+      "id": "granary",
+      "name": "Granary/seeded",
+      "audioName": "granary seeded",
+      "description": "A hearty bread made with malted wheat grains and seeds, giving it a nutty flavour and chewy texture.",
+      "image": "granary.jpg"
+    },
+    {
+      "id": "wholemeal",
+      "name": "Wholemeal/brown",
+      "audioName": "wholemeal brown",
+      "description": "Made with whole wheat flour, giving it a denser texture, nutty flavour, and higher fibre content than white bread.",
+      "image": "wholemeal.jpg"
+    },
+    {
+      "id": "white",
+      "name": "White",
+      "description": "Made with refined white flour. Soft with a light texture and mild flavour.",
+      "image": "white.jpg"
+    },
+    {
+      "id": "bagel",
+      "name": "Bagel",
+      "description": "A ring-shaped bread roll with a dense, chewy texture. Often topped with seeds.",
+      "image": "bagel.jpg"
+    },
+    {
+      "id": "bap-roll",
+      "name": "Bap/roll",
+      "audioName": "bap or roll",
+      "description": "A soft, round bread roll. Light and fluffy, commonly used for sandwiches.",
+      "image": "bap-roll.jpg"
+    },
+    {
+      "id": "wrap",
+      "name": "Wrap",
+      "description": "A thin, soft flatbread used to roll around sandwich fillings. Also called a tortilla.",
+      "image": "wrap.jpg"
+    },
+    {
+      "id": "sourdough",
+      "name": "Sourdough",
+      "description": "Made using a natural fermentation starter, giving it a distinctive tangy flavour and chewy crust.",
+      "image": "sourdough.jpg"
+    }
+  ]
+}

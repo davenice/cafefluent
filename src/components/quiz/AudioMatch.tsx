@@ -5,29 +5,32 @@ import { shuffle, pickRandom } from '../../utils/shuffle'
 interface Props {
   items: AllergenItem[]
   audioBase: string
+  variants?: string[]
   onComplete: (score: number, total: number) => void
 }
 
 interface Question {
   answer: AllergenItem
   options: AllergenItem[]
+  variant: string
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-function buildQuestions(items: AllergenItem[]): Question[] {
+function buildQuestions(items: AllergenItem[], variants: string[]): Question[] {
   return shuffle(items).map((answer) => ({
     answer,
     options: shuffle([answer, ...pickRandom(items, 3, answer)]),
+    variant: variants[Math.floor(Math.random() * variants.length)],
   }))
 }
 
-function audioFile(base: string, item: AllergenItem): string {
-  return `${base}${item.id}_name.mp3`
+function audioFile(base: string, item: AllergenItem, variant: string): string {
+  return `${base}${item.id}_${variant}.mp3`
 }
 
-export default function AudioMatch({ items, audioBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(items))
+export default function AudioMatch({ items, audioBase, variants = ['name'], onComplete }: Props) {
+  const [questions] = useState<Question[]>(() => buildQuestions(items, variants))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
@@ -42,7 +45,7 @@ export default function AudioMatch({ items, audioBase, onComplete }: Props) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
-    const audio = new Audio(audioFile(audioBase, question.answer))
+    const audio = new Audio(audioFile(audioBase, question.answer, question.variant))
     audioRef.current = audio
     audio.onplay = () => setIsPlaying(true)
     audio.onended = () => setIsPlaying(false)
@@ -83,7 +86,7 @@ export default function AudioMatch({ items, audioBase, onComplete }: Props) {
         setSelected(null)
         setAnswerState('unanswered')
       } else {
-        onComplete(score + (answerState === 'correct' ? 1 : 0), questions.length)
+        onComplete(score, questions.length)
       }
     }, delay)
     return () => clearTimeout(timer)
@@ -116,7 +119,7 @@ export default function AudioMatch({ items, audioBase, onComplete }: Props) {
     <div style={styles.container}>
       <div style={styles.prompt}>
         <p style={styles.counter}>{index + 1} of {questions.length}</p>
-        <p style={styles.instruction}>What allergen do you hear?</p>
+        <p style={styles.instruction}>What do you hear?</p>
 
         <button
           style={{ ...styles.playBtn, ...(isPlaying ? styles.playBtnActive : {}) }}

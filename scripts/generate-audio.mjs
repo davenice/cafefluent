@@ -53,7 +53,11 @@ async function generateModule(moduleId, force) {
     return;
   }
 
-  const { items } = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  const moduleData = JSON.parse(readFileSync(dataPath, 'utf-8'));
+  const { items } = moduleData;
+  const activeVariants = moduleData.variants
+    ? Object.fromEntries(Object.entries(VARIANTS).filter(([k]) => moduleData.variants.includes(k)))
+    : VARIANTS;
   const audioDir = join(ROOT, 'public/content', moduleId, 'audio');
   mkdirSync(audioDir, { recursive: true });
 
@@ -72,7 +76,7 @@ async function generateModule(moduleId, force) {
   for (const item of items) {
     const spokenName = item.audioName ?? item.name;
 
-    for (const [variant, getText] of Object.entries(VARIANTS)) {
+    for (const [variant, getText] of Object.entries(activeVariants)) {
       const filename = `${item.id}_${variant}.mp3`;
       const outputPath = join(audioDir, filename);
 

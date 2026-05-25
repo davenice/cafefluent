@@ -1,0 +1,67 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "baguette",
+      "variant": "name",
+      "text": "Baguette",
+      "file": "baguette_name.mp3"
+    },
+    {
+      "id": "ciabatta",
+      "variant": "name",
+      "text": "Ciabatta",
+      "file": "ciabatta_name.mp3"
+    },
+    {
+      "id": "gluten-free",
+      "variant": "name",
+      "text": "Gluten-free",
+      "file": "gluten-free_name.mp3"
+    },
+    {
+      "id": "granary",
+      "variant": "name",
+      "text": "granary seeded",
+      "file": "granary_name.mp3"
+    },
+    {
+      "id": "wholemeal",
+      "variant": "name",
+      "text": "wholemeal brown",
+      "file": "wholemeal_name.mp3"
+    },
+    {
+      "id": "white",
+      "variant": "name",
+      "text": "White",
+      "file": "white_name.mp3"
+    },
+    {
+      "id": "bagel",
+      "variant": "name",
+      "text": "Bagel",
+      "file": "bagel_name.mp3"
+    },
+    {
+      "id": "bap-roll",
+      "variant": "name",
+      "text": "bap or roll",
+      "file": "bap-roll_name.mp3"
+    },
+    {
+      "id": "wrap",
+      "variant": "name",
+      "text": "Wrap",
+      "file": "wrap_name.mp3"
+    },
+    {
+      "id": "sourdough",
+      "variant": "name",
+      "text": "Sourdough",
+      "file": "sourdough_name.mp3"
+    }
+  ]
+}
