@@ -56,6 +56,11 @@ export const MODULES: ModuleDef[] = [
         type: 'audio-match',
         title: 'Listen and match the bread name',
       },
+      {
+        id: 'task3',
+        type: 'product-match',
+        title: 'Match the product name and ingredient',
+      },
     ],
   },
 ]

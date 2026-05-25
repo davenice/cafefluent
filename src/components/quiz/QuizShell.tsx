@@ -7,6 +7,7 @@ import ImageMatch from './ImageMatch'
 import AudioMatch from './AudioMatch'
 import SentenceMatch from './SentenceMatch'
 import RevisionTask from './RevisionTask'
+import ProductMatch from './ProductMatch'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -84,6 +85,14 @@ export default function QuizShell() {
           <SentenceMatch
             items={data.items}
             audioBase={mod.audioBase ?? '/content/allergens/audio/'}
+            imageBase={mod.imageBase}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'product-match' && (
+          <ProductMatch
+            products={data.products ?? []}
+            items={data.items}
             imageBase={mod.imageBase}
             onComplete={handleComplete}
           />

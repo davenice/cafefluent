@@ -7,13 +7,22 @@ export interface AllergenItem {
   audio?: string
 }
 
+export interface ProductItem {
+  id: string
+  name: string
+  image: string
+  breadAnswer: string
+  breadIds: string[]
+}
+
 export interface ModuleData {
   id: string
   title: string
   items: AllergenItem[]
+  products?: ProductItem[]
 }
 
-export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match'
+export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match'
 
 export interface TaskDef {
   id: string

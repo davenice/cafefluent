@@ -67,5 +67,42 @@
       "description": "Made using a natural fermentation starter, giving it a distinctive tangy flavour and chewy crust.",
       "image": "sourdough.jpg"
     }
+  ],
+  "products": [
+    {
+      "id": "butty",
+      "name": "Butty / sandwich",
+      "image": "product-butty.jpg",
+      "breadAnswer": "White or brown bread",
+      "breadIds": ["white", "wholemeal"]
+    },
+    {
+      "id": "toast",
+      "name": "Toast",
+      "image": "product-toast.jpg",
+      "breadAnswer": "White or brown bread",
+      "breadIds": ["white", "wholemeal"]
+    },
+    {
+      "id": "toasty",
+      "name": "Toasty",
+      "image": "product-toasty.jpg",
+      "breadAnswer": "White or brown bread",
+      "breadIds": ["white", "wholemeal"]
+    },
+    {
+      "id": "burger",
+      "name": "Burger",
+      "image": "product-burger.jpg",
+      "breadAnswer": "Bap / roll",
+      "breadIds": ["bap-roll"]
+    },
+    {
+      "id": "panini",
+      "name": "Panini",
+      "image": "product-panini.jpg",
+      "breadAnswer": "Ciabatta",
+      "breadIds": ["ciabatta"]
+    }
   ]
 }
