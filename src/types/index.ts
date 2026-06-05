@@ -20,9 +20,24 @@ export interface ModuleData {
   title: string
   items: AllergenItem[]
   products?: ProductItem[]
+  diagrams?: DiagramData[]
 }
 
-export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match'
+export interface Hotspot {
+  id: string
+  label: string
+  x: number
+  y: number
+}
+
+export interface DiagramData {
+  id: string
+  title: string
+  image: string
+  hotspots: Hotspot[]
+}
+
+export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label'
 
 export interface TaskDef {
   id: string

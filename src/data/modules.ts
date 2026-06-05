@@ -63,4 +63,18 @@ export const MODULES: ModuleDef[] = [
       },
     ],
   },
+  {
+    id: 'coffee',
+    title: 'Coffee equipment',
+    description: 'Learn the vocabulary of coffee equipment and preparation',
+    dataUrl: '/content/coffee/data.json',
+    imageBase: '/content/coffee/images/',
+    tasks: [
+      {
+        id: 'task1',
+        type: 'diagram-label',
+        title: 'Label the coffee equipment',
+      },
+    ],
+  },
 ]

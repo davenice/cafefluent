@@ -49,3 +49,9 @@ button {
   background: none;
   font: inherit;
 }
+
+@keyframes diagram-pulse {
+  0%   { box-shadow: 0 0 0 0   rgba(230, 57, 70, 0.7), 0 0 0 2px rgba(0,0,0,0.25); }
+  70%  { box-shadow: 0 0 0 10px rgba(230, 57, 70, 0),   0 0 0 2px rgba(0,0,0,0.25); }
+  100% { box-shadow: 0 0 0 0   rgba(230, 57, 70, 0),   0 0 0 2px rgba(0,0,0,0.25); }
+}

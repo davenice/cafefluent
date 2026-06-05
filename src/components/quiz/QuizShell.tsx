@@ -8,6 +8,7 @@ import AudioMatch from './AudioMatch'
 import SentenceMatch from './SentenceMatch'
 import RevisionTask from './RevisionTask'
 import ProductMatch from './ProductMatch'
+import DiagramLabel from './DiagramLabel'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -93,6 +94,13 @@ export default function QuizShell() {
           <ProductMatch
             products={data.products ?? []}
             items={data.items}
+            imageBase={mod.imageBase}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'diagram-label' && (
+          <DiagramLabel
+            diagrams={data.diagrams ?? []}
             imageBase={mod.imageBase}
             onComplete={handleComplete}
           />
