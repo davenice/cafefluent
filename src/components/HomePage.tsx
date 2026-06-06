@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom'
 import { MODULES } from '../data/modules'
 import { getProgress } from '../hooks/useProgress'
+import { useEnabledModules } from '../hooks/useEnabledModules'
 
 export default function HomePage() {
+  const enabledModules = useEnabledModules()
+  const visibleModules = MODULES.filter(m => (enabledModules ?? []).includes(m.id))
+
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -11,7 +15,7 @@ export default function HomePage() {
       </header>
 
       <main style={styles.main}>
-        {MODULES.map((mod) => {
+        {visibleModules.map((mod) => {
           const completedTasks = mod.tasks.filter(
             (t) => getProgress(mod.id, t.id) !== null
           ).length

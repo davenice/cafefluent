@@ -12,6 +12,15 @@ export default defineConfig({
     __BUILD_COMMIT__: JSON.stringify(buildCommit),
   },
   base: '/',
+  server: {
+    proxy: {
+      '/modules-api': {
+        target: 'https://6wup3s4xsica4mfyglrdzsvevu0gmjjy.lambda-url.us-east-1.on.aws',
+        changeOrigin: true,
+        rewrite: path => path.replace(/^\/modules-api/, ''),
+      },
+    },
+  },
   plugins: [
     react(),
     VitePWA({
@@ -31,6 +40,17 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,json}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/6wup3s4xsica4mfyglrdzsvevu0gmjjy\.lambda-url\.us-east-1\.on\.aws/,
+            handler: 'NetworkFirst' as const,
+            options: {
+              cacheName: 'module-config',
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 1 },
+            },
+          },
+        ],
       },
     }),
   ],
