@@ -1,7 +1,3 @@
-## Coffee machine labelling
-- Update pictures to be ones without arrows
-- Include adj / verb in the word - "Tare (verb)", "Coarse (adj.)", "Fine (adj.)"
-
 ## Update quiz to be two way (words -> pictures, pictures -> words)
 - For the standard terminology quizzes, introduce words -> pictures where they get a word and several pictures, have to choose the right picture
 - I think this is ImageMatch?

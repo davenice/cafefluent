@@ -80,7 +80,7 @@ export default function DiagramLabel({ diagrams, imageBase, onComplete }: Props)
               : answerState === 'wrong'
               ? 'var(--color-wrong)'
               : 'var(--color-accent)',
-            animation: answerState === 'unanswered' ? 'diagram-pulse 1.4s ease-in-out infinite' : 'none',
+            animation: answerState === 'unanswered' ? 'dot-pop 2s ease-in-out infinite' : 'none',
           }}
         />
       </div>
@@ -133,13 +133,13 @@ const styles: Record<string, React.CSSProperties> = {
   },
   marker: {
     position: 'absolute',
-    width: 22,
-    height: 22,
+    width: 18,
+    height: 18,
     borderRadius: '50%',
     border: '3px solid #fff',
     transform: 'translate(-50%, -50%)',
     pointerEvents: 'none',
-    boxShadow: '0 0 0 2px rgba(0,0,0,0.25)',
+    boxShadow: '0 0 0 2px rgba(0,0,0,0.3)',
     transition: 'background 0.2s',
   },
   options: {
