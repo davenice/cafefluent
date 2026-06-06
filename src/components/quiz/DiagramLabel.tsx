@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { DiagramData } from '../../types'
-import { shuffle } from '../../utils/shuffle'
+import { buildDiagramQuestions } from './questionBuilders'
 
 interface Props {
   diagrams: DiagramData[]
@@ -8,36 +8,10 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-interface Question {
-  image: string
-  diagramTitle: string
-  answer: string
-  x: number
-  y: number
-  options: string[]
-}
-
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-function buildQuestions(diagrams: DiagramData[]): Question[] {
-  const allLabels = diagrams.flatMap((d) => d.hotspots.map((h) => h.label))
-  return diagrams.flatMap((diagram) =>
-    shuffle([...diagram.hotspots]).map((hotspot) => {
-      const distractors = shuffle(allLabels.filter((l) => l !== hotspot.label)).slice(0, 3)
-      return {
-        image: diagram.image,
-        diagramTitle: diagram.title,
-        answer: hotspot.label,
-        x: hotspot.x,
-        y: hotspot.y,
-        options: shuffle([hotspot.label, ...distractors]),
-      }
-    })
-  )
-}
-
 export default function DiagramLabel({ diagrams, imageBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(diagrams))
+  const [questions] = useState(() => buildDiagramQuestions(diagrams))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)

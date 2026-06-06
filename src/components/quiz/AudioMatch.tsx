@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AllergenItem } from '../../types'
-import { shuffle, pickRandom } from '../../utils/shuffle'
+import { buildAudioQuestions } from './questionBuilders'
 
 interface Props {
   items: AllergenItem[]
@@ -9,28 +9,14 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-interface Question {
-  answer: AllergenItem
-  options: AllergenItem[]
-  variant: string
-}
-
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
-function buildQuestions(items: AllergenItem[], variants: string[]): Question[] {
-  return shuffle(items).map((answer) => ({
-    answer,
-    options: shuffle([answer, ...pickRandom(items, 3, answer)]),
-    variant: variants[Math.floor(Math.random() * variants.length)],
-  }))
-}
 
 function audioFile(base: string, item: AllergenItem, variant: string): string {
   return `${base}${item.id}_${variant}.mp3`
 }
 
 export default function AudioMatch({ items, audioBase, variants = ['name'], onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(items, variants))
+  const [questions] = useState(() => buildAudioQuestions(items, variants))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
