@@ -10,9 +10,11 @@ Hosted at **cafefluent.dandr.org** via GitHub Pages — fully client-side, no ba
 npm install
 npm run dev        # dev server at http://localhost:5173/
 npm run build      # production build to dist/
+npm test           # run unit and component tests
+npm run test:watch # tests in watch mode
 ```
 
-Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages.
+Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
 
 ## Architecture
 
@@ -166,13 +168,17 @@ src/
     ModulePage.tsx      ← task list for a module
     quiz/
       QuizShell.tsx         ← loads data, manages quiz lifecycle
-      AllergenRevision.tsx  ← Task 0 study guide (all allergens, images, descriptions)
-      ImageMatch.tsx        ← Task 1 question type
-      AudioMatch.tsx        ← Task 2 question type
-      SentenceMatch.tsx     ← Task 3 question type
+      RevisionTask.tsx      ← study guide task type (browse items with images/descriptions)
+      ImageMatch.tsx        ← match name → image
+      AudioMatch.tsx        ← hear word → choose written name
+      SentenceMatch.tsx     ← hear sentence → choose correct image
+      ProductMatch.tsx      ← match product image → product name
+      DiagramLabel.tsx      ← label hotspots on a diagram
+      questionBuilders.ts   ← pure question-building logic (shared, tested)
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle
 
 .github/workflows/
   deploy.yml            ← build + deploy to GitHub Pages on push to main
+  ci.yml                ← run tests + build on pull requests
 ```
