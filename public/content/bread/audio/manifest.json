@@ -24,13 +24,13 @@
     {
       "id": "granary",
       "variant": "name",
-      "text": "granary seeded",
+      "text": "granary or seeded",
       "file": "granary_name.mp3"
     },
     {
       "id": "wholemeal",
       "variant": "name",
-      "text": "wholemeal brown",
+      "text": "wholemeal or brown",
       "file": "wholemeal_name.mp3"
     },
     {

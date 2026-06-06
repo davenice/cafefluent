@@ -24,15 +24,15 @@
     },
     {
       "id": "granary",
-      "name": "Granary/seeded",
-      "audioName": "granary seeded",
+      "name": "Granary or seeded",
+      "audioName": "granary or seeded",
       "description": "A hearty bread made with malted wheat grains and seeds, giving it a nutty flavour and chewy texture.",
       "image": "granary.jpg"
     },
     {
       "id": "wholemeal",
-      "name": "Wholemeal/brown",
-      "audioName": "wholemeal brown",
+      "name": "Wholemeal or brown",
+      "audioName": "wholemeal or brown",
       "description": "Made with whole wheat flour, giving it a denser texture, nutty flavour, and higher fibre content than white bread.",
       "image": "wholemeal.jpg"
     },
@@ -50,7 +50,7 @@
     },
     {
       "id": "bap-roll",
-      "name": "Bap/roll",
+      "name": "Bap or roll",
       "audioName": "bap or roll",
       "description": "A soft, round bread roll. Light and fluffy, commonly used for sandwiches.",
       "image": "bap-roll.jpg"
@@ -71,7 +71,7 @@
   "products": [
     {
       "id": "butty",
-      "name": "Butty / sandwich",
+      "name": "Butty or sandwich",
       "image": "product-butty.jpg",
       "breadAnswer": "White or brown bread",
       "breadIds": ["white", "wholemeal"]
@@ -94,7 +94,7 @@
       "id": "burger",
       "name": "Burger",
       "image": "product-burger.jpg",
-      "breadAnswer": "Bap / roll",
+      "breadAnswer": "Bap or roll",
       "breadIds": ["bap-roll"]
     },
     {
