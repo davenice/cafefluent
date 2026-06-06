@@ -6,12 +6,12 @@ type Variant = 'allergic' | 'intolerant' | 'must-not-eat' | 'cant-eat' | 'allerg
 
 // Keep in sync with VARIANTS in scripts/generate-audio.mjs
 const DISPLAY_TEMPLATES: Record<Variant, (name: string) => string> = {
-  allergic:       (name) => `I'm allergic to ${name}`,
-  intolerant:     (name) => `I'm intolerant to ${name}`,
-  'must-not-eat': (name) => `I must not eat ${name}`,
-  'cant-eat':     (name) => `I can't eat ${name}`,
-  'allergy-to':   (name) => `I have an allergy to ${name}`,
-  'cant-have':    (name) => `I can't have ${name}`,
+  allergic:       (name) => `I'm allergic to ${name.toLowerCase()}`,
+  intolerant:     (name) => `I'm intolerant to ${name.toLowerCase()}`,
+  'must-not-eat': (name) => `I must not eat ${name.toLowerCase()}`,
+  'cant-eat':     (name) => `I can't eat ${name.toLowerCase()}`,
+  'allergy-to':   (name) => `I have an allergy to ${name.toLowerCase()}`,
+  'cant-have':    (name) => `I can't have ${name.toLowerCase()}`,
 }
 
 const BLANK_TEMPLATES: Record<Variant, string> = {
