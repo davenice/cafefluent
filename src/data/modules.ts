@@ -59,7 +59,7 @@ export const MODULES: ModuleDef[] = [
       {
         id: 'task3',
         type: 'product-match',
-        title: 'Match the product name and ingredient',
+        title: 'Match the product name',
       },
     ],
   },

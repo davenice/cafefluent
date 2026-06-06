@@ -93,7 +93,6 @@ export default function QuizShell() {
         {phase === 'quiz' && data && task.type === 'product-match' && (
           <ProductMatch
             products={data.products ?? []}
-            items={data.items}
             imageBase={mod.imageBase}
             onComplete={handleComplete}
           />

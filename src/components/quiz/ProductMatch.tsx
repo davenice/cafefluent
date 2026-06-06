@@ -1,44 +1,32 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { AllergenItem, ProductItem } from '../../types'
+import type { ProductItem } from '../../types'
 import { shuffle } from '../../utils/shuffle'
 
 interface Props {
   products: ProductItem[]
-  items: AllergenItem[]
   imageBase: string
   onComplete: (score: number, total: number) => void
 }
 
 interface Question {
   product: ProductItem
-  phase: 'name' | 'bread'
   options: string[]
   correct: string
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-function buildQuestions(products: ProductItem[], items: AllergenItem[]): Question[] {
-  const allBreadAnswers = [...new Set(products.map((p) => p.breadAnswer))]
-
-  return shuffle(products).flatMap((product) => {
-    const nameOptions = shuffle(products.map((p) => p.name))
-
-    const otherAnswers = allBreadAnswers.filter((a) => a !== product.breadAnswer)
-    const itemDistractors = shuffle(
-      items.filter((b) => !product.breadIds.includes(b.id)).map((b) => b.name)
-    )
-    const breadOptions = shuffle([product.breadAnswer, ...[...otherAnswers, ...itemDistractors].slice(0, 3)])
-
-    return [
-      { product, phase: 'name' as const, options: nameOptions, correct: product.name },
-      { product, phase: 'bread' as const, options: breadOptions, correct: product.breadAnswer },
-    ]
-  })
+function buildQuestions(products: ProductItem[]): Question[] {
+  const allNames = products.map((p) => p.name)
+  return shuffle(products).map((product) => ({
+    product,
+    options: shuffle(allNames),
+    correct: product.name,
+  }))
 }
 
-export default function ProductMatch({ products, items, imageBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(products, items))
+export default function ProductMatch({ products, imageBase, onComplete }: Props) {
+  const [questions] = useState<Question[]>(() => buildQuestions(products))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
@@ -72,8 +60,6 @@ export default function ProductMatch({ products, items, imageBase, onComplete }:
     return () => clearTimeout(timer)
   }, [answerState, index, questions.length, score, onComplete])
 
-  const productNum = Math.floor(index / 2) + 1
-
   return (
     <div style={styles.container}>
       <div style={styles.imageWrap}>
@@ -83,19 +69,12 @@ export default function ProductMatch({ products, items, imageBase, onComplete }:
           style={styles.image}
         />
         <div style={styles.badge}>
-          {productNum} of {products.length}
+          {index + 1} of {questions.length}
         </div>
       </div>
 
       <div style={styles.prompt}>
-        {question.phase === 'name' ? (
-          <p style={styles.promptText}>What is this product called?</p>
-        ) : (
-          <>
-            <p style={styles.productName}>{question.product.name}</p>
-            <p style={styles.promptText}>What bread is it made with?</p>
-          </>
-        )}
+        <p style={styles.promptText}>What is this product called?</p>
       </div>
 
       <div style={styles.options}>
@@ -193,12 +172,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '16px',
     boxShadow: 'var(--shadow)',
     textAlign: 'center',
-  },
-  productName: {
-    fontSize: 18,
-    fontWeight: 700,
-    color: 'var(--color-primary)',
-    marginBottom: 4,
   },
   promptText: {
     fontSize: 15,
