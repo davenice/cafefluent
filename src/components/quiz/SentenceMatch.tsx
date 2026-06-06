@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AllergenItem } from '../../types'
-import { shuffle, pickRandom } from '../../utils/shuffle'
+import { buildSentenceQuestions } from './questionBuilders'
 
 type Variant = 'allergic' | 'intolerant' | 'must-not-eat' | 'cant-eat' | 'allergy-to' | 'cant-have'
 
@@ -32,28 +32,14 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-interface Question {
-  answer: AllergenItem
-  variant: Variant
-  options: AllergenItem[]
-}
-
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
-function buildQuestions(items: AllergenItem[]): Question[] {
-  return shuffle(items).map((answer) => ({
-    answer,
-    variant: ALL_VARIANTS[Math.floor(Math.random() * ALL_VARIANTS.length)],
-    options: shuffle([answer, ...pickRandom(items, 3, answer)]),
-  }))
-}
 
 function audioFile(base: string, item: AllergenItem, variant: Variant): string {
   return `${base}${item.id}_${variant}.mp3`
 }
 
 export default function SentenceMatch({ items, audioBase, imageBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(items))
+  const [questions] = useState(() => buildSentenceQuestions(items, ALL_VARIANTS))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)

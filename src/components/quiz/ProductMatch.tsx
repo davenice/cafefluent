@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { ProductItem } from '../../types'
-import { shuffle } from '../../utils/shuffle'
+import { buildProductQuestions } from './questionBuilders'
 
 interface Props {
   products: ProductItem[]
@@ -8,25 +8,10 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-interface Question {
-  product: ProductItem
-  options: string[]
-  correct: string
-}
-
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-function buildQuestions(products: ProductItem[]): Question[] {
-  const allNames = products.map((p) => p.name)
-  return shuffle(products).map((product) => ({
-    product,
-    options: shuffle(allNames),
-    correct: product.name,
-  }))
-}
-
 export default function ProductMatch({ products, imageBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(products))
+  const [questions] = useState(() => buildProductQuestions(products))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)

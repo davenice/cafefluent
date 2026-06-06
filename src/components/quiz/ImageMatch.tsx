@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { AllergenItem } from '../../types'
-import { shuffle, pickRandom } from '../../utils/shuffle'
+import { buildImageQuestions } from './questionBuilders'
 
 interface Props {
   items: AllergenItem[]
@@ -8,22 +8,10 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-interface Question {
-  answer: AllergenItem
-  options: AllergenItem[]
-}
-
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-function buildQuestions(items: AllergenItem[]): Question[] {
-  return shuffle(items).map((answer) => ({
-    answer,
-    options: shuffle([answer, ...pickRandom(items, 3, answer)]),
-  }))
-}
-
 export default function ImageMatch({ items, imageBase, onComplete }: Props) {
-  const [questions] = useState<Question[]>(() => buildQuestions(items))
+  const [questions] = useState(() => buildImageQuestions(items))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
