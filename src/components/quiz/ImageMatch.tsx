@@ -67,33 +67,66 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
     return null
   }
 
+  function optionOpacity(option: AllergenItem): number {
+    return answerState !== 'unanswered' && option.id !== question.answer.id && option.id !== selected
+      ? 0.45
+      : 1
+  }
+
   return (
     <div style={styles.container}>
-      <div style={styles.prompt}>
-        <p style={styles.promptName}>{question.answer.name}</p>
-        <p style={styles.promptDesc}>{question.answer.description}</p>
-      </div>
+      {question.mode === 'word' ? (
+        <div style={styles.prompt}>
+          <p style={styles.promptName}>{question.answer.name}</p>
+          <p style={styles.promptDesc}>{question.answer.description}</p>
+        </div>
+      ) : (
+        <div style={styles.imagePrompt}>
+          <img
+            data-testid="prompt-image"
+            src={`${imageBase}${question.answer.image}`}
+            alt=""
+            style={{ ...styles.promptImg, objectPosition: question.answer.imagePosition ?? 'center' }}
+          />
+        </div>
+      )}
 
       <div style={styles.grid}>
-        {question.options.map((option) => (
-          <button
-            key={option.id}
-            style={{
-              ...styles.optionBtn,
-              borderColor: borderColor(option),
-              opacity: answerState !== 'unanswered' && option.id !== question.answer.id && option.id !== selected ? 0.45 : 1,
-            }}
-            onClick={() => handleSelect(option.id)}
-            disabled={answerState !== 'unanswered'}
-          >
-            <img
-              src={`${imageBase}${option.image}`}
-              alt={option.name}
-              style={{ ...styles.optionImg, objectPosition: option.imagePosition ?? 'center' }}
-            />
-            {overlay(option)}
-          </button>
-        ))}
+        {question.options.map((option) =>
+          question.mode === 'word' ? (
+            <button
+              key={option.id}
+              style={{
+                ...styles.optionBtn,
+                borderColor: borderColor(option),
+                opacity: optionOpacity(option),
+              }}
+              onClick={() => handleSelect(option.id)}
+              disabled={answerState !== 'unanswered'}
+            >
+              <img
+                src={`${imageBase}${option.image}`}
+                alt={option.name}
+                style={{ ...styles.optionImg, objectPosition: option.imagePosition ?? 'center' }}
+              />
+              {overlay(option)}
+            </button>
+          ) : (
+            <button
+              key={option.id}
+              style={{
+                ...styles.wordBtn,
+                borderColor: borderColor(option),
+                opacity: optionOpacity(option),
+              }}
+              onClick={() => handleSelect(option.id)}
+              disabled={answerState !== 'unanswered'}
+            >
+              <span style={styles.wordBtnText}>{option.name}</span>
+              {overlay(option)}
+            </button>
+          )
+        )}
       </div>
     </div>
   )
@@ -124,6 +157,18 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--color-muted)',
     lineHeight: 1.5,
   },
+  imagePrompt: {
+    borderRadius: 'var(--radius)',
+    overflow: 'hidden',
+    aspectRatio: '4/3',
+    boxShadow: 'var(--shadow)',
+  },
+  promptImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block',
+  },
   grid: {
     display: 'grid',
     gridTemplateColumns: '1fr 1fr',
@@ -139,6 +184,28 @@ const styles: Record<string, React.CSSProperties> = {
     transition: 'border-color 0.2s, opacity 0.2s',
     aspectRatio: '1',
     overflow: 'hidden',
+  },
+  wordBtn: {
+    position: 'relative',
+    background: 'var(--color-surface)',
+    border: '3px solid',
+    borderRadius: 'var(--radius)',
+    padding: '16px 12px',
+    boxShadow: 'var(--shadow)',
+    transition: 'border-color 0.2s, opacity 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 72,
+    overflow: 'hidden',
+    cursor: 'pointer',
+  },
+  wordBtnText: {
+    fontSize: 16,
+    fontWeight: 600,
+    color: 'var(--color-text)',
+    textAlign: 'center',
+    lineHeight: 1.3,
   },
   overlay: {
     position: 'absolute',

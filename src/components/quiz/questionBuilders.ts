@@ -5,6 +5,7 @@ export function buildImageQuestions(items: AllergenItem[]) {
   return shuffle(items).map((answer) => ({
     answer,
     options: shuffle([answer, ...pickRandom(items, 3, answer)]),
+    mode: (Math.random() < 0.5 ? 'word' : 'image') as 'word' | 'image',
   }))
 }
 

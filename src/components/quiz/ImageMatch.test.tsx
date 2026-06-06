@@ -19,9 +19,15 @@ const items: AllergenItem[] = [
   { id: 'e', name: 'Epsilon', description: 'Desc of E', image: 'e.jpg' },
 ]
 
-describe('ImageMatch', () => {
-  beforeEach(() => { vi.useFakeTimers() })
-  afterEach(() => { vi.useRealTimers() })
+describe('ImageMatch — word mode (show text, pick image)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(0) // 0 < 0.5 → 'word' mode
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
 
   it('renders the first question prompt', () => {
     render(<ImageMatch items={items} imageBase="/img/" onComplete={vi.fn()} />)
@@ -71,5 +77,51 @@ describe('ImageMatch', () => {
       act(() => { vi.advanceTimersByTime(1200) })
     }
     expect(onComplete).toHaveBeenCalledWith(items.length - 1, items.length)
+  })
+})
+
+describe('ImageMatch — image mode (show picture, pick word)', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.spyOn(Math, 'random').mockReturnValue(0.9) // 0.9 >= 0.5 → 'image' mode
+  })
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.restoreAllMocks()
+  })
+
+  it('renders a prompt image and word option buttons', () => {
+    render(<ImageMatch items={items} imageBase="/img/" onComplete={vi.fn()} />)
+    expect(screen.getByTestId('prompt-image')).toBeInTheDocument()
+    expect(screen.getByText('Alpha').closest('button')).toBeInTheDocument()
+    expect(screen.getByText('Beta').closest('button')).toBeInTheDocument()
+  })
+
+  it('correct word answer shows ✓ and advances after 1200ms', () => {
+    render(<ImageMatch items={items} imageBase="/img/" onComplete={vi.fn()} />)
+    fireEvent.click(screen.getByText('Alpha').closest('button')!)
+    expect(screen.getByText('✓')).toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(1200) })
+    // Q2: Beta is the answer — its name appears as a word option button
+    expect(screen.getByText('Beta').closest('button')).toBeInTheDocument()
+  })
+
+  it('wrong word answer shows ✗ and does not advance at 1200ms', () => {
+    render(<ImageMatch items={items} imageBase="/img/" onComplete={vi.fn()} />)
+    fireEvent.click(screen.getByText('Beta').closest('button')!)
+    expect(screen.getByText('✗')).toBeInTheDocument()
+    act(() => { vi.advanceTimersByTime(1200) })
+    // Still on Q1 — prompt image still present
+    expect(screen.getByTestId('prompt-image')).toBeInTheDocument()
+  })
+
+  it('calls onComplete with correct score when all answers correct', () => {
+    const onComplete = vi.fn()
+    render(<ImageMatch items={items} imageBase="/img/" onComplete={onComplete} />)
+    for (const item of items) {
+      fireEvent.click(screen.getByText(item.name).closest('button')!)
+      act(() => { vi.advanceTimersByTime(1200) })
+    }
+    expect(onComplete).toHaveBeenCalledWith(items.length, items.length)
   })
 })

@@ -18,7 +18,7 @@ export const MODULES: ModuleDef[] = [
       {
         id: 'task1',
         type: 'image-match',
-        title: 'Match the allergen to its image',
+        title: 'Match the allergen name and image',
       },
       {
         id: 'task2',
@@ -49,7 +49,7 @@ export const MODULES: ModuleDef[] = [
       {
         id: 'task1',
         type: 'image-match',
-        title: 'Match the bread to its image',
+        title: 'Match the bread name and image',
       },
       {
         id: 'task2',

@@ -1,7 +1,3 @@
-## Update quiz to be two way (words -> pictures, pictures -> words)
-- For the standard terminology quizzes, introduce words -> pictures where they get a word and several pictures, have to choose the right picture
-- I think this is ImageMatch?
-
 ## Add in cakes and snacks module
 - I have the documents for this
 
