@@ -12,7 +12,7 @@
           "id": "hopper",
           "label": "hopper",
           "x": 41,
-          "y": 10
+          "y": 8
         },
         {
           "id": "coffee-beans",
@@ -34,25 +34,19 @@
         },
         {
           "id": "tare",
-          "label": "tare (verb)",
-          "x": 87,
-          "y": 29
-        },
-        {
-          "id": "coffee-grounds",
-          "label": "coffee grounds",
-          "x": 79,
-          "y": 69
+          "label": "tare button",
+          "x": 84,
+          "y": 31
         },
         {
           "id": "coarse",
-          "label": "coarse (adj.)",
+          "label": "coarse coffee grounds",
           "x": 70,
           "y": 84
         },
         {
           "id": "fine",
-          "label": "fine (adj.)",
+          "label": "fine coffee grounds",
           "x": 89,
           "y": 84
         }
