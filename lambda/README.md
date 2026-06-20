@@ -1,6 +1,6 @@
 # Module config Lambda
 
-Returns the list of enabled module IDs to the app.
+GET returns the list of enabled module IDs. POST (PIN-protected) updates it.
 
 ## Deploy
 
@@ -11,15 +11,35 @@ Returns the list of enabled module IDs to the app.
 3. Upload `function.zip` as the code source
 4. Configuration → Function URL → Create function URL
    - Auth type: NONE
-5. Configuration → Permissions → add inline policy:
-   _(no extra permissions needed at this stage — SSM comes later)_
+5. Configuration → Environment variables → add:
+   - `ADMIN_PIN` — a short numeric PIN known only to the instructor
+6. Configuration → Permissions → add inline policy:
+   ```json
+   {
+     "Effect": "Allow",
+     "Action": ["ssm:GetParameter", "ssm:PutParameter"],
+     "Resource": "arn:aws:ssm:*:*:parameter/cafefluent/enabled-modules"
+   }
+   ```
+
+## SSM Parameter
+
+Create the parameter before first use:
+
+AWS Console → Systems Manager → Parameter Store → Create parameter
+- Name: `/cafefluent/enabled-modules`
+- Type: String
+- Value: `allergens,bread,coffee` (or whichever modules should be enabled initially)
 
 ## CORS
 
-`Access-Control-Allow-Origin` is set to `https://cafefluent.dandr.org`.
+Allowed origins are hardcoded in `index.mjs`:
+- `https://cafefluent.dandr.org`
+- `http://localhost:5173`
+- `http://localhost:4173`
 
-## Next steps
+## Usage
 
-- Wire the Function URL into the app via `VITE_MODULES_API_URL`
-- Replace the hard-coded list with SSM Parameter Store (see `progressive-enablement.md`)
-- Add POST endpoint + `ADMIN_PIN` for the admin UI
+- **GET** — returns `{ enabledModules: string[] }` (read by the app on startup)
+- **POST with empty body + `x-admin-pin` header** — PIN check; returns `{ ok: true, enabledModules: string[] }`
+- **POST with `{ enabledModules }` + `x-admin-pin` header** — saves new list to SSM; returns `{ ok: true }`
