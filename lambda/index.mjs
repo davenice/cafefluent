@@ -14,6 +14,8 @@ function corsHeaders(event) {
   return {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://cafefluent.dandr.org',
+    'Access-Control-Allow-Headers': 'content-type, x-admin-pin',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   }
 }
 
@@ -26,6 +28,10 @@ export const handler = async (event) => {
   const headers = corsHeaders(event)
   try {
     const method = event.requestContext.http.method
+
+    if (method === 'OPTIONS') {
+      return { statusCode: 204, headers }
+    }
 
     if (method === 'POST') {
       if (event.headers['x-admin-pin'] !== process.env.ADMIN_PIN) {
