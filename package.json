@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "generate:audio": "node scripts/generate-audio.mjs",
+    "generate:drink-svgs": "node scripts/generate-drink-svgs.mjs",
     "test": "vitest run",
     "test:watch": "vitest"
   },

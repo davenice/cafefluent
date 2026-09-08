@@ -1,0 +1,61 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "cappuccino",
+      "variant": "name",
+      "text": "Cappuccino",
+      "file": "cappuccino_name.mp3"
+    },
+    {
+      "id": "americano",
+      "variant": "name",
+      "text": "Americano",
+      "file": "americano_name.mp3"
+    },
+    {
+      "id": "espresso",
+      "variant": "name",
+      "text": "Espresso",
+      "file": "espresso_name.mp3"
+    },
+    {
+      "id": "macchiato",
+      "variant": "name",
+      "text": "Macchiato",
+      "file": "macchiato_name.mp3"
+    },
+    {
+      "id": "flat-white",
+      "variant": "name",
+      "text": "Flat white",
+      "file": "flat-white_name.mp3"
+    },
+    {
+      "id": "cortado",
+      "variant": "name",
+      "text": "Cortado",
+      "file": "cortado_name.mp3"
+    },
+    {
+      "id": "long-black",
+      "variant": "name",
+      "text": "Long black",
+      "file": "long-black_name.mp3"
+    },
+    {
+      "id": "mocha",
+      "variant": "name",
+      "text": "Mocha",
+      "file": "mocha_name.mp3"
+    },
+    {
+      "id": "latte",
+      "variant": "name",
+      "text": "Latte",
+      "file": "latte_name.mp3"
+    }
+  ]
+}

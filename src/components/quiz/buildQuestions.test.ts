@@ -5,6 +5,7 @@ import {
   buildSentenceQuestions,
   buildProductQuestions,
   buildDiagramQuestions,
+  buildIngredientQuestions,
 } from './questionBuilders'
 import type { AllergenItem, ProductItem, DiagramData } from '../../types'
 
@@ -177,5 +178,37 @@ describe('DiagramLabel buildQuestions', () => {
       expect(q.x).toBe(hotspot.x)
       expect(q.y).toBe(hotspot.y)
     }
+  })
+})
+
+describe('IngredientMatch buildQuestions', () => {
+  const qs = buildIngredientQuestions(items)
+
+  it('creates one question per item', () => {
+    expect(qs).toHaveLength(items.length)
+  })
+
+  it('each question includes its answer in options', () => {
+    for (const q of qs) {
+      expect(q.options).toContainEqual(q.answer)
+    }
+  })
+
+  it('each question has exactly 4 options', () => {
+    for (const q of qs) {
+      expect(q.options).toHaveLength(4)
+    }
+  })
+
+  it('options contain no duplicates', () => {
+    for (const q of qs) {
+      const ids = q.options.map((o) => o.id)
+      expect(new Set(ids).size).toBe(ids.length)
+    }
+  })
+
+  it('asks about every item exactly once', () => {
+    const asked = qs.map((q) => q.answer.id).sort()
+    expect(asked).toEqual(items.map((i) => i.id).sort())
   })
 })

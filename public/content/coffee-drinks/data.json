@@ -1,0 +1,61 @@
+{
+  "id": "coffee-drinks",
+  "title": "Coffee drinks",
+  "variants": ["name"],
+  "items": [
+    {
+      "id": "cappuccino",
+      "name": "Cappuccino",
+      "description": "Espresso, then steamed milk, topped with lots of foam.",
+      "image": "cappuccino.svg"
+    },
+    {
+      "id": "americano",
+      "name": "Americano",
+      "description": "Espresso first, then hot water poured on top.",
+      "image": "americano.svg"
+    },
+    {
+      "id": "espresso",
+      "name": "Espresso",
+      "description": "Just espresso. No milk and no water, served short in a small cup.",
+      "image": "espresso.svg"
+    },
+    {
+      "id": "macchiato",
+      "name": "Macchiato",
+      "description": "Espresso in a small cup with just a bit of foam on top.",
+      "image": "macchiato.svg"
+    },
+    {
+      "id": "flat-white",
+      "name": "Flat white",
+      "description": "Espresso with steamed milk and only a bit of foam. A smaller cup makes it stronger than a latte.",
+      "image": "flat-white.svg"
+    },
+    {
+      "id": "cortado",
+      "name": "Cortado",
+      "description": "Espresso with an equal amount of steamed milk, and nothing else.",
+      "image": "cortado.svg"
+    },
+    {
+      "id": "long-black",
+      "name": "Long black",
+      "description": "Hot water first, then espresso poured on top.",
+      "image": "long-black.svg"
+    },
+    {
+      "id": "mocha",
+      "name": "Mocha",
+      "description": "Espresso with chocolate powder, then steamed milk.",
+      "image": "mocha.svg"
+    },
+    {
+      "id": "latte",
+      "name": "Latte",
+      "description": "Espresso with lots of steamed milk and a bit of foam.",
+      "image": "latte.svg"
+    }
+  ]
+}

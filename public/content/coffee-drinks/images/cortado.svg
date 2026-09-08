@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" role="img">
+  <defs>
+    <pattern id="espresso-0" patternUnits="userSpaceOnUse" x="0" y="116" width="9" height="9">
+      <rect width="9" height="9" fill="#fff"/>
+      <path d="M-2 2 L2 -2 M-1 10 L10 -1 M7 11 L11 7" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/>
+    </pattern>
+    <clipPath id="cup"><path d="M 66 70 L 77.89 148.16 Q 80 162 94 162 L 180 162 Q 194 162 196.11 148.16 L 208 70 Z"/></clipPath>
+  </defs>
+  <path d="M 32 162 L 242 162 L 226 180 Q 220 188 208 188 L 66 188 Q 54 188 48 180 Z" fill="#fff" stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M 196.04 82.88 C 248.54 78.88 240.7 140.4 188.2 134.4" fill="none" stroke="#2b2b2b" stroke-width="17"/>
+  <path d="M 196.04 82.88 C 248.54 78.88 240.7 140.4 188.2 134.4" fill="none" stroke="#fff" stroke-width="8"/>
+  <g clip-path="url(#cup)">
+    <rect x="0" y="0" width="300" height="200" fill="#fff"/>
+    <rect x="0" y="116" width="300" height="46" fill="url(#espresso-0)"/>
+    <rect x="0" y="70" width="300" height="46" fill="#ffffff"/>
+    <line x1="0" y1="116" x2="300" y2="116" stroke="#2b2b2b" stroke-width="2"/>
+  </g>
+  <path d="M 66 70 L 77.89 148.16 Q 80 162 94 162 L 180 162 Q 194 162 196.11 148.16 L 208 70 Z" fill="none" stroke="#2b2b2b" stroke-width="5" stroke-linejoin="round"/>
+</svg>

@@ -9,6 +9,7 @@ import SentenceMatch from './SentenceMatch'
 import RevisionTask from './RevisionTask'
 import ProductMatch from './ProductMatch'
 import DiagramLabel from './DiagramLabel'
+import IngredientMatch from './IngredientMatch'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -61,6 +62,8 @@ export default function QuizShell() {
             items={data.items}
             imageBase={mod.imageBase}
             intro={mod.revisionIntro}
+            imageFit={mod.imageFit}
+            imageLegend={mod.imageLegend}
             onDone={() => {
               if (mod && task) saveProgress(mod.id, task.id, { score: 1, total: 1, completedAt: new Date().toISOString() })
               navigate(`/${moduleId}`)
@@ -71,6 +74,15 @@ export default function QuizShell() {
           <ImageMatch
             items={data.items}
             imageBase={mod.imageBase}
+            imageFit={mod.imageFit}
+            imageLegend={mod.imageLegend}
+            showDescription={!mod.hideDescriptionInQuiz}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'ingredient-match' && (
+          <IngredientMatch
+            items={data.items}
             onComplete={handleComplete}
           />
         )}

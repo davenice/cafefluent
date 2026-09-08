@@ -16,6 +16,13 @@ export default function ModulePage() {
     )
   }
 
+  // Quizzes are numbered 1..n in order, skipping any revision task — which is
+  // marked with a star rather than a number.
+  const quizNumbers = new Map<string, number>()
+  for (const task of mod.tasks) {
+    if (task.type !== 'revision') quizNumbers.set(task.id, quizNumbers.size + 1)
+  }
+
   return (
     <div style={styles.page}>
       <header style={styles.header}>
@@ -25,13 +32,13 @@ export default function ModulePage() {
       </header>
 
       <main style={styles.main}>
-        {mod.tasks.map((task, i) => {
+        {mod.tasks.map((task) => {
           const isRevision = task.type === 'revision'
           const progress = getProgress(mod.id, task.id)
           return (
             <Link key={task.id} to={`/${mod.id}/${task.id}`} style={styles.card}>
               <div style={{ ...styles.taskNumber, ...(isRevision ? styles.taskNumberRevision : {}) }}>
-                {isRevision ? '★' : i}
+                {isRevision ? '★' : quizNumbers.get(task.id)}
               </div>
               <div style={styles.taskBody}>
                 <h2 style={styles.taskTitle}>{task.title}</h2>

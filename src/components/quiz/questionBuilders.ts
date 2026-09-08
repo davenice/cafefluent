@@ -50,3 +50,10 @@ export function buildDiagramQuestions(diagrams: DiagramData[]) {
     })
   )
 }
+
+export function buildIngredientQuestions(items: AllergenItem[]) {
+  return shuffle(items).map((answer) => ({
+    answer,
+    options: shuffle([answer, ...pickRandom(items, 3, answer)]),
+  }))
+}

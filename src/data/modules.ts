@@ -64,6 +64,40 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
+    id: 'coffee-drinks',
+    title: 'Coffee drinks',
+    description: 'Learn the nine classic coffee drinks and what goes in them',
+    revisionIntro: 'Nine drinks, made from the same few ingredients. Each picture is a cut-through of the cup, so whatever sits at the bottom went in first — that is the only thing separating an americano from a long black.',
+    dataUrl: '/content/coffee-drinks/data.json',
+    imageBase: '/content/coffee-drinks/images/',
+    audioBase: '/content/coffee-drinks/audio/',
+    imageFit: 'contain',
+    imageLegend: 'key.svg',
+    hideDescriptionInQuiz: true,
+    tasks: [
+      {
+        id: 'task0',
+        type: 'revision',
+        title: 'Meet the coffee drinks',
+      },
+      {
+        id: 'task1',
+        type: 'image-match',
+        title: 'Match the drink name and picture',
+      },
+      {
+        id: 'task2',
+        type: 'ingredient-match',
+        title: 'Match the ingredients to the drink',
+      },
+      {
+        id: 'task3',
+        type: 'audio-match',
+        title: 'Listen and match the drink name',
+      },
+    ],
+  },
+  {
     id: 'coffee',
     title: 'Coffee equipment',
     description: 'Learn the vocabulary of coffee equipment and preparation',

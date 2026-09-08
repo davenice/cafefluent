@@ -5,12 +5,15 @@ import { buildImageQuestions } from './questionBuilders'
 interface Props {
   items: AllergenItem[]
   imageBase: string
+  imageFit?: 'cover' | 'contain'
+  imageLegend?: string
+  showDescription?: boolean
   onComplete: (score: number, total: number) => void
 }
 
 type AnswerState = 'unanswered' | 'correct' | 'wrong'
 
-export default function ImageMatch({ items, imageBase, onComplete }: Props) {
+export default function ImageMatch({ items, imageBase, imageFit = 'cover', imageLegend, showDescription = true, onComplete }: Props) {
   const [questions] = useState(() => buildImageQuestions(items))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -78,7 +81,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
       {question.mode === 'word' ? (
         <div style={styles.prompt}>
           <p style={styles.promptName}>{question.answer.name}</p>
-          <p style={styles.promptDesc}>{question.answer.description}</p>
+          {showDescription && <p style={styles.promptDesc}>{question.answer.description}</p>}
         </div>
       ) : (
         <div style={styles.imagePrompt}>
@@ -86,7 +89,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
             data-testid="prompt-image"
             src={`${imageBase}${question.answer.image}`}
             alt=""
-            style={{ ...styles.promptImg, objectPosition: question.answer.imagePosition ?? 'center' }}
+            style={{ ...styles.promptImg, objectFit: imageFit, objectPosition: question.answer.imagePosition ?? 'center' }}
           />
         </div>
       )}
@@ -107,7 +110,7 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
               <img
                 src={`${imageBase}${option.image}`}
                 alt={option.name}
-                style={{ ...styles.optionImg, objectPosition: option.imagePosition ?? 'center' }}
+                style={{ ...styles.optionImg, objectFit: imageFit, objectPosition: option.imagePosition ?? 'center' }}
               />
               {overlay(option)}
             </button>
@@ -128,6 +131,14 @@ export default function ImageMatch({ items, imageBase, onComplete }: Props) {
           )
         )}
       </div>
+
+      {imageLegend && (
+        <img
+          src={`${imageBase}${imageLegend}`}
+          alt="Key: hatching is espresso, white is steamed milk, dots are foam, solid is chocolate powder, waves are water"
+          style={styles.legend}
+        />
+      )}
     </div>
   )
 }
@@ -217,6 +228,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: '#fff',
     borderRadius: 'var(--radius-sm)',
     pointerEvents: 'none',
+  },
+  legend: {
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
+    display: 'block',
   },
   optionImg: {
     width: '100%',

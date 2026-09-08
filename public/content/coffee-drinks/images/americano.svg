@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 200" width="300" height="200" role="img">
+  <defs>
+    <pattern id="espresso-0" patternUnits="userSpaceOnUse" x="0" y="103" width="9" height="9">
+      <rect width="9" height="9" fill="#fff"/>
+      <path d="M-2 2 L2 -2 M-1 10 L10 -1 M7 11 L11 7" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/>
+    </pattern>
+    <pattern id="water-1" patternUnits="userSpaceOnUse" x="0" y="44" width="18" height="7">
+      <rect width="18" height="7" fill="#fff"/>
+      <path d="M0 3 q4.5 -2.5 9 0 t9 0" fill="none" stroke="#2b2b2b" stroke-width="1.6" stroke-linecap="round"/>
+    </pattern>
+    <clipPath id="cup"><path d="M 48 44 L 63 148.14 Q 65 162 79 162 L 195 162 Q 209 162 211 148.14 L 226 44 Z"/></clipPath>
+  </defs>
+  <path d="M 14 162 L 260 162 L 244 180 Q 238 188 226 188 L 48 188 Q 36 188 30 180 Z" fill="#fff" stroke="#2b2b2b" stroke-width="5.5" stroke-linejoin="round"/>
+  <path d="M 213.62 60.52 C 276.12 56.52 266.6 132.6 204.1 126.6" fill="none" stroke="#2b2b2b" stroke-width="18.7"/>
+  <path d="M 213.62 60.52 C 276.12 56.52 266.6 132.6 204.1 126.6" fill="none" stroke="#fff" stroke-width="8.8"/>
+  <g clip-path="url(#cup)">
+    <rect x="0" y="0" width="300" height="200" fill="#fff"/>
+    <rect x="0" y="103" width="300" height="59" fill="url(#espresso-0)"/>
+    <rect x="0" y="44" width="300" height="59" fill="url(#water-1)"/>
+    <line x1="0" y1="103" x2="300" y2="103" stroke="#2b2b2b" stroke-width="2"/>
+  </g>
+  <path d="M 48 44 L 63 148.14 Q 65 162 79 162 L 195 162 Q 209 162 211 148.14 L 226 44 Z" fill="none" stroke="#2b2b2b" stroke-width="5.5" stroke-linejoin="round"/>
+</svg>
