@@ -4,6 +4,7 @@ import ModulePage from './components/ModulePage'
 import QuizShell from './components/quiz/QuizShell'
 import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
+import UpdatePrompt from './components/UpdatePrompt'
 
 declare const __BUILD_DATE__: string
 declare const __BUILD_COMMIT__: string
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/admin" element={<AdminPage />} />
       </Routes>
       <BuildStamp />
+      <UpdatePrompt />
     </HashRouter>
   )
 }

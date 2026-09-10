@@ -24,7 +24,7 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       includeAssets: ['icons/*.png', 'content/**/*'],
       manifest: {
         name: 'CafeFluent',
@@ -39,6 +39,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Control the page from the very first load so the module-config
+        // runtime cache is populated before the user ever goes offline.
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,json}'],
         runtimeCaching: [
           {

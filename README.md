@@ -29,13 +29,18 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
 
 ### Deploying changes
 
-After any code or content change, update the PWA version so returning users get the new content:
+No manual version bump is needed. Every build regenerates `sw.js` with fresh precache
+revision hashes, which is what tells the browser a new version exists.
 
-```json
-// public/manifest.json  →  bump "version" (e.g. "1.0.0" → "1.1.0")
-```
+Returning users are handled by `UpdatePrompt.tsx`: when the service worker finds a new
+build it shows a "A new version is ready" bar with Reload and Later buttons. Reload activates the
+new worker and reloads; Later hides the bar until the next launch. The bar is never shown
+mid-task, since quiz progress is only saved on completion. It checks for updates on load, hourly, and whenever the app returns to
+the foreground — the last of these is what catches a PWA resumed from the home screen,
+since browsers only check about once a day on their own.
 
-The service worker caches aggressively; without a version bump, users may see stale content until they manually clear the cache.
+The build stamp in the bottom-right corner shows the commit a device is actually running,
+which is the quickest way to confirm an update landed.
 
 ### Adding content
 
@@ -165,6 +170,7 @@ src/
   types/index.ts        ← shared TypeScript types
   components/
     HomePage.tsx        ← module list
+    UpdatePrompt.tsx    ← "new version ready" reload bar (service worker updates)
     ModulePage.tsx      ← task list for a module
     quiz/
       QuizShell.tsx         ← loads data, manages quiz lifecycle
