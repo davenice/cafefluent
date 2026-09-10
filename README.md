@@ -34,7 +34,9 @@ revision hashes, which is what tells the browser a new version exists.
 
 Returning users are handled by `UpdatePrompt.tsx`: when the service worker finds a new
 build it shows a "A new version is ready" bar with Reload and Later buttons. Reload activates the
-new worker and reloads; Later hides the bar until the next launch. The bar is never shown
+new worker and reloads; Later hides the bar for this session. Fully closing the app also
+applies the update, since the browser activates a waiting worker once no page is using the
+old one, so the prompt only matters for an app that stays open. The bar is never shown
 mid-task, since quiz progress is only saved on completion. It checks for updates on load, hourly, and whenever the app returns to
 the foreground — the last of these is what catches a PWA resumed from the home screen,
 since browsers only check about once a day on their own.

@@ -25,8 +25,9 @@ export default function UpdatePrompt() {
     },
   })
 
-  // "Later" hides the bar for this session; the waiting worker is still there,
-  // so the prompt comes back on the next launch.
+  // "Later" hides the bar for this session. The new worker keeps waiting while
+  // this page is open; once the app is fully closed the browser activates it, so
+  // the next launch is simply on the new version.
   if (!needRefresh || dismissed || inTask) return null
 
   // The plugin only reloads after activation when the page was already controlled
