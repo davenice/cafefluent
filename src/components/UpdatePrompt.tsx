@@ -29,6 +29,16 @@ export default function UpdatePrompt() {
   // so the prompt comes back on the next launch.
   if (!needRefresh || dismissed || inTask) return null
 
+  // The plugin only reloads after activation when the page was already controlled
+  // by a worker. A hard-refreshed page is not, so reload on controllerchange ourselves,
+  // with a fallback in case that event never arrives.
+  function reloadWithNewVersion() {
+    const reload = () => window.location.reload()
+    navigator.serviceWorker?.addEventListener('controllerchange', reload, { once: true })
+    setTimeout(reload, 3000)
+    updateServiceWorker(true)
+  }
+
   return (
     <div style={styles.bar}>
       <span style={styles.label}>A new version is ready</span>
@@ -36,7 +46,7 @@ export default function UpdatePrompt() {
         <button style={styles.laterButton} onClick={() => setDismissed(true)}>
           Later
         </button>
-        <button style={styles.button} onClick={() => updateServiceWorker(true)}>
+        <button style={styles.button} onClick={reloadWithNewVersion}>
           Reload
         </button>
       </div>
