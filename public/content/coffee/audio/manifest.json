@@ -1,0 +1,103 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "hopper",
+      "variant": "name",
+      "text": "hopper",
+      "file": "hopper_name.mp3"
+    },
+    {
+      "id": "coffee-beans",
+      "variant": "name",
+      "text": "coffee beans",
+      "file": "coffee-beans_name.mp3"
+    },
+    {
+      "id": "grinder-body",
+      "variant": "name",
+      "text": "grinder",
+      "file": "grinder-body_name.mp3"
+    },
+    {
+      "id": "scales",
+      "variant": "name",
+      "text": "scales",
+      "file": "scales_name.mp3"
+    },
+    {
+      "id": "tare",
+      "variant": "name",
+      "text": "tare button",
+      "file": "tare_name.mp3"
+    },
+    {
+      "id": "coarse",
+      "variant": "name",
+      "text": "coarse coffee grounds",
+      "file": "coarse_name.mp3"
+    },
+    {
+      "id": "fine",
+      "variant": "name",
+      "text": "fine coffee grounds",
+      "file": "fine_name.mp3"
+    },
+    {
+      "id": "group-head",
+      "variant": "name",
+      "text": "group head",
+      "file": "group-head_name.mp3"
+    },
+    {
+      "id": "steam-wand",
+      "variant": "name",
+      "text": "steam wand",
+      "file": "steam-wand_name.mp3"
+    },
+    {
+      "id": "handle",
+      "variant": "name",
+      "text": "handle",
+      "file": "handle_name.mp3"
+    },
+    {
+      "id": "spout",
+      "variant": "name",
+      "text": "spout",
+      "file": "spout_name.mp3"
+    },
+    {
+      "id": "drip-tray",
+      "variant": "name",
+      "text": "drip tray",
+      "file": "drip-tray_name.mp3"
+    },
+    {
+      "id": "tamper",
+      "variant": "name",
+      "text": "tamper",
+      "file": "tamper_name.mp3"
+    },
+    {
+      "id": "milk-jug",
+      "variant": "name",
+      "text": "milk jug",
+      "file": "milk-jug_name.mp3"
+    },
+    {
+      "id": "portafilter",
+      "variant": "name",
+      "text": "portafilter",
+      "file": "portafilter_name.mp3"
+    },
+    {
+      "id": "basket",
+      "variant": "name",
+      "text": "basket",
+      "file": "basket_name.mp3"
+    }
+  ]
+}

@@ -37,7 +37,7 @@ export interface DiagramData {
   hotspots: Hotspot[]
 }
 
-export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'ingredient-match'
+export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'diagram-audio' | 'ingredient-match'
 
 export interface TaskDef {
   id: string

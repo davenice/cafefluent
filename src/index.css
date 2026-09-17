@@ -56,3 +56,10 @@ button {
   32%, 58%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   70%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
+
+/* Diagram tap targets fade together so the picture is regularly seen clearly.
+   Never fully hidden — the ring stays findable at its faintest. */
+@keyframes marker-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.15; }
+}

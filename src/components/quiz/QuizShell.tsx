@@ -9,6 +9,7 @@ import SentenceMatch from './SentenceMatch'
 import RevisionTask from './RevisionTask'
 import ProductMatch from './ProductMatch'
 import DiagramLabel from './DiagramLabel'
+import DiagramAudio from './DiagramAudio'
 import IngredientMatch from './IngredientMatch'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
@@ -113,6 +114,14 @@ export default function QuizShell() {
           <DiagramLabel
             diagrams={data.diagrams ?? []}
             imageBase={mod.imageBase}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'diagram-audio' && (
+          <DiagramAudio
+            diagrams={data.diagrams ?? []}
+            imageBase={mod.imageBase}
+            audioBase={mod.audioBase ?? ''}
             onComplete={handleComplete}
           />
         )}

@@ -5,6 +5,7 @@ import {
   buildSentenceQuestions,
   buildProductQuestions,
   buildDiagramQuestions,
+  buildDiagramAudioQuestions,
   buildIngredientQuestions,
 } from './questionBuilders'
 import type { AllergenItem, ProductItem, DiagramData } from '../../types'
@@ -210,5 +211,50 @@ describe('IngredientMatch buildQuestions', () => {
   it('asks about every item exactly once', () => {
     const asked = qs.map((q) => q.answer.id).sort()
     expect(asked).toEqual(items.map((i) => i.id).sort())
+  })
+})
+
+describe('DiagramAudio buildQuestions', () => {
+  const diagrams: DiagramData[] = [
+    {
+      id: 'd1',
+      title: 'Coffee Machine',
+      image: 'machine.jpg',
+      hotspots: [
+        { id: 'h1', label: 'Portafilter', x: 30, y: 60 },
+        { id: 'h2', label: 'Steam wand', x: 70, y: 50 },
+      ],
+    },
+    {
+      id: 'd2',
+      title: 'Grinder',
+      image: 'grinder.jpg',
+      hotspots: [
+        { id: 'h3', label: 'Hopper', x: 50, y: 40 },
+        { id: 'h4', label: 'Scales', x: 50, y: 80 },
+        { id: 'h5', label: 'Tare button', x: 55, y: 85 },
+      ],
+    },
+  ]
+  const qs = buildDiagramAudioQuestions(diagrams)
+
+  it('creates one question per hotspot', () => {
+    expect(qs).toHaveLength(5)
+  })
+
+  it('asks about every hotspot exactly once', () => {
+    const asked = qs.map((q) => q.answer.id).sort()
+    expect(asked).toEqual(['h1', 'h2', 'h3', 'h4', 'h5'])
+  })
+
+  it('answer belongs to the question diagram', () => {
+    for (const q of qs) {
+      expect(q.diagram.hotspots).toContain(q.answer)
+    }
+  })
+
+  it('keeps each diagram\'s questions together', () => {
+    const order = qs.map((q) => q.diagram.id)
+    expect(order).toEqual(['d1', 'd1', 'd2', 'd2', 'd2'])
   })
 })

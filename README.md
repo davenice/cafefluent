@@ -117,6 +117,8 @@ public/content/<module>/audio/manifest.json
 
 `manifest.json` records every generated clip — its item id, variant name, the exact text that was synthesised, and the filename. The app reads this to know what audio is available.
 
+Modules with diagrams (e.g. Barista equipment) also get one `<hotspotId>_name.mp3` per hotspot, spoken from the hotspot's `label`. Add an `audioName` to a hotspot to override the spoken text.
+
 ### Voice settings
 
 Configured at the top of [scripts/generate-audio.mjs](scripts/generate-audio.mjs):
@@ -182,6 +184,7 @@ src/
       SentenceMatch.tsx     ← hear sentence → choose correct image
       ProductMatch.tsx      ← match product image → product name
       DiagramLabel.tsx      ← label hotspots on a diagram
+      DiagramAudio.tsx      ← hear a part name → tap it on the diagram
       questionBuilders.ts   ← pure question-building logic (shared, tested)
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle

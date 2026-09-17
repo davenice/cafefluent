@@ -17,6 +17,11 @@
  * To add a spoken-name override for an item (e.g. to handle slashes or
  * abbreviations), add an "audioName" field to the item in data.json.
  *
+ * Diagram hotspots (data.json "diagrams[].hotspots") also get a clip each:
+ *   public/content/<module>/audio/<hotspotId>_name.mp3
+ * spoken from the hotspot's "label" (or "audioName" if present). Only the
+ * "name" variant is generated for hotspots.
+ *
  * To add new phrase variants for sentence tasks, add entries to VARIANTS below:
  *   allergic: (name) => `I'm allergic to ${name}`,
  */
@@ -54,10 +59,11 @@ async function generateModule(moduleId, force) {
   }
 
   const moduleData = JSON.parse(readFileSync(dataPath, 'utf-8'));
-  const { items } = moduleData;
+  const { items = [], diagrams = [] } = moduleData;
   const activeVariants = moduleData.variants
     ? Object.fromEntries(Object.entries(VARIANTS).filter(([k]) => moduleData.variants.includes(k)))
     : VARIANTS;
+  const nameOnly = { name: VARIANTS.name };
   const audioDir = join(ROOT, 'public/content', moduleId, 'audio');
   mkdirSync(audioDir, { recursive: true });
 
@@ -73,10 +79,17 @@ async function generateModule(moduleId, force) {
   let generated = 0;
   let skipped = 0;
 
-  for (const item of items) {
-    const spokenName = item.audioName ?? item.name;
+  // Every clip to produce: module items get all active variants, diagram
+  // hotspots get just their label.
+  const jobs = [
+    ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, variants: activeVariants })),
+    ...diagrams.flatMap(d => d.hotspots.map(h => ({ id: h.id, spokenName: h.audioName ?? h.label, variants: nameOnly }))),
+  ];
 
-    for (const [variant, getText] of Object.entries(activeVariants)) {
+  for (const item of jobs) {
+    const { spokenName } = item;
+
+    for (const [variant, getText] of Object.entries(item.variants)) {
       const filename = `${item.id}_${variant}.mp3`;
       const outputPath = join(audioDir, filename);
 

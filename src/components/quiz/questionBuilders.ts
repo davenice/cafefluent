@@ -57,3 +57,17 @@ export function buildIngredientQuestions(items: AllergenItem[]) {
     options: shuffle([answer, ...pickRandom(items, 3, answer)]),
   }))
 }
+
+/**
+ * One question per hotspot, grouped by diagram so the picture doesn't change
+ * between consecutive questions. The learner hears the hotspot's label and
+ * must tap the matching marker on the diagram.
+ */
+export function buildDiagramAudioQuestions(diagrams: DiagramData[]) {
+  return diagrams.flatMap((diagram) =>
+    shuffle([...diagram.hotspots]).map((hotspot) => ({
+      diagram,
+      answer: hotspot,
+    }))
+  )
+}

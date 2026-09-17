@@ -99,15 +99,21 @@ export const MODULES: ModuleDef[] = [
   },
   {
     id: 'coffee',
-    title: 'Coffee equipment',
-    description: 'Learn the vocabulary of coffee equipment and preparation',
+    title: 'Barista equipment',
+    description: 'Learn the vocabulary of barista equipment and preparation',
     dataUrl: '/content/coffee/data.json',
     imageBase: '/content/coffee/images/',
+    audioBase: '/content/coffee/audio/',
     tasks: [
       {
         id: 'task1',
         type: 'diagram-label',
-        title: 'Label the coffee equipment',
+        title: 'Label the barista equipment',
+      },
+      {
+        id: 'task2',
+        type: 'diagram-audio',
+        title: 'Listen and find the part',
       },
     ],
   },
