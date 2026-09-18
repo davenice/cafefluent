@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { MODULES } from '../data/modules'
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
@@ -95,18 +95,22 @@ export default function AdminPage() {
       </header>
       <main style={styles.list}>
         {MODULES.map(mod => (
-          <label key={mod.id} style={styles.row}>
-            <div style={styles.rowBody}>
-              <div style={styles.modTitle}>{mod.title}</div>
-              <div style={styles.modDesc}>{mod.description}</div>
-            </div>
-            <input
-              type="checkbox"
-              checked={enabled.includes(mod.id)}
-              onChange={() => toggleModule(mod.id)}
-              style={styles.checkbox}
-            />
-          </label>
+          <div key={mod.id} style={styles.row}>
+            <label style={styles.rowToggle}>
+              <div style={styles.rowBody}>
+                <div style={styles.modTitle}>{mod.title}</div>
+                <div style={styles.modDesc}>{mod.description}</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={enabled.includes(mod.id)}
+                onChange={() => toggleModule(mod.id)}
+                style={styles.checkbox}
+              />
+            </label>
+            {/* Opens the module directly, so it can be checked before it is switched on for learners */}
+            <Link to={`/${mod.id}`} style={styles.previewLink}>Preview module →</Link>
+          </div>
         ))}
       </main>
       {saveError && <p style={styles.error}>Save failed — try again</p>}
@@ -175,13 +179,25 @@ const styles: Record<string, React.CSSProperties> = {
   },
   row: {
     display: 'flex',
-    alignItems: 'center',
+    flexDirection: 'column',
     background: 'var(--color-surface)',
     borderRadius: 'var(--radius)',
     padding: '16px',
     boxShadow: 'var(--shadow)',
+    gap: 10,
+  },
+  rowToggle: {
+    display: 'flex',
+    alignItems: 'center',
     gap: 12,
     cursor: 'pointer',
+  },
+  previewLink: {
+    alignSelf: 'flex-start',
+    fontSize: 13,
+    fontWeight: 600,
+    color: 'var(--color-primary)',
+    textDecoration: 'none',
   },
   rowBody: {
     flex: 1,
