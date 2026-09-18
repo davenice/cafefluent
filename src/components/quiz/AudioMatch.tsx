@@ -6,6 +6,10 @@ interface Props {
   items: AllergenItem[]
   audioBase: string
   variants?: string[]
+  /** Answer by tapping a written name or a picture. Pictures need `imageBase`. */
+  answerWith?: 'words' | 'pictures'
+  imageBase?: string
+  imageFit?: 'cover' | 'contain'
   onComplete: (score: number, total: number) => void
 }
 
@@ -15,7 +19,16 @@ function audioFile(base: string, item: AllergenItem, variant: string): string {
   return `${base}${item.id}_${variant}.mp3`
 }
 
-export default function AudioMatch({ items, audioBase, variants = ['name'], onComplete }: Props) {
+export default function AudioMatch({
+  items,
+  audioBase,
+  variants = ['name'],
+  answerWith = 'words',
+  imageBase = '',
+  imageFit = 'cover',
+  onComplete,
+}: Props) {
+  const usePictures = answerWith === 'pictures'
   const [questions] = useState(() => buildAudioQuestions(items, variants))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
@@ -101,6 +114,28 @@ export default function AudioMatch({ items, audioBase, variants = ['name'], onCo
     return { ...styles.optionBtn, borderColor, background, color, opacity }
   }
 
+  function pictureStyle(option: AllergenItem): React.CSSProperties {
+    let borderColor = 'var(--color-border)'
+    let opacity = 1
+    if (answerState !== 'unanswered') {
+      if (option.id === question.answer.id) borderColor = 'var(--color-correct)'
+      else if (option.id === selected) borderColor = 'var(--color-wrong)'
+      else opacity = 0.45
+    }
+    return { ...styles.pictureBtn, borderColor, opacity }
+  }
+
+  function overlay(option: AllergenItem): React.ReactNode {
+    if (answerState === 'unanswered') return null
+    if (option.id === question.answer.id) {
+      return <span style={{ ...styles.overlay, background: 'rgba(45,106,79,0.5)' }}>✓</span>
+    }
+    if (option.id === selected) {
+      return <span style={{ ...styles.overlay, background: 'rgba(193,18,31,0.75)' }}>✗</span>
+    }
+    return null
+  }
+
   return (
     <div style={styles.container}>
       <div style={styles.prompt}>
@@ -118,18 +153,38 @@ export default function AudioMatch({ items, audioBase, variants = ['name'], onCo
         <p style={styles.replayHint}>{isPlaying ? 'Playing…' : 'Tap to replay'}</p>
       </div>
 
-      <div style={styles.options}>
-        {question.options.map((option) => (
-          <button
-            key={option.id}
-            style={optionStyle(option)}
-            onClick={() => handleSelect(option.id)}
-            disabled={answerState !== 'unanswered'}
-          >
-            {option.name}
-          </button>
-        ))}
-      </div>
+      {usePictures ? (
+        <div style={styles.grid}>
+          {question.options.map((option) => (
+            <button
+              key={option.id}
+              style={pictureStyle(option)}
+              onClick={() => handleSelect(option.id)}
+              disabled={answerState !== 'unanswered'}
+            >
+              <img
+                src={`${imageBase}${option.image}`}
+                alt={option.name}
+                style={{ ...styles.pictureImg, objectFit: imageFit, objectPosition: option.imagePosition ?? 'center' }}
+              />
+              {overlay(option)}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div style={styles.options}>
+          {question.options.map((option) => (
+            <button
+              key={option.id}
+              style={optionStyle(option)}
+              onClick={() => handleSelect(option.id)}
+              disabled={answerState !== 'unanswered'}
+            >
+              {option.name}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -229,5 +284,40 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'left',
     boxShadow: 'var(--shadow)',
     transition: 'border-color 0.2s, background 0.2s, opacity 0.2s, color 0.2s',
+  },
+  grid: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    gap: 12,
+  },
+  pictureBtn: {
+    position: 'relative',
+    background: 'var(--color-surface)',
+    border: '3px solid',
+    borderColor: 'var(--color-border)',
+    borderRadius: 'var(--radius)',
+    padding: 8,
+    boxShadow: 'var(--shadow)',
+    transition: 'border-color 0.2s, opacity 0.2s',
+    aspectRatio: '1',
+    overflow: 'hidden',
+  },
+  pictureImg: {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    borderRadius: 'var(--radius-sm)',
+    display: 'block',
+  },
+  overlay: {
+    position: 'absolute',
+    inset: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: 48,
+    color: '#fff',
+    borderRadius: 'var(--radius-sm)',
+    pointerEvents: 'none',
   },
 }

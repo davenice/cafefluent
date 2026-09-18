@@ -93,6 +93,9 @@ export default function QuizShell() {
             items={data.items}
             audioBase={mod.audioBase ?? '/content/allergens/audio/'}
             variants={task.audioVariants}
+            answerWith={task.answerWith}
+            imageBase={mod.imageBase}
+            imageFit={mod.imageFit}
             onComplete={handleComplete}
           />
         )}

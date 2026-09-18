@@ -54,7 +54,8 @@ export const MODULES: ModuleDef[] = [
       {
         id: 'task2',
         type: 'audio-match',
-        title: 'Listen and match the bread name',
+        title: 'Listen and match the picture',
+        answerWith: 'pictures',
       },
       {
         id: 'task3',
@@ -120,6 +121,7 @@ export const MODULES: ModuleDef[] = [
         id: 'task2',
         type: 'audio-match',
         title: 'Listen and match the picture',
+        answerWith: 'pictures',
       },
     ],
   },

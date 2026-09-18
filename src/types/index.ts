@@ -57,6 +57,12 @@ export interface TaskDef {
   type: TaskType
   title: string
   audioVariants?: string[]
+  /**
+   * For 'audio-match' tasks: whether the learner answers by tapping a written name
+   * or a picture. Pictures suit modules where the items are things you'd point at
+   * on a counter. Defaults to 'words'.
+   */
+  answerWith?: 'words' | 'pictures'
   /** For 'sequence-order' tasks: which of the module's sequences to use. Defaults to the first. */
   sequenceId?: string
 }
