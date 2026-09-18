@@ -52,6 +52,8 @@ which is the quickest way to confirm an update landed.
 - Edit allergen descriptions: edit `public/content/allergens/data.json` directly.
 - Swap an image: replace the file in `public/content/allergens/images/` — filename must match the `image` field in `data.json`.
 
+**Language level.** The app is aimed at ESOL learners, so all learner-facing text (item names, descriptions, module intros, sentence audio) should be written at **CEFR B1 level**: short sentences with one idea each, everyday vocabulary, and no rare descriptive words (e.g. *crimped*, *domed*, *tangy*, *dusted*). Useful cafe vocabulary such as *flaky*, *savoury*, *sponge* or *puff pastry* is fine, since learning those words is the point. If a word is unusual and the picture does the work, leave it out.
+
 Progress is stored per-task in `localStorage` — no account or server needed.
 
 ---
