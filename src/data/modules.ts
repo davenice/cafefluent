@@ -143,4 +143,20 @@ export const MODULES: ModuleDef[] = [
       },
     ],
   },
+  {
+    // Try-out module for new quiz styles. Enable it from the admin page to see it.
+    id: 'preview',
+    title: 'Preview',
+    description: 'New quiz styles we are trying out',
+    dataUrl: '/content/preview/data.json',
+    imageBase: '/content/preview/images/',
+    tasks: [
+      {
+        id: 'task1',
+        type: 'sequence-order',
+        title: 'Making a basic coffee drink',
+        sequenceId: 'basic-coffee',
+      },
+    ],
+  },
 ]

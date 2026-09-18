@@ -21,6 +21,7 @@ export interface ModuleData {
   items: AllergenItem[]
   products?: ProductItem[]
   diagrams?: DiagramData[]
+  sequences?: SequenceData[]
 }
 
 export interface Hotspot {
@@ -37,13 +38,27 @@ export interface DiagramData {
   hotspots: Hotspot[]
 }
 
-export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'diagram-audio' | 'ingredient-match'
+export interface SequenceStep {
+  id: string
+  text: string
+}
+
+/** An ordered procedure the learner has to reassemble. `steps` is the correct order. */
+export interface SequenceData {
+  id: string
+  title: string
+  steps: SequenceStep[]
+}
+
+export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'diagram-audio' | 'ingredient-match' | 'sequence-order'
 
 export interface TaskDef {
   id: string
   type: TaskType
   title: string
   audioVariants?: string[]
+  /** For 'sequence-order' tasks: which of the module's sequences to use. Defaults to the first. */
+  sequenceId?: string
 }
 
 export interface ModuleDef {

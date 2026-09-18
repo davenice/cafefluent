@@ -11,6 +11,7 @@ import ProductMatch from './ProductMatch'
 import DiagramLabel from './DiagramLabel'
 import DiagramAudio from './DiagramAudio'
 import IngredientMatch from './IngredientMatch'
+import SequenceOrder from './SequenceOrder'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
 
@@ -125,6 +126,12 @@ export default function QuizShell() {
             onComplete={handleComplete}
           />
         )}
+        {phase === 'quiz' && data && task.type === 'sequence-order' && (() => {
+          const sequence = data.sequences?.find((s) => s.id === task.sequenceId) ?? data.sequences?.[0]
+          return sequence
+            ? <SequenceOrder key={sequence.id} sequence={sequence} onComplete={handleComplete} />
+            : <ErrorScreen onBack={() => navigate(`/${moduleId}`)} message="This quiz has no steps yet." />
+        })()}
         {phase === 'score' && finalScore && (
           <ScoreScreen
             score={finalScore.score}
