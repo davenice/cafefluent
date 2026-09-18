@@ -170,6 +170,12 @@ export const MODULES: ModuleDef[] = [
         type: 'diagram-audio',
         title: 'Listen and find the part',
       },
+      {
+        id: 'task3',
+        type: 'sequence-order',
+        title: 'Making a basic coffee drink',
+        sequenceId: 'basic-coffee',
+      },
     ],
   },
   {
@@ -179,13 +185,6 @@ export const MODULES: ModuleDef[] = [
     description: 'New quiz styles we are trying out',
     dataUrl: '/content/preview/data.json',
     imageBase: '/content/preview/images/',
-    tasks: [
-      {
-        id: 'task1',
-        type: 'sequence-order',
-        title: 'Making a basic coffee drink',
-        sequenceId: 'basic-coffee',
-      },
-    ],
+    tasks: [],
   },
 ]

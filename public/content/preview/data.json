@@ -2,56 +2,5 @@
   "id": "preview",
   "title": "Preview",
   "items": [],
-  "sequences": [
-    {
-      "id": "basic-coffee",
-      "title": "Making a basic coffee drink",
-      "steps": [
-        {
-          "id": "beans-in-grinder",
-          "text": "Put the coffee beans in the grinder."
-        },
-        {
-          "id": "grind-beans",
-          "text": "Grind the beans."
-        },
-        {
-          "id": "weigh-grounds",
-          "text": "Weigh the coffee grounds."
-        },
-        {
-          "id": "grounds-in-basket",
-          "text": "Put the grounds in the basket."
-        },
-        {
-          "id": "tamp-grounds",
-          "text": "Tamp the grounds."
-        },
-        {
-          "id": "insert-portafilter",
-          "text": "Put the portafilter into the coffee machine."
-        },
-        {
-          "id": "start-shot",
-          "text": "Press the button to start the shot."
-        },
-        {
-          "id": "milk-in-jug",
-          "text": "Pour the milk into the milk jug."
-        },
-        {
-          "id": "steam-milk",
-          "text": "Steam the milk."
-        },
-        {
-          "id": "pour-and-mix",
-          "text": "Pour the milk into the espresso shot and mix."
-        },
-        {
-          "id": "serve",
-          "text": "Serve your coffee!"
-        }
-      ]
-    }
-  ]
+  "sequences": []
 }
