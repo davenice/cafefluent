@@ -17,6 +17,12 @@
  * To add a spoken-name override for an item (e.g. to handle slashes or
  * abbreviations), add an "audioName" field to the item in data.json.
  *
+ * For words the voice mispronounces (foreign names, say), add an "audioSsml"
+ * field instead: an SSML fragment that replaces the name wherever it is spoken,
+ * e.g. <phoneme alphabet="ipa" ph="pæn əʊ ˈʃɒkəlɑː">pain au chocolat</phoneme>.
+ * The request is then sent as SSML. "audioName" is still used as the plain-text
+ * form recorded in the manifest.
+ *
  * Diagram hotspots (data.json "diagrams[].hotspots") also get a clip each:
  *   public/content/<module>/audio/<hotspotId>_name.mp3
  * spoken from the hotspot's "label" (or "audioName" if present). Only the
@@ -82,12 +88,12 @@ async function generateModule(moduleId, force) {
   // Every clip to produce: module items get all active variants, diagram
   // hotspots get just their label.
   const jobs = [
-    ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, variants: activeVariants })),
-    ...diagrams.flatMap(d => d.hotspots.map(h => ({ id: h.id, spokenName: h.audioName ?? h.label, variants: nameOnly }))),
+    ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, ssmlName: item.audioSsml, variants: activeVariants })),
+    ...diagrams.flatMap(d => d.hotspots.map(h => ({ id: h.id, spokenName: h.audioName ?? h.label, ssmlName: h.audioSsml, variants: nameOnly }))),
   ];
 
   for (const item of jobs) {
-    const { spokenName } = item;
+    const { spokenName, ssmlName } = item;
 
     for (const [variant, getText] of Object.entries(item.variants)) {
       const filename = `${item.id}_${variant}.mp3`;
@@ -99,10 +105,12 @@ async function generateModule(moduleId, force) {
       }
 
       const text = getText(spokenName);
-      console.log(`  ${filename} — "${text}"`);
+      const ssml = ssmlName ? `<speak>${getText(ssmlName)}</speak>` : undefined;
+      console.log(`  ${filename} — "${text}"${ssml ? ` (ssml: ${ssml})` : ''}`);
 
       const response = await client.send(new SynthesizeSpeechCommand({
-        Text: text,
+        Text: ssml ?? text,
+        TextType: ssml ? 'ssml' : 'text',
         VoiceId: VOICE_ID,
         Engine: ENGINE,
         OutputFormat: 'mp3',
@@ -116,7 +124,7 @@ async function generateModule(moduleId, force) {
       writeFileSync(outputPath, Buffer.concat(chunks));
       generated++;
 
-      const entry = { id: item.id, variant, text, file: filename };
+      const entry = { id: item.id, variant, text, ...(ssml ? { ssml } : {}), file: filename };
       const idx = manifestIndex.get(`${item.id}:${variant}`);
       if (idx !== undefined) {
         manifest.items[idx] = entry;

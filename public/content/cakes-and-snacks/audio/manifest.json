@@ -1,0 +1,128 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "rocky-road",
+      "variant": "name",
+      "text": "Rocky road",
+      "file": "rocky-road_name.mp3"
+    },
+    {
+      "id": "millionaires-shortbread",
+      "variant": "name",
+      "text": "Millionaire's shortbread",
+      "file": "millionaires-shortbread_name.mp3"
+    },
+    {
+      "id": "scone",
+      "variant": "name",
+      "text": "Scone with jam and cream",
+      "file": "scone_name.mp3"
+    },
+    {
+      "id": "chocolate-muffin",
+      "variant": "name",
+      "text": "Chocolate muffin",
+      "file": "chocolate-muffin_name.mp3"
+    },
+    {
+      "id": "flapjack",
+      "variant": "name",
+      "text": "Flapjack",
+      "file": "flapjack_name.mp3"
+    },
+    {
+      "id": "chocolate-brownie",
+      "variant": "name",
+      "text": "Chocolate brownie",
+      "file": "chocolate-brownie_name.mp3"
+    },
+    {
+      "id": "chocolate-chip-cookie",
+      "variant": "name",
+      "text": "Chocolate chip cookie",
+      "file": "chocolate-chip-cookie_name.mp3"
+    },
+    {
+      "id": "cupcake",
+      "variant": "name",
+      "text": "Cupcake",
+      "file": "cupcake_name.mp3"
+    },
+    {
+      "id": "victoria-sandwich",
+      "variant": "name",
+      "text": "Victoria sandwich",
+      "file": "victoria-sandwich_name.mp3"
+    },
+    {
+      "id": "lemon-drizzle-cake",
+      "variant": "name",
+      "text": "Lemon drizzle cake",
+      "file": "lemon-drizzle-cake_name.mp3"
+    },
+    {
+      "id": "carrot-cake",
+      "variant": "name",
+      "text": "Carrot cake",
+      "file": "carrot-cake_name.mp3"
+    },
+    {
+      "id": "chocolate-fudge-cake",
+      "variant": "name",
+      "text": "Chocolate fudge cake",
+      "file": "chocolate-fudge-cake_name.mp3"
+    },
+    {
+      "id": "croissant",
+      "variant": "name",
+      "text": "Croissant",
+      "file": "croissant_name.mp3"
+    },
+    {
+      "id": "almond-croissant",
+      "variant": "name",
+      "text": "Almond croissant",
+      "file": "almond-croissant_name.mp3"
+    },
+    {
+      "id": "cinnamon-bun",
+      "variant": "name",
+      "text": "Cinnamon bun, or cinnamon roll",
+      "file": "cinnamon-bun_name.mp3"
+    },
+    {
+      "id": "pain-au-chocolat",
+      "variant": "name",
+      "text": "Pain au chocolat",
+      "ssml": "<speak><phoneme alphabet=\"ipa\" ph=\"pæn əʊ ˈʃɒkəlɑː\">pain au chocolat</phoneme></speak>",
+      "file": "pain-au-chocolat_name.mp3"
+    },
+    {
+      "id": "cornish-pasty",
+      "variant": "name",
+      "text": "Cornish pasty",
+      "file": "cornish-pasty_name.mp3"
+    },
+    {
+      "id": "cheese-and-onion-slice",
+      "variant": "name",
+      "text": "Cheese and onion slice",
+      "file": "cheese-and-onion-slice_name.mp3"
+    },
+    {
+      "id": "toasted-teacake",
+      "variant": "name",
+      "text": "Toasted teacake",
+      "file": "toasted-teacake_name.mp3"
+    },
+    {
+      "id": "sausage-roll",
+      "variant": "name",
+      "text": "Sausage roll",
+      "file": "sausage-roll_name.mp3"
+    }
+  ]
+}

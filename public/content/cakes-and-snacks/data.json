@@ -1,0 +1,130 @@
+{
+  "id": "cakes-and-snacks",
+  "title": "Cakes and snacks",
+  "variants": ["name"],
+  "items": [
+    {
+      "id": "rocky-road",
+      "name": "Rocky road",
+      "description": "A no-bake chocolate bar packed with marshmallows, biscuit pieces and sometimes nuts or cherries.",
+      "image": "rocky-road.jpg"
+    },
+    {
+      "id": "millionaires-shortbread",
+      "name": "Millionaire's shortbread",
+      "description": "Three layers: buttery shortbread, soft caramel and a chocolate top. Sometimes called caramel shortbread.",
+      "image": "millionaires-shortbread.jpg"
+    },
+    {
+      "id": "scone",
+      "name": "Scone (with jam and cream)",
+      "audioName": "Scone with jam and cream",
+      "description": "A small, round baked cake, split and served with jam and clotted cream. The classic cream tea.",
+      "image": "scone.jpg"
+    },
+    {
+      "id": "chocolate-muffin",
+      "name": "Chocolate muffin",
+      "description": "A large, soft individual cake baked in a paper case, with a domed top and chocolate chips or cocoa.",
+      "image": "chocolate-muffin.jpg"
+    },
+    {
+      "id": "flapjack",
+      "name": "Flapjack",
+      "description": "A chewy oat bar made with butter, sugar and golden syrup. Cut into squares or rectangles.",
+      "image": "flapjack.jpg"
+    },
+    {
+      "id": "chocolate-brownie",
+      "name": "Chocolate brownie",
+      "description": "A dense, rich chocolate square. Fudgy in the middle with a thin crackly top.",
+      "image": "chocolate-brownie.jpg"
+    },
+    {
+      "id": "chocolate-chip-cookie",
+      "name": "Chocolate chip cookie",
+      "description": "A round, flat biscuit with pieces of chocolate baked into it. Soft or crunchy.",
+      "image": "chocolate-chip-cookie.jpg"
+    },
+    {
+      "id": "cupcake",
+      "name": "Cupcake",
+      "description": "A small sponge cake in a paper case, topped with a swirl of buttercream or icing and decorations.",
+      "image": "cupcake.jpg"
+    },
+    {
+      "id": "victoria-sandwich",
+      "name": "Victoria sandwich",
+      "description": "Two layers of light sponge with jam and cream in the middle, dusted with sugar on top. Also called a Victoria sponge.",
+      "image": "victoria-sandwich.jpg"
+    },
+    {
+      "id": "lemon-drizzle-cake",
+      "name": "Lemon drizzle cake",
+      "description": "A lemon sponge loaf soaked with a sweet, tangy lemon syrup while still warm, giving it a crisp sugary top.",
+      "image": "lemon-drizzle-cake.jpg"
+    },
+    {
+      "id": "carrot-cake",
+      "name": "Carrot cake",
+      "description": "A moist, spiced sponge made with grated carrot, usually with a cream cheese frosting.",
+      "image": "carrot-cake.jpg"
+    },
+    {
+      "id": "chocolate-fudge-cake",
+      "name": "Chocolate fudge cake",
+      "description": "A layered chocolate sponge covered in thick, fudgy chocolate icing.",
+      "image": "chocolate-fudge-cake.jpg"
+    },
+    {
+      "id": "croissant",
+      "name": "Croissant",
+      "description": "A crescent-shaped French pastry made from layers of buttery, flaky dough.",
+      "image": "croissant.jpg"
+    },
+    {
+      "id": "almond-croissant",
+      "name": "Almond croissant",
+      "description": "A croissant filled with sweet almond paste, topped with flaked almonds and icing sugar.",
+      "image": "almond-croissant.jpg"
+    },
+    {
+      "id": "cinnamon-bun",
+      "name": "Cinnamon bun or roll",
+      "audioName": "Cinnamon bun, or cinnamon roll",
+      "description": "A soft, sweet dough rolled up in a spiral with a cinnamon and sugar filling, often glazed or iced.",
+      "image": "cinnamon-bun.jpg"
+    },
+    {
+      "id": "pain-au-chocolat",
+      "name": "Pain au chocolat",
+      "audioSsml": "<phoneme alphabet=\"ipa\" ph=\"pæn əʊ ˈʃɒkəlɑː\">pain au chocolat</phoneme>",
+      "description": "A rectangular flaky pastry, like a croissant, with sticks of dark chocolate baked inside.",
+      "image": "pain-au-chocolat.jpg"
+    },
+    {
+      "id": "cornish-pasty",
+      "name": "Cornish pasty",
+      "description": "A D-shaped pastry with a crimped edge, filled with beef, potato, swede and onion. Eaten hot or cold.",
+      "image": "cornish-pasty.jpg"
+    },
+    {
+      "id": "cheese-and-onion-slice",
+      "name": "Cheese and onion slice",
+      "description": "A rectangle of puff pastry with a savoury cheese and onion filling.",
+      "image": "cheese-and-onion-slice.jpg"
+    },
+    {
+      "id": "toasted-teacake",
+      "name": "Toasted teacake",
+      "description": "A round, lightly sweet bread roll with dried fruit, split, toasted and served with butter.",
+      "image": "toasted-teacake.jpg"
+    },
+    {
+      "id": "sausage-roll",
+      "name": "Sausage roll",
+      "description": "Seasoned sausage meat wrapped in golden puff pastry. A savoury snack served hot or cold.",
+      "image": "sausage-roll.jpg"
+    }
+  ]
+}

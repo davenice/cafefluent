@@ -98,6 +98,32 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
+    id: 'cakes-and-snacks',
+    title: 'Cakes and snacks',
+    description: 'Learn to recognise and name the cakes, pastries and savoury snacks on the counter',
+    revisionIntro: 'The counter is full of cakes, pastries and savoury snacks. Learn their names so you can point customers to what they want and take orders confidently.',
+    dataUrl: '/content/cakes-and-snacks/data.json',
+    imageBase: '/content/cakes-and-snacks/images/',
+    audioBase: '/content/cakes-and-snacks/audio/',
+    tasks: [
+      {
+        id: 'task0',
+        type: 'revision',
+        title: 'Meet the cakes and snacks',
+      },
+      {
+        id: 'task1',
+        type: 'image-match',
+        title: 'Match the name and picture',
+      },
+      {
+        id: 'task2',
+        type: 'audio-match',
+        title: 'Listen and match the picture',
+      },
+    ],
+  },
+  {
     id: 'coffee',
     title: 'Barista equipment',
     description: 'Learn the vocabulary of barista equipment and preparation',

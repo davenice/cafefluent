@@ -1,6 +1,3 @@
-## Add in cakes and snacks module
-- I have the documents for this
-
 ## Key ingredients in a product
 - Needs a specification
 

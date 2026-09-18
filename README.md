@@ -154,6 +154,19 @@ If an allergen name contains characters that synthesise poorly (e.g. `Sulphites/
 }
 ```
 
+If the voice mispronounces a word outright (foreign names such as *pain au chocolat*), add an `audioSsml`
+field instead: an SSML fragment that replaces the name wherever it is spoken, typically a
+`<phoneme>` tag giving the pronunciation in IPA. The request is then sent to Polly as SSML.
+
+```json
+{
+  "id": "pain-au-chocolat",
+  "name": "Pain au chocolat",
+  "audioSsml": "<phoneme alphabet=\"ipa\" ph=\"pæn əʊ ˈʃɒkəlɑː\">pain au chocolat</phoneme>",
+  ...
+}
+```
+
 ---
 
 ## Project structure
