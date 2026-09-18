@@ -1,0 +1,49 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "cutlery",
+      "variant": "name",
+      "text": "Cutlery",
+      "file": "cutlery_name.mp3"
+    },
+    {
+      "id": "crockery",
+      "variant": "name",
+      "text": "Crockery",
+      "file": "crockery_name.mp3"
+    },
+    {
+      "id": "stirrers",
+      "variant": "name",
+      "text": "Stirrers",
+      "file": "stirrers_name.mp3"
+    },
+    {
+      "id": "napkins",
+      "variant": "name",
+      "text": "Napkins",
+      "file": "napkins_name.mp3"
+    },
+    {
+      "id": "saucer",
+      "variant": "name",
+      "text": "Saucer",
+      "file": "saucer_name.mp3"
+    },
+    {
+      "id": "utensils",
+      "variant": "name",
+      "text": "Utensils",
+      "file": "utensils_name.mp3"
+    },
+    {
+      "id": "tongs",
+      "variant": "name",
+      "text": "Tongs",
+      "file": "tongs_name.mp3"
+    }
+  ]
+}

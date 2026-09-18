@@ -1,0 +1,51 @@
+{
+  "id": "kitchen-equipment",
+  "title": "Kitchen equipment",
+  "variants": [
+    "name"
+  ],
+  "items": [
+    {
+      "id": "cutlery",
+      "name": "Cutlery",
+      "description": "Knives, forks and spoons. Customers eat with them. They go on the table or in a pot on the counter.",
+      "image": "cutlery.jpg"
+    },
+    {
+      "id": "crockery",
+      "name": "Crockery",
+      "description": "Plates, bowls, cups and saucers. We serve food and drinks on them.",
+      "image": "crockery.jpg"
+    },
+    {
+      "id": "stirrers",
+      "name": "Stirrers",
+      "description": "Thin wooden sticks for mixing sugar or milk into a hot drink. They are usually kept by the till for takeaway drinks.",
+      "image": "stirrers.jpg"
+    },
+    {
+      "id": "napkins",
+      "name": "Napkins",
+      "description": "Small squares of paper or cloth. Customers use them to wipe their hands and mouths. Also called serviettes.",
+      "image": "napkins.jpg"
+    },
+    {
+      "id": "saucer",
+      "name": "Saucer",
+      "description": "A small plate that a cup sits on. It catches spills and holds the teaspoon.",
+      "image": "saucer.jpg"
+    },
+    {
+      "id": "utensils",
+      "name": "Utensils",
+      "description": "Hand tools for preparing food in the kitchen, such as a knife, a whisk or a peeler.",
+      "image": "utensils.jpg"
+    },
+    {
+      "id": "tongs",
+      "name": "Tongs",
+      "description": "A tool with two arms for picking up food without touching it. We use tongs to serve cakes and pastries from the counter.",
+      "image": "tongs.jpg"
+    }
+  ]
+}

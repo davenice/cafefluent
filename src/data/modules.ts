@@ -126,6 +126,33 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
+    id: 'kitchen-equipment',
+    title: 'Kitchen equipment',
+    description: 'Learn the names of everyday kitchen and serving equipment',
+    revisionIntro: 'Every shift uses the same everyday equipment. Learn the names so you can find what you need and ask for it.',
+    dataUrl: '/content/kitchen-equipment/data.json',
+    imageBase: '/content/kitchen-equipment/images/',
+    audioBase: '/content/kitchen-equipment/audio/',
+    tasks: [
+      {
+        id: 'task0',
+        type: 'revision',
+        title: 'Meet the kitchen equipment',
+      },
+      {
+        id: 'task1',
+        type: 'image-match',
+        title: 'Match the name and picture',
+      },
+      {
+        id: 'task2',
+        type: 'audio-match',
+        title: 'Listen and match the picture',
+        answerWith: 'pictures',
+      },
+    ],
+  },
+  {
     id: 'coffee',
     title: 'Barista equipment',
     description: 'Learn the vocabulary of barista equipment and preparation',
