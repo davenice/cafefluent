@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Voice recordings from /#/record, unzipped
+recordings/

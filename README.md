@@ -182,6 +182,24 @@ field instead: an SSML fragment that replaces the name wherever it is spoken, ty
 
 ---
 
+## Recording real voices
+
+`/#/record` (not linked from the app) lets a volunteer record every clip in their own voice.
+They read each phrase on screen; two seconds of silence saves the clip and shows the next one.
+
+- A 3-second room check refuses to start if the background is louder than the quiet limit
+  (−40 dBFS by default), and recording pauses if the room gets noisy.
+- Phrases come in a random order seeded by the speaker's name, so several people who only
+  get part way through cover more phrases between them. Resuming with the same name carries on.
+- Clips are kept in the browser (IndexedDB) as 22,050 Hz WAVs, about 10 MB for a full set.
+  "Download zip" packs whatever is recorded so far, plus a `phrases.json` listing what each file says.
+- Space pauses. Backspace records the last phrase again. The review screen plays back every clip.
+
+The microphone needs https or localhost, so test locally at `http://localhost:5173/#/record`.
+Code is in `src/recorder/` and `src/components/RecordPage.tsx`.
+
+---
+
 ## Project structure
 
 ```

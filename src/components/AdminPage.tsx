@@ -113,6 +113,8 @@ export default function AdminPage() {
           </div>
         ))}
       </main>
+      {/* The recorder isn't linked anywhere for learners; an installed app can't be sent to it by URL */}
+      <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
       {saveError && <p style={styles.error}>Save failed — try again</p>}
       <footer style={styles.footer}>
         <button onClick={() => navigate('/')} style={styles.cancelButton}>Cancel</button>
@@ -191,6 +193,14 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 12,
     cursor: 'pointer',
+  },
+  toolLink: {
+    alignSelf: 'flex-start',
+    marginTop: 16,
+    fontSize: 14,
+    fontWeight: 600,
+    color: 'var(--color-primary)',
+    textDecoration: 'none',
   },
   previewLink: {
     alignSelf: 'flex-start',
