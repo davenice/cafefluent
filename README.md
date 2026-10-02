@@ -143,6 +143,17 @@ intolerant:  (name) => `I'm intolerant to ${name}`,
 
 Re-running will generate only the new variants; existing files are untouched.
 
+Each allergen only uses some of the sentences, so learners hear a mix without every
+sentence being recorded for every allergen. An item's `variants` in `data.json` lists the
+clips it gets, overriding the module's list. The generator, the sentence quiz and the voice
+recorder all follow it:
+
+```json
+{ "id": "milk", "variants": ["name", "allergic", "intolerant", "cant-have"], ... }
+```
+
+The generator doesn't delete clips. If you take a variant away, delete its mp3 and manifest entry.
+
 ### Overriding the spoken name
 
 If an allergen name contains characters that synthesise poorly (e.g. `Sulphites/Sulphur Dioxide`), add an `audioName` field to the item in `data.json`:

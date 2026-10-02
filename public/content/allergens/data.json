@@ -4,84 +4,98 @@
   "items": [
     {
       "id": "celery",
+      "variants": ["name", "allergic", "intolerant", "must-not-eat"],
       "name": "Celery",
       "description": "Celery is used in food in various forms, including celery sticks, leaves, seeds and root (celeriac).",
       "image": "celery.jpg"
     },
     {
       "id": "gluten",
+      "variants": ["name", "allergy-to", "intolerant", "cant-eat"],
       "name": "Cereals containing gluten",
       "description": "'Cereals containing gluten' includes wheat, which is a common cause of food allergy.",
       "image": "gluten.jpg"
     },
     {
       "id": "crustaceans",
+      "variants": ["name", "allergic", "intolerant", "cant-have"],
       "name": "Crustaceans",
       "description": "Crustaceans include crab, lobster, crayfish, and prawns.",
       "image": "crustaceans.jpg"
     },
     {
       "id": "eggs",
+      "variants": ["name", "allergy-to", "intolerant", "must-not-eat"],
       "name": "Egg",
       "description": "Egg can be found in a wide range of foods including cakes, pastries, desserts, meat products, mayonnaise, and many more.",
       "image": "eggs.jpg"
     },
     {
       "id": "fish",
+      "variants": ["name", "allergic", "intolerant", "cant-eat"],
       "name": "Fish",
       "description": "Fish allergy refers to fish that have fins such as cod, plaice, haddock, herring, trout, salmon and tuna.",
       "image": "fish.jpg"
     },
     {
       "id": "lupin",
+      "variants": ["name", "allergy-to", "intolerant", "cant-have"],
       "name": "Lupin",
       "description": "The lupin is well-known as a popular garden flower. The seeds from certain lupin species are also cultivated as food.",
       "image": "lupin.jpg"
     },
     {
       "id": "milk",
+      "variants": ["name", "allergic", "intolerant", "cant-have"],
       "name": "Milk",
       "description": "Cow's milk is used to make many foods including butter, cheese, cream, yogurt and more.",
       "image": "milk.jpg"
     },
     {
       "id": "molluscs",
+      "variants": ["name", "allergy-to", "intolerant", "cant-eat"],
       "name": "Molluscs",
       "description": "Molluscs include mussels, oysters, scallops, snails, squid, octopus and many more.",
       "image": "molluscs.jpg"
     },
     {
       "id": "mustard",
+      "variants": ["name", "allergic", "intolerant", "must-not-eat"],
       "name": "Mustard",
       "description": "Mustard plants have seeds that can be white, yellow, brown or black. They can be used to make different types of mustard.",
       "image": "mustard.jpg"
     },
     {
       "id": "nuts",
+      "variants": ["name", "allergy-to", "intolerant", "must-not-eat"],
       "name": "Tree nuts",
       "description": "Tree nuts include almonds, Brazil nuts, cashew nuts, hazelnuts, walnuts, pecans, pistachios and macadamia nuts.",
       "image": "nuts.jpg"
     },
     {
       "id": "peanuts",
+      "variants": ["name", "allergic", "intolerant", "cant-eat"],
       "name": "Peanuts",
       "description": "The peanut is a legume and is in the same plant family as peas, beans and lentils.",
       "image": "peanuts.jpg"
     },
     {
       "id": "sesame",
+      "variants": ["name", "allergy-to", "intolerant", "cant-eat"],
       "name": "Sesame",
       "description": "Sesame seeds can be black, white, brown or red. Foods made with sesame include tahini, hummus and halvah.",
       "image": "sesame.jpg"
     },
     {
       "id": "soya",
+      "variants": ["name", "allergic", "intolerant", "must-not-eat"],
       "name": "Soya",
       "description": "'Soya' or 'soy' is made from the soya bean, which is a legume. Soya is used to make soy sauce and tofu and is used as an ingredient in many food products.",
       "image": "soya.jpg"
     },
     {
       "id": "sulphites",
+      "variants": ["name", "allergy-to", "intolerant", "cant-have"],
       "name": "Sulphites/Sulphur Dioxide",
       "audioName": "Sulphites and Sulphur Dioxide",
       "description": "Sulphites are preservatives added to food and drinks to extend their shelf life.",

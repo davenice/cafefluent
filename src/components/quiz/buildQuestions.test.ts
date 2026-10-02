@@ -104,6 +104,15 @@ describe('SentenceMatch buildQuestions', () => {
       expect(KNOWN_VARIANTS).toContain(q.variant)
     }
   })
+
+  it('only uses the sentences an item has its own audio for', () => {
+    const limited = items.map((item) => ({ ...item, variants: ['name', 'allergy-to', 'intolerant', 'cant-have'] }))
+    for (let run = 0; run < 20; run++) {
+      for (const q of buildSentenceQuestions(limited, KNOWN_VARIANTS)) {
+        expect(['allergy-to', 'intolerant', 'cant-have']).toContain(q.variant)
+      }
+    }
+  })
 })
 
 describe('ProductMatch buildQuestions', () => {

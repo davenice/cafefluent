@@ -18,11 +18,16 @@ export function buildAudioQuestions(items: AllergenItem[], variants: string[]) {
 }
 
 export function buildSentenceQuestions<V extends string>(items: AllergenItem[], variants: V[]) {
-  return shuffle(items).map((answer) => ({
-    answer,
-    variant: variants[Math.floor(Math.random() * variants.length)],
-    options: shuffle([answer, ...pickRandom(items, 3, answer)]),
-  }))
+  return shuffle(items).map((answer) => {
+    // Each item may only have audio for some of the sentences.
+    const own = answer.variants ? variants.filter((v) => answer.variants!.includes(v)) : variants
+    const choices = own.length ? own : variants
+    return {
+      answer,
+      variant: choices[Math.floor(Math.random() * choices.length)],
+      options: shuffle([answer, ...pickRandom(items, 3, answer)]),
+    }
+  })
 }
 
 export function buildProductQuestions(products: ProductItem[]) {

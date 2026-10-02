@@ -28,6 +28,9 @@
  * spoken from the hotspot's "label" (or "audioName" if present). Only the
  * "name" variant is generated for hotspots.
  *
+ * An item can list its own "variants" in data.json to record only some of the
+ * sentences for it; otherwise it gets the module's "variants" (or all of them).
+ *
  * To add new phrase variants for sentence tasks, add entries to VARIANTS below:
  *   allergic: (name) => `I'm allergic to ${name}`,
  */
@@ -48,7 +51,7 @@ const SAMPLE_RATE = '22050';
 // Add sentence variants here when Tasks 3+ are implemented.
 const VARIANTS = {
   name:           (audioName) => audioName,
-  // Sentence variants for Task 3 — keep in sync with DISPLAY_TEMPLATES in src/components/quiz/SentenceMatch.tsx
+  // Sentence variants for Task 3 — keep in sync with SENTENCE_TEMPLATES in src/data/sentenceVariants.ts
   allergic:       (audioName) => `I'm allergic to ${audioName}`,
   intolerant:     (audioName) => `I'm intolerant to ${audioName}`,
   'must-not-eat': (audioName) => `I must not eat ${audioName}`,
@@ -66,9 +69,8 @@ async function generateModule(moduleId, force) {
 
   const moduleData = JSON.parse(readFileSync(dataPath, 'utf-8'));
   const { items = [], diagrams = [] } = moduleData;
-  const activeVariants = moduleData.variants
-    ? Object.fromEntries(Object.entries(VARIANTS).filter(([k]) => moduleData.variants.includes(k)))
-    : VARIANTS;
+  const pickVariants = (names) => Object.fromEntries(Object.entries(VARIANTS).filter(([k]) => names.includes(k)));
+  const activeVariants = moduleData.variants ? pickVariants(moduleData.variants) : VARIANTS;
   const nameOnly = { name: VARIANTS.name };
   const audioDir = join(ROOT, 'public/content', moduleId, 'audio');
   mkdirSync(audioDir, { recursive: true });
@@ -88,7 +90,7 @@ async function generateModule(moduleId, force) {
   // Every clip to produce: module items get all active variants, diagram
   // hotspots get just their label.
   const jobs = [
-    ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, ssmlName: item.audioSsml, variants: activeVariants })),
+    ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, ssmlName: item.audioSsml, variants: item.variants ? pickVariants(item.variants) : activeVariants })),
     ...diagrams.flatMap(d => d.hotspots.map(h => ({ id: h.id, spokenName: h.audioName ?? h.label, ssmlName: h.audioSsml, variants: nameOnly }))),
   ];
 

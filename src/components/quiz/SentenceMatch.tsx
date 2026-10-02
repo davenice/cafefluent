@@ -1,18 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AllergenItem } from '../../types'
 import { buildSentenceQuestions } from './questionBuilders'
+import { SENTENCE_TEMPLATES, SENTENCE_VARIANTS, type SentenceVariant } from '../../data/sentenceVariants'
 
-type Variant = 'allergic' | 'intolerant' | 'must-not-eat' | 'cant-eat' | 'allergy-to' | 'cant-have'
-
-// Keep in sync with VARIANTS in scripts/generate-audio.mjs
-const DISPLAY_TEMPLATES: Record<Variant, (name: string) => string> = {
-  allergic:       (name) => `I'm allergic to ${name.toLowerCase()}`,
-  intolerant:     (name) => `I'm intolerant to ${name.toLowerCase()}`,
-  'must-not-eat': (name) => `I must not eat ${name.toLowerCase()}`,
-  'cant-eat':     (name) => `I can't eat ${name.toLowerCase()}`,
-  'allergy-to':   (name) => `I have an allergy to ${name.toLowerCase()}`,
-  'cant-have':    (name) => `I can't have ${name.toLowerCase()}`,
-}
+type Variant = SentenceVariant
 
 const BLANK_TEMPLATES: Record<Variant, string> = {
   allergic:       "I'm allergic to …",
@@ -22,8 +13,6 @@ const BLANK_TEMPLATES: Record<Variant, string> = {
   'allergy-to':   "I have an allergy to …",
   'cant-have':    "I can't have …",
 }
-
-const ALL_VARIANTS: Variant[] = ['allergic', 'intolerant', 'must-not-eat', 'cant-eat', 'allergy-to', 'cant-have']
 
 interface Props {
   items: AllergenItem[]
@@ -39,7 +28,7 @@ function audioFile(base: string, item: AllergenItem, variant: Variant): string {
 }
 
 export default function SentenceMatch({ items, audioBase, imageBase, onComplete }: Props) {
-  const [questions] = useState(() => buildSentenceQuestions(items, ALL_VARIANTS))
+  const [questions] = useState(() => buildSentenceQuestions(items, SENTENCE_VARIANTS))
   const [index, setIndex] = useState(0)
   const [score, setScore] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
@@ -124,7 +113,7 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
         <p style={styles.counter}>{index + 1} of {questions.length}</p>
         <p style={styles.sentence}>
           {answerState !== 'unanswered'
-            ? DISPLAY_TEMPLATES[question.variant](question.answer.name)
+            ? SENTENCE_TEMPLATES[question.variant](question.answer.name)
             : BLANK_TEMPLATES[question.variant]}
         </p>
         <button

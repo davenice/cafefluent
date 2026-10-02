@@ -5,6 +5,8 @@ export interface AllergenItem {
   image: string
   imagePosition?: string
   audio?: string
+  /** Audio variants recorded for this item, overriding the module's `variants`. */
+  variants?: string[]
 }
 
 export interface ProductItem {
