@@ -58,14 +58,16 @@ async function getEnabledModules() {
   return Parameter.Value.split(',').map(s => s.trim()).filter(Boolean)
 }
 
-// Settings for the describe-the-word table game, stored as JSON. null until first saved.
+// Settings for the describe-the-word table game, stored as JSON. null until first
+// saved, or if it can't be read: the game is optional, so it must never stop the
+// module list loading.
 async function getGameSettings() {
   try {
     const { Parameter } = await ssm.send(new GetParameterCommand({ Name: GAME_SSM_NAME }))
     return JSON.parse(Parameter.Value)
   } catch (err) {
-    if (err.name === 'ParameterNotFound') return null
-    throw err
+    if (err.name !== 'ParameterNotFound') console.error('Could not read game settings', err)
+    return null
   }
 }
 

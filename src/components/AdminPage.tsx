@@ -11,7 +11,7 @@ export default function AdminPage() {
   const navigate = useNavigate()
   const [screen, setScreen] = useState<Screen>('pin')
   const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState(false)
+  const [pinError, setPinError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [enabled, setEnabled] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -23,7 +23,7 @@ export default function AdminPage() {
 
   async function checkPin(value: string) {
     setChecking(true)
-    setPinError(false)
+    setPinError(null)
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
@@ -31,11 +31,16 @@ export default function AdminPage() {
         body: JSON.stringify({}),
       })
       if (res.status === 401) {
-        setPinError(true)
+        setPinError('Incorrect PIN')
         setPin('')
         return
       }
-      const data = await res.json()
+      const data = await res.json().catch(() => null)
+      if (!res.ok || !Array.isArray(data?.enabledModules)) {
+        setPinError('The server had a problem. Try again later.')
+        setPin('')
+        return
+      }
       setEnabled(data.enabledModules)
       const game = normaliseGameSettings(data.game)
       setGameWords(game.words.join('\n'))
@@ -43,7 +48,7 @@ export default function AdminPage() {
       setGameTurns(String(game.turns))
       setScreen('modules')
     } catch {
-      setPinError(true)
+      setPinError('Could not reach the server. Check the connection.')
     } finally {
       setChecking(false)
     }
@@ -99,7 +104,7 @@ export default function AdminPage() {
               disabled={checking}
               autoFocus
             />
-            {pinError && <p style={styles.error}>Incorrect PIN</p>}
+            {pinError && <p style={styles.error}>{pinError}</p>}
           </div>
           {/* Outside the PIN on purpose: volunteers recording on an installed app can't reach it by URL */}
           <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
