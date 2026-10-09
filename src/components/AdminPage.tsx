@@ -69,20 +69,24 @@ export default function AdminPage() {
   if (screen === 'pin') {
     return (
       <div style={styles.page}>
-        <div style={styles.pinCard}>
-          <h1 style={styles.title}>Admin</h1>
-          <input
-            type="password"
-            inputMode="numeric"
-            maxLength={6}
-            value={pin}
-            onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
-            placeholder="····"
-            style={{ ...styles.pinInput, ...(pinError ? styles.pinInputError : {}) }}
-            disabled={checking}
-            autoFocus
-          />
-          {pinError && <p style={styles.error}>Incorrect PIN</p>}
+        <div style={styles.pinGroup}>
+          <div style={styles.pinCard}>
+            <h1 style={styles.title}>Admin</h1>
+            <input
+              type="password"
+              inputMode="numeric"
+              maxLength={6}
+              value={pin}
+              onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
+              placeholder="····"
+              style={{ ...styles.pinInput, ...(pinError ? styles.pinInputError : {}) }}
+              disabled={checking}
+              autoFocus
+            />
+            {pinError && <p style={styles.error}>Incorrect PIN</p>}
+          </div>
+          {/* Outside the PIN on purpose: volunteers recording on an installed app can't reach it by URL */}
+          <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
         </div>
       </div>
     )
@@ -113,8 +117,6 @@ export default function AdminPage() {
           </div>
         ))}
       </main>
-      {/* The recorder isn't linked anywhere for learners; an installed app can't be sent to it by URL */}
-      <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
       {saveError && <p style={styles.error}>Save failed — try again</p>}
       <footer style={styles.footer}>
         <button onClick={() => navigate('/')} style={styles.cancelButton}>Cancel</button>
@@ -133,8 +135,16 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     padding: '0 16px 32px',
   },
-  pinCard: {
+  pinGroup: {
     margin: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 16,
+    width: '100%',
+    maxWidth: 280,
+  },
+  pinCard: {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -195,8 +205,6 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
   },
   toolLink: {
-    alignSelf: 'flex-start',
-    marginTop: 16,
     fontSize: 14,
     fontWeight: 600,
     color: 'var(--color-primary)',
