@@ -11,8 +11,15 @@ export default function HomePage() {
   return (
     <div style={styles.page}>
       <header style={styles.header}>
-        <h1 style={styles.title}>CafeFluent</h1>
-        <p style={styles.subtitle}>Learn the language of the cafe</p>
+        <img
+          src={`${import.meta.env.BASE_URL}brand/real-hope-leeds.webp`}
+          alt="Real Hope Leeds"
+          style={styles.logo}
+        />
+        <div>
+          <h1 style={styles.title}>CafeFluent</h1>
+          <p style={styles.subtitle}>Learn the language of the cafe</p>
+        </div>
       </header>
 
       <main style={styles.main}>
@@ -58,8 +65,18 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0 16px 32px',
   },
   header: {
-    padding: '40px 0 24px',
-    textAlign: 'center',
+    padding: '32px 0 24px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  // The logo has a white background, so clip it to its circle against the page colour.
+  logo: {
+    width: 88,
+    height: 88,
+    flexShrink: 0,
+    borderRadius: '50%',
   },
   title: {
     fontSize: 32,
