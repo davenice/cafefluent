@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MODULES } from '../data/modules'
+import { MODULES, DESCRIBE_GAME } from '../data/modules'
+import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/settings'
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
 
@@ -15,6 +16,10 @@ export default function AdminPage() {
   const [enabled, setEnabled] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(false)
+  // Kept as typed until Save, so the textarea doesn't fight the user over blank lines.
+  const [gameWords, setGameWords] = useState('')
+  const [gameSeconds, setGameSeconds] = useState('')
+  const [gameTurns, setGameTurns] = useState('')
 
   async function checkPin(value: string) {
     setChecking(true)
@@ -32,6 +37,10 @@ export default function AdminPage() {
       }
       const data = await res.json()
       setEnabled(data.enabledModules)
+      const game = normaliseGameSettings(data.game)
+      setGameWords(game.words.join('\n'))
+      setGameSeconds(String(game.seconds))
+      setGameTurns(String(game.turns))
       setScreen('modules')
     } catch {
       setPinError(true)
@@ -55,7 +64,14 @@ export default function AdminPage() {
       const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-admin-pin': pin },
-        body: JSON.stringify({ enabledModules: enabled }),
+        body: JSON.stringify({
+          enabledModules: enabled,
+          game: normaliseGameSettings({
+            words: gameWords.split('\n'),
+            seconds: Number(gameSeconds),
+            turns: Number(gameTurns),
+          }),
+        }),
       })
       if (!res.ok) { setSaveError(true); return }
       navigate('/')
@@ -116,6 +132,61 @@ export default function AdminPage() {
             <Link to={`/${mod.id}`} style={styles.previewLink}>Preview module →</Link>
           </div>
         ))}
+
+        <h2 style={styles.sectionTitle}>Table games</h2>
+        <div style={styles.row}>
+          <label style={styles.rowToggle}>
+            <div style={styles.rowBody}>
+              <div style={styles.modTitle}>{DESCRIBE_GAME.title}</div>
+              <div style={styles.modDesc}>{DESCRIBE_GAME.description}</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={enabled.includes(DESCRIBE_GAME.id)}
+              onChange={() => toggleModule(DESCRIBE_GAME.id)}
+              style={styles.checkbox}
+            />
+          </label>
+          <label style={styles.field}>
+            <span style={styles.fieldLabel}>Words, one per line</span>
+            <textarea
+              value={gameWords}
+              onChange={e => setGameWords(e.target.value)}
+              rows={8}
+              style={styles.textarea}
+            />
+          </label>
+          <div style={styles.fieldRow}>
+            <label style={styles.field}>
+              <span style={styles.fieldLabel}>Seconds per turn</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={SECONDS_RANGE.min}
+                max={SECONDS_RANGE.max}
+                value={gameSeconds}
+                onChange={e => setGameSeconds(e.target.value)}
+                style={styles.numberInput}
+              />
+            </label>
+            <label style={styles.field}>
+              <span style={styles.fieldLabel}>Turns per game</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={TURNS_RANGE.min}
+                max={TURNS_RANGE.max}
+                value={gameTurns}
+                onChange={e => setGameTurns(e.target.value)}
+                style={styles.numberInput}
+              />
+            </label>
+          </div>
+          <div style={styles.modDesc}>
+            Turns are shared out between the players in order. Tables are scored on words guessed per turn, so tables of different sizes can be compared.
+          </div>
+          <Link to={`/${DESCRIBE_GAME.id}`} style={styles.previewLink}>Preview game →</Link>
+        </div>
       </main>
       {saveError && <p style={styles.error}>Save failed — try again</p>}
       <footer style={styles.footer}>
@@ -228,6 +299,43 @@ const styles: Record<string, React.CSSProperties> = {
     marginTop: 3,
     fontSize: 12,
     color: 'var(--color-muted)',
+  },
+  sectionTitle: {
+    marginTop: 20,
+    fontSize: 13,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: 'var(--color-muted)',
+  },
+  field: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+    flex: 1,
+  },
+  fieldRow: {
+    display: 'flex',
+    gap: 10,
+  },
+  fieldLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+  },
+  textarea: {
+    fontSize: 15,
+    fontFamily: 'inherit',
+    padding: '8px 10px',
+    border: '2px solid var(--color-border)',
+    borderRadius: 'var(--radius-sm)',
+    resize: 'vertical',
+  },
+  numberInput: {
+    fontSize: 15,
+    padding: '8px 10px',
+    border: '2px solid var(--color-border)',
+    borderRadius: 'var(--radius-sm)',
+    width: '100%',
   },
   checkbox: {
     width: 20,

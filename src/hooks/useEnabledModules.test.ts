@@ -1,11 +1,11 @@
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MODULES } from '../data/modules'
+import { MODULES, DESCRIBE_GAME } from '../data/modules'
 
 vi.stubEnv('VITE_MODULES_API_URL', 'https://example.test/modules')
 const { useEnabledModules } = await import('./useEnabledModules')
 
-const ALL = MODULES.map(m => m.id)
+const ALL = [...MODULES.map(m => m.id), DESCRIBE_GAME.id]
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 

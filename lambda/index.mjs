@@ -3,6 +3,7 @@ import { SSMClient, GetParameterCommand, PutParameterCommand } from '@aws-sdk/cl
 
 const ssm = new SSMClient()
 const SSM_NAME = '/cafefluent/enabled-modules'
+const GAME_SSM_NAME = '/cafefluent/game-settings'
 
 // --- Usage logging -----------------------------------------------------------
 // One JSON line per request, queryable in CloudWatch Logs Insights.
@@ -57,6 +58,23 @@ async function getEnabledModules() {
   return Parameter.Value.split(',').map(s => s.trim()).filter(Boolean)
 }
 
+// Settings for the describe-the-word table game, stored as JSON. null until first saved.
+async function getGameSettings() {
+  try {
+    const { Parameter } = await ssm.send(new GetParameterCommand({ Name: GAME_SSM_NAME }))
+    return JSON.parse(Parameter.Value)
+  } catch (err) {
+    if (err.name === 'ParameterNotFound') return null
+    throw err
+  }
+}
+
+function validGameSettings(game) {
+  return game && typeof game === 'object'
+    && Array.isArray(game.words) && game.words.every(w => typeof w === 'string')
+    && Number.isInteger(game.seconds) && Number.isInteger(game.turns)
+}
+
 export const handler = async (event) => {
   const response = await handleRequest(event)
   logRequest(event, response.statusCode)
@@ -80,24 +98,40 @@ async function handleRequest(event) {
       }
 
       const body = event.body ? JSON.parse(event.body) : {}
-      const enabledModules = await getEnabledModules()
+      const saveModules = Array.isArray(body.enabledModules)
+      const saveGame = body.game !== undefined
 
-      if (Array.isArray(body.enabledModules)) {
+      if (saveGame && !validGameSettings(body.game)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid game settings' }) }
+      }
+
+      if (saveModules) {
         await ssm.send(new PutParameterCommand({
           Name: SSM_NAME,
           Value: body.enabledModules.join(','),
           Type: 'String',
           Overwrite: true,
         }))
+      }
+      if (saveGame) {
+        await ssm.send(new PutParameterCommand({
+          Name: GAME_SSM_NAME,
+          Value: JSON.stringify(body.game),
+          Type: 'String',
+          Overwrite: true,
+        }))
+      }
+      if (saveModules || saveGame) {
         return { statusCode: 200, headers, body: JSON.stringify({ ok: true }) }
       }
 
       // PIN check only — return current state
-      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, enabledModules }) }
+      const [enabledModules, game] = await Promise.all([getEnabledModules(), getGameSettings()])
+      return { statusCode: 200, headers, body: JSON.stringify({ ok: true, enabledModules, game }) }
     }
 
-    const enabledModules = await getEnabledModules()
-    return { statusCode: 200, headers, body: JSON.stringify({ enabledModules }) }
+    const [enabledModules, game] = await Promise.all([getEnabledModules(), getGameSettings()])
+    return { statusCode: 200, headers, body: JSON.stringify({ enabledModules, game }) }
   } catch (err) {
     console.error(err)
     return { statusCode: 500, headers, body: JSON.stringify({ error: 'Internal error' }) }

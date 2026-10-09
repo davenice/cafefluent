@@ -79,6 +79,21 @@ Audio files are pre-generated offline and committed to `public/content/<module>/
 
 Further topics following the course curriculum — to be defined as the course develops.
 
+### Table game: Describe it
+
+A describe-the-word game for a table sharing one phone (`/#/describe-it`, code in
+`src/game/` and `src/components/DescribeGamePage.tsx`). It is switched on and off on the
+admin page like a module, but listed separately under "Table games".
+
+The course leader sets the words, the seconds per turn and the number of turns on the
+admin page. These are stored in the `/cafefluent/game-settings` SSM parameter (see
+[lambda/README.md](lambda/README.md)). Players add their names, and the turns are shared out
+between them in order. Each word is "Got it" (1 point) or "Skip" (0). Skipped words come
+round again when the words run out. The score is words guessed per turn, so tables of
+different sizes can be compared. The results list the skipped words for the class to go over.
+
+The game in progress is saved in `localStorage` after every tap, so it survives a reload.
+
 ---
 
 ## Generating audio

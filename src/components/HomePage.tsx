@@ -1,11 +1,12 @@
 import { Link } from 'react-router-dom'
-import { MODULES } from '../data/modules'
+import { MODULES, DESCRIBE_GAME } from '../data/modules'
 import { getProgress } from '../hooks/useProgress'
 import { useEnabledModules } from '../hooks/useEnabledModules'
 
 export default function HomePage() {
   const enabledModules = useEnabledModules()
   const visibleModules = MODULES.filter(m => (enabledModules ?? []).includes(m.id))
+  const showGame = (enabledModules ?? []).includes(DESCRIBE_GAME.id)
 
   return (
     <div style={styles.page}>
@@ -32,6 +33,19 @@ export default function HomePage() {
           )
         })}
       </main>
+
+      {showGame && (
+        <section style={styles.games}>
+          <h2 style={styles.sectionTitle}>Table games</h2>
+          <Link to={`/${DESCRIBE_GAME.id}`} style={{ ...styles.card, ...styles.gameCard }}>
+            <div style={styles.cardBody}>
+              <h2 style={styles.cardTitle}>{DESCRIBE_GAME.title}</h2>
+              <p style={styles.cardDesc}>{DESCRIBE_GAME.description}</p>
+            </div>
+            <span style={styles.arrow}>›</span>
+          </Link>
+        </section>
+      )}
     </div>
   )
 }
@@ -71,6 +85,27 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '18px 16px',
     boxShadow: 'var(--shadow)',
     gap: 12,
+  },
+  games: {
+    marginTop: 32,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: 600,
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    color: 'var(--color-muted)',
+  },
+  // Not a module with tasks to complete, so it looks different from the module cards.
+  gameCard: {
+    borderLeft: '4px solid var(--color-accent)',
+  },
+  arrow: {
+    fontSize: 22,
+    color: 'var(--color-muted)',
   },
   cardBody: {
     flex: 1,

@@ -1,6 +1,6 @@
 # Module config Lambda
 
-GET returns the list of enabled module IDs. POST (PIN-protected) updates it.
+GET returns the list of enabled module IDs and the table game settings. POST (PIN-protected) updates them.
 
 ## Deploy
 
@@ -19,7 +19,10 @@ GET returns the list of enabled module IDs. POST (PIN-protected) updates it.
    {
      "Effect": "Allow",
      "Action": ["ssm:GetParameter", "ssm:PutParameter"],
-     "Resource": "arn:aws:ssm:*:*:parameter/cafefluent/enabled-modules"
+     "Resource": [
+       "arn:aws:ssm:*:*:parameter/cafefluent/enabled-modules",
+       "arn:aws:ssm:*:*:parameter/cafefluent/game-settings"
+     ]
    }
    ```
 
@@ -31,6 +34,10 @@ AWS Console → Systems Manager → Parameter Store → Create parameter
 - Name: `/cafefluent/enabled-modules`
 - Type: String
 - Value: `allergens,bread,coffee` (or whichever modules should be enabled initially)
+
+`/cafefluent/game-settings` holds the table game's words, turn length and number
+of turns as JSON. It doesn't need creating by hand: the admin page creates it on
+first save, and until then the Lambda returns `game: null`.
 
 ## CORS
 
@@ -71,6 +78,8 @@ filter event = "request" and method = "GET" and origin = "https://cafefluent.dan
 
 ## Usage
 
-- **GET** — returns `{ enabledModules: string[] }` (read by the app on startup)
-- **POST with empty body + `x-admin-pin` header** — PIN check; returns `{ ok: true, enabledModules: string[] }`
-- **POST with `{ enabledModules }` + `x-admin-pin` header** — saves new list to SSM; returns `{ ok: true }`
+- **GET** — returns `{ enabledModules: string[], game: GameSettings | null }` (read by the app on startup)
+- **POST with empty body + `x-admin-pin` header** — PIN check; returns `{ ok: true, enabledModules, game }`
+- **POST with `{ enabledModules, game }` + `x-admin-pin` header** — saves either or both to SSM; returns `{ ok: true }`
+
+`GameSettings` is `{ words: string[], seconds: number, turns: number }`.

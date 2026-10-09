@@ -5,6 +5,7 @@ import ModulePage from './components/ModulePage'
 import QuizShell from './components/quiz/QuizShell'
 import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
+import DescribeGamePage from './components/DescribeGamePage'
 import UpdatePrompt from './components/UpdatePrompt'
 
 // Voice recorder for volunteers. Loaded on demand: learners never need it.
@@ -34,6 +35,7 @@ export default function App() {
         <Route path="/:moduleId/:taskId" element={<QuizShell />} />
         <Route path="/calibrate" element={<CalibratePage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/describe-it" element={<DescribeGamePage />} />
         <Route path="/record" element={<Suspense fallback={null}><RecordPage /></Suspense>} />
       </Routes>
       <BuildStamp />

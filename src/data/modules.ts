@@ -188,3 +188,14 @@ export const MODULES: ModuleDef[] = [
     tasks: [],
   },
 ]
+
+/**
+ * The table game, a describe-the-word game played on one shared phone. It is switched
+ * on and off with the modules, but listed apart from them. The words, turn length
+ * and number of turns are set on the admin page.
+ */
+export const DESCRIBE_GAME = {
+  id: 'describe-it',
+  title: 'Describe it',
+  description: 'A team game for your table. Describe the word. Your team guesses.',
+}
