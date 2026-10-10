@@ -78,6 +78,10 @@ filter event = "request" and method = "GET" and origin = "https://cafefluent.dan
 
 ## Usage
 
+The e2e tests use a copy of this contract in `e2e/fakeConfigApi.ts`, and
+`index.test.mjs` tests the handler itself. When you change the handler, update
+both, and the e2e tests in `e2e/enablement.spec.ts`.
+
 - **GET** — returns `{ enabledModules: string[], game: GameSettings | null }` (read by the app on startup)
 - **POST with empty body + `x-admin-pin` header** — PIN check; returns `{ ok: true, enabledModules, game }`
 - **POST with `{ enabledModules, game }` + `x-admin-pin` header** — saves either or both to SSM; returns `{ ok: true }`

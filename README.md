@@ -12,6 +12,7 @@ npm run dev        # dev server at http://localhost:5173/
 npm run build      # production build to dist/
 npm test           # run unit and component tests
 npm run test:watch # tests in watch mode
+npm run test:e2e   # run end-to-end tests in real browsers
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -43,6 +44,20 @@ since browsers only check about once a day on their own.
 
 The build stamp in the bottom-right corner shows the commit a device is actually running,
 which is the quickest way to confirm an update landed.
+
+### Testing
+
+There are two kinds of tests. Both run on every pull request.
+
+**Unit and component tests** (Vitest, `npm test`) sit next to the code in `src/`, as `*.test.ts(x)`. Components are tested in jsdom with Testing Library. The config Lambda has its own tests in `lambda/index.test.mjs`, with Parameter Store replaced by an in-memory fake.
+
+**End-to-end tests** (Playwright, `npm run test:e2e`) are in `e2e/`. They build the app with `vite build --mode e2e` into `dist-e2e/`, serve it with `vite preview`, and drive it in Chromium and WebKit at phone size. Use these for what component tests can't see: routing, saved progress, module enablement, and the service worker. `npm run test:e2e:ui` opens Playwright's UI for stepping through a test. The first time, install the browsers with `npx playwright install chromium webkit`.
+
+The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the PIN `246810`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**.
+
+Service workers are blocked by default in the e2e tests, because Playwright can't intercept a service worker's own requests in WebKit. `e2e/offline.spec.ts` turns the worker back on, and so only runs in Chromium.
+
+When a test fails in CI, the HTML report with a trace of the failure is uploaded as the `playwright-report` artifact. Locally, open a trace with `npx playwright show-trace test-results/<test>/trace.zip`.
 
 ### Adding content
 

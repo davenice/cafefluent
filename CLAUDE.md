@@ -5,3 +5,11 @@ Quiz app for ESOL learners training to work in a cafe. See README.md for archite
 ## Writing learner-facing text
 
 All text a learner sees or hears (item names, descriptions, module intros, sentence audio) must be at **CEFR B1 level**: short sentences, one idea each, everyday vocabulary. Avoid rare descriptive words; keep useful cafe vocabulary (flaky, savoury, sponge, puff pastry). Details in README.md under "Adding content".
+
+## Tests
+
+`npm test` runs the unit and component tests (Vitest), including the config Lambda's in `lambda/index.test.mjs`. `npm run test:e2e` runs the Playwright tests in `e2e/` against a production build. Details in README.md under "Testing".
+
+## Changing the config Lambda
+
+The e2e tests never call the real Lambda. `e2e/fakeConfigApi.ts` answers in its place and copies the contract of `lambda/index.mjs`: the methods, the PIN check, the request and response bodies, and the status codes. **If you change the Lambda, update the fake and the e2e tests (`e2e/enablement.spec.ts`) to match in the same change**, as well as `lambda/index.test.mjs`. Otherwise the e2e tests keep passing against the old behaviour, and a mismatch between the app and the Lambda will not be caught.
