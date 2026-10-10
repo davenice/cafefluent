@@ -8,7 +8,9 @@ All text a learner sees or hears (item names, descriptions, module intros, sente
 
 ## Tests
 
-`npm test` runs the unit and component tests (Vitest), including the config Lambda's in `lambda/index.test.mjs`. `npm run test:e2e` runs the Playwright tests in `e2e/` against a production build. Details in README.md under "Testing".
+`npm test` runs the unit and component tests (Vitest), including the config Lambda's in `lambda/index.test.mjs` and the content check in `scripts/content.test.ts`. `npm run test:e2e` runs the Playwright tests in `e2e/` against a production build. Details in README.md under "Testing".
+
+When adding or changing a quiz type, keep the tests in step: the files it loads go in `expectedFiles` in `scripts/content.test.ts`, and how to find its right answer goes in `correctAnswer` in `e2e/helpers/quiz.ts`. The e2e tests pick up new modules and tasks from `src/data/modules.ts` by themselves.
 
 ## Changing the config Lambda
 

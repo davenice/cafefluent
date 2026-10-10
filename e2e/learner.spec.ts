@@ -1,8 +1,7 @@
-import { test, expect } from '@playwright/test'
-import { FakeConfigApi } from './fakeConfigApi'
+import { test, expect } from './fixtures'
 
-test('completing a study guide is remembered', async ({ page, context }) => {
-  await new FakeConfigApi({ enabledModules: ['allergens'] }).install(context)
+test('completing a study guide is remembered', async ({ page, api }) => {
+  api.state.enabledModules = ['allergens']
   await page.goto('/')
 
   await page.getByRole('link', { name: /^Allergens/ }).click()

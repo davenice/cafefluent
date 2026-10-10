@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const PORT = 4174
+// E2E_PORT lets a second run go alongside one already open, e.g. the --ui mode.
+const PORT = Number(process.env.E2E_PORT ?? 4174)
 
 export default defineConfig({
   testDir: './e2e',

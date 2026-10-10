@@ -13,6 +13,7 @@ npm run build      # production build to dist/
 npm test           # run unit and component tests
 npm run test:watch # tests in watch mode
 npm run test:e2e   # run end-to-end tests in real browsers
+npm run check:content # check every image and audio file the quizzes use exists
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -27,6 +28,7 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
 2. Create a component in `src/components/quiz/` — quiz types receive `items`, `imageBase`, and `onComplete(score, total)`; study types (like `revision`) receive `items`, `imageBase`, and `onDone`
 3. Register it in `QuizShell.tsx` (dispatches on `task.type`)
 4. Add the task entry to the module in `src/data/modules.ts`
+5. Teach the tests about it: list the files it needs in `expectedFiles` in `scripts/content.test.ts`, and add a way to find the right answer in `correctAnswer` in `e2e/helpers/quiz.ts`
 
 ### Deploying changes
 
@@ -51,11 +53,27 @@ There are two kinds of tests. Both run on every pull request.
 
 **Unit and component tests** (Vitest, `npm test`) sit next to the code in `src/`, as `*.test.ts(x)`. Components are tested in jsdom with Testing Library. The config Lambda has its own tests in `lambda/index.test.mjs`, with Parameter Store replaced by an in-memory fake.
 
+**Content check** (`scripts/content.test.ts`, part of `npm test`, or alone with `npm run check:content`) works out every file each module's tasks will ask for and fails if any is missing, naming the file and the task that needs it. It covers item, product and diagram images, image legends, and the audio for each item, sentence variant and hotspot. It also checks each task has enough content to ask a question.
+
 **End-to-end tests** (Playwright, `npm run test:e2e`) are in `e2e/`. They build the app with `vite build --mode e2e` into `dist-e2e/`, serve it with `vite preview`, and drive it in Chromium and WebKit at phone size. Use these for what component tests can't see: routing, saved progress, module enablement, and the service worker. `npm run test:e2e:ui` opens Playwright's UI for stepping through a test. The first time, install the browsers with `npx playwright install chromium webkit`.
 
 The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the PIN `246810`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**.
 
+| File | Covers |
+|---|---|
+| `tasks.spec.ts` | Every task in every module opens, and all its images load |
+| `quizzes.spec.ts` | One task of each quiz type answered to a perfect score, saved and kept after a reload; a worse result replacing the saved one; right and wrong answer feedback |
+| `audio.spec.ts` | Every task with audio asks for a sound file that exists and matches an answer on screen; the replay button |
+| `navigation.spec.ts` | Back buttons, the browser's back button, deep links, unknown modules and tasks |
+| `learner.spec.ts` | A study guide marked complete is remembered |
+| `enablement.spec.ts` | Module enablement on the home and admin pages |
+| `offline.spec.ts` | The last known module config is used offline |
+
+Most tests import `test` from `e2e/fixtures.ts` rather than from Playwright. It installs the fake config API with every module enabled, and records every `new Audio(src)` the page makes, since headless browsers may never play the sound. The quiz tests answer from the module's `data.json`: `e2e/helpers/quiz.ts` works out the right answer from what is on screen, or from the audio file just asked for. They pause the page's clock (`pauseClock`) and move it on past the pause after each answer, so a 14-question quiz takes well under a second.
+
 Service workers are blocked by default in the e2e tests, because Playwright can't intercept a service worker's own requests in WebKit. `e2e/offline.spec.ts` turns the worker back on, and so only runs in Chromium.
+
+To run the tests while `npm run test:e2e:ui` is already open, give the second run its own port: `E2E_PORT=4175 npm run test:e2e`.
 
 When a test fails in CI, the HTML report with a trace of the failure is uploaded as the `playwright-report` artifact. Locally, open a trace with `npx playwright show-trace test-results/<test>/trace.zip`.
 

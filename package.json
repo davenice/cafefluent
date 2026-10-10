@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "check:content": "vitest run scripts/content.test.ts",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
