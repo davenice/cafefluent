@@ -60,6 +60,17 @@ test.describe('admin page', () => {
     await expect(page.getByRole('checkbox', { name: /^Bread/ })).toBeChecked()
   })
 
+  // The page has to work against a Lambda that has not been redeployed yet, so it
+  // sends the password under the old header name as well as the new one.
+  test('sends the password under both header names', async ({ page, context }) => {
+    const api = new FakeConfigApi({ enabledModules: ['bread'] })
+    await api.install(context)
+    await signIn(page)
+
+    await expect(page.getByRole('checkbox', { name: /^Bread/ })).toBeChecked()
+    expect(api.authHeaderNames).toEqual(['x-admin-key', 'x-admin-pin'])
+  })
+
   test('shows the current state after the right password', async ({ page, context }) => {
     await new FakeConfigApi({
       enabledModules: ['bread'],

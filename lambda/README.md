@@ -93,9 +93,19 @@ both, and the e2e tests in `e2e/enablement.spec.ts`.
 - **POST with empty body + `x-admin-key` header** — sign-in check; returns `{ ok: true, enabledModules, game }`
 - **POST with `{ enabledModules, game }` + `x-admin-key` header** — saves either or both to SSM; returns `{ ok: true }`
 
-`x-admin-pin` is still accepted alongside `x-admin-key`, so the function and the
-site can be deployed minutes apart. Drop both old names once the site is live.
-A wrong or missing password gets a 401 after a 2 second delay. With no secret
-configured at all, every POST is refused.
+`x-admin-pin` is still accepted alongside `x-admin-key`, and the admin page sends
+the password under both names, so a page on the new code still signs in against a
+function on the old code. That is what makes local development work before this
+function is redeployed.
+
+Deploy this function before the site, though. The browser preflights the real
+cross-origin call, and a function still on the old code does not list
+`x-admin-key` as an allowed header, so it would refuse the new page's request
+before the password was ever checked. Local development is not affected, because
+the Vite proxy makes the call same-origin and no preflight happens.
+
+Drop both old names, here and in the admin page, once the function and the site
+are on the new code. A wrong or missing password gets a 401 after a 2 second
+delay. With no secret configured at all, every POST is refused.
 
 `GameSettings` is `{ words: string[], seconds: number, turns: number }`.

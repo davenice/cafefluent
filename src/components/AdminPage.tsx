@@ -5,6 +5,16 @@ import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/setti
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
 
+// The password goes under both header names while the Lambda is mid-move from
+// the PIN: x-admin-key for the new handler, x-admin-pin so the page still works
+// against one that has not been redeployed yet. Drop x-admin-pin once the
+// function is on the new code, together with its fallback there.
+const authHeaders = (password: string) => ({
+  'Content-Type': 'application/json',
+  'x-admin-key': password,
+  'x-admin-pin': password,
+})
+
 type Screen = 'signIn' | 'modules'
 
 export default function AdminPage() {
@@ -29,7 +39,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': value },
+        headers: authHeaders(value),
         body: JSON.stringify({}),
       })
       if (res.status === 401) {
@@ -71,7 +81,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
+        headers: authHeaders(adminKey),
         body: JSON.stringify({
           enabledModules: enabled,
           game: normaliseGameSettings({

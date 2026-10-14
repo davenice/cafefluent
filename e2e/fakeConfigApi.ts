@@ -31,6 +31,8 @@ export class FakeConfigApi {
   mode: Mode = 'ok'
   // Bodies of the POSTs that got past the sign-in, for asserting on what was saved.
   readonly posts: unknown[] = []
+  // Header names the last sign-in arrived under, for asserting on compatibility.
+  authHeaderNames: string[] = []
 
   constructor(initial: Partial<ConfigState> = {}) {
     this.state = { enabledModules: [], game: null, ...initial }
@@ -58,7 +60,9 @@ export class FakeConfigApi {
 
     if (request.method() === 'POST') {
       // Either header name is accepted, as the Lambda does for one release.
-      const given = request.headers()['x-admin-key'] ?? request.headers()['x-admin-pin']
+      const sent = request.headers()
+      this.authHeaderNames = ['x-admin-key', 'x-admin-pin'].filter(h => sent[h] !== undefined)
+      const given = sent['x-admin-key'] ?? sent['x-admin-pin']
       if (!given || given !== TEST_ADMIN_KEY) {
         return reply(401, { error: 'Unauthorized' })
       }
