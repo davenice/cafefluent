@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test'
-import { FakeConfigApi, TEST_PIN } from './fakeConfigApi'
+import { FakeConfigApi, TEST_ADMIN_KEY } from './fakeConfigApi'
 
 const homeCard = (page: Page, title: string) =>
   page.getByRole('main').getByRole('link', { name: new RegExp(`^${title}`) })
@@ -34,20 +34,33 @@ test.describe('home page', () => {
 })
 
 test.describe('admin page', () => {
-  async function signIn(page: Page, pin = TEST_PIN) {
+  async function signIn(page: Page, password = TEST_ADMIN_KEY) {
     await page.goto('/#/admin')
-    await page.getByPlaceholder('····').fill(pin)
+    await page.getByLabel('Password').fill(password)
+    await page.getByRole('button', { name: 'Sign in' }).click()
   }
 
-  test('rejects a wrong PIN', async ({ page, context }) => {
+  test('rejects a wrong password', async ({ page, context }) => {
     await new FakeConfigApi().install(context)
-    await signIn(page, '000000')
+    await signIn(page, 'not-the-password')
 
-    await expect(page.getByText('Incorrect PIN')).toBeVisible()
-    await expect(page.getByPlaceholder('····')).toHaveValue('')
+    await expect(page.getByText('Incorrect password')).toBeVisible()
+    await expect(page.getByLabel('Password')).toHaveValue('')
   })
 
-  test('shows the current state after the right PIN', async ({ page, context }) => {
+  // The field takes a password of any length, so the secret can be replaced with
+  // a long one without touching the app.
+  test('accepts a long password', async ({ page, context }) => {
+    const api = new FakeConfigApi({ enabledModules: ['bread'] })
+    await api.install(context)
+    await page.goto('/#/admin')
+    await page.getByLabel('Password').fill(TEST_ADMIN_KEY)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+
+    await expect(page.getByRole('checkbox', { name: /^Bread/ })).toBeChecked()
+  })
+
+  test('shows the current state after the right password', async ({ page, context }) => {
     await new FakeConfigApi({
       enabledModules: ['bread'],
       game: { words: ['latte', 'scone'], seconds: 45, turns: 6 },
@@ -92,7 +105,7 @@ test.describe('admin page', () => {
     expect(api.state.game).toEqual({ words: ['flat white', 'croissant'], seconds: 30, turns: 4 })
   })
 
-  test('explains a server error at the PIN screen', async ({ page, context }) => {
+  test('explains a server error at the sign-in screen', async ({ page, context }) => {
     const api = new FakeConfigApi()
     api.mode = 'error'
     await api.install(context)
@@ -101,7 +114,7 @@ test.describe('admin page', () => {
     await expect(page.getByText('The server had a problem. Try again later.')).toBeVisible()
   })
 
-  test('explains a lost connection at the PIN screen', async ({ page, context }) => {
+  test('explains a lost connection at the sign-in screen', async ({ page, context }) => {
     const api = new FakeConfigApi()
     api.mode = 'offline'
     await api.install(context)

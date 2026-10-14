@@ -1,17 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MODULES, DESCRIBE_GAME } from '../data/modules'
 import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/settings'
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
 
-type Screen = 'pin' | 'modules'
+type Screen = 'signIn' | 'modules'
 
 export default function AdminPage() {
   const navigate = useNavigate()
-  const [screen, setScreen] = useState<Screen>('pin')
-  const [pin, setPin] = useState('')
-  const [pinError, setPinError] = useState<string | null>(null)
+  const [screen, setScreen] = useState<Screen>('signIn')
+  // The admin password. Held only for as long as the page is open, and sent on
+  // each request; the browser's password manager is what remembers it.
+  const [adminKey, setAdminKey] = useState('')
+  const [signInError, setSignInError] = useState<string | null>(null)
   const [checking, setChecking] = useState(false)
   const [enabled, setEnabled] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
@@ -21,24 +23,24 @@ export default function AdminPage() {
   const [gameSeconds, setGameSeconds] = useState('')
   const [gameTurns, setGameTurns] = useState('')
 
-  async function checkPin(value: string) {
+  async function signIn(value: string) {
     setChecking(true)
-    setPinError(null)
+    setSignInError(null)
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-pin': value },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': value },
         body: JSON.stringify({}),
       })
       if (res.status === 401) {
-        setPinError('Incorrect PIN')
-        setPin('')
+        setSignInError('Incorrect password')
+        setAdminKey('')
         return
       }
       const data = await res.json().catch(() => null)
       if (!res.ok || !Array.isArray(data?.enabledModules)) {
-        setPinError('The server had a problem. Try again later.')
-        setPin('')
+        setSignInError('The server had a problem. Try again later.')
+        setAdminKey('')
         return
       }
       setEnabled(data.enabledModules)
@@ -48,15 +50,16 @@ export default function AdminPage() {
       setGameTurns(String(game.turns))
       setScreen('modules')
     } catch {
-      setPinError('Could not reach the server. Check the connection.')
+      setSignInError('Could not reach the server. Check the connection.')
     } finally {
       setChecking(false)
     }
   }
 
-  useEffect(() => {
-    if (pin.length === 6) checkPin(pin)
-  }, [pin])
+  function handleSignIn(e: React.FormEvent) {
+    e.preventDefault()
+    if (!checking && adminKey) signIn(adminKey)
+  }
 
   function toggleModule(id: string) {
     setEnabled(prev => prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id])
@@ -68,7 +71,7 @@ export default function AdminPage() {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-pin': pin },
+        headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
         body: JSON.stringify({
           enabledModules: enabled,
           game: normaliseGameSettings({
@@ -87,26 +90,46 @@ export default function AdminPage() {
     }
   }
 
-  if (screen === 'pin') {
+  if (screen === 'signIn') {
     return (
       <div style={styles.page}>
-        <div style={styles.pinGroup}>
-          <div style={styles.pinCard}>
+        <div style={styles.signInGroup}>
+          <form onSubmit={handleSignIn} style={styles.signInCard}>
             <h1 style={styles.title}>Admin</h1>
+            {/* Not shown, and not typed into: it gives the password manager a name
+                to file the saved password under. */}
             <input
-              type="password"
-              inputMode="numeric"
-              maxLength={6}
-              value={pin}
-              onChange={e => setPin(e.target.value.replace(/\D/g, ''))}
-              placeholder="····"
-              style={{ ...styles.pinInput, ...(pinError ? styles.pinInputError : {}) }}
-              disabled={checking}
-              autoFocus
+              type="text"
+              name="username"
+              value="cafefluent-admin"
+              readOnly
+              tabIndex={-1}
+              autoComplete="username"
+              style={styles.hiddenField}
             />
-            {pinError && <p style={styles.error}>{pinError}</p>}
-          </div>
-          {/* Outside the PIN on purpose: volunteers recording on an installed app can't reach it by URL */}
+            <label style={styles.field}>
+              <span style={styles.fieldLabel}>Password</span>
+              <input
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                value={adminKey}
+                onChange={e => setAdminKey(e.target.value)}
+                style={{ ...styles.passwordInput, ...(signInError ? styles.passwordInputError : {}) }}
+                disabled={checking}
+                autoFocus
+              />
+            </label>
+            {signInError && <p style={styles.error}>{signInError}</p>}
+            <button
+              type="submit"
+              disabled={checking || !adminKey}
+              style={{ ...styles.signInButton, ...(checking || !adminKey ? styles.signInButtonDisabled : {}) }}
+            >
+              {checking ? 'Checking…' : 'Sign in'}
+            </button>
+          </form>
+          {/* Outside the sign-in on purpose: volunteers recording on an installed app can't reach it by URL */}
           <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
         </div>
       </div>
@@ -211,7 +234,7 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh',
     padding: '0 16px 32px',
   },
-  pinGroup: {
+  signInGroup: {
     margin: 'auto',
     display: 'flex',
     flexDirection: 'column',
@@ -220,11 +243,11 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     maxWidth: 280,
   },
-  pinCard: {
+  signInCard: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
-    gap: 20,
+    alignItems: 'stretch',
+    gap: 16,
     padding: '40px 32px',
     background: 'var(--color-surface)',
     borderRadius: 'var(--radius)',
@@ -236,20 +259,39 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 22,
     fontWeight: 700,
     color: 'var(--color-primary)',
-  },
-  pinInput: {
-    width: '100%',
-    fontSize: 28,
     textAlign: 'center',
-    letterSpacing: 12,
-    padding: '12px 16px',
+  },
+  passwordInput: {
+    width: '100%',
+    fontSize: 16,
+    padding: '12px 14px',
     border: '2px solid var(--color-border)',
     borderRadius: 'var(--radius-sm)',
     outline: 'none',
     background: 'var(--color-bg)',
   },
-  pinInputError: {
+  passwordInputError: {
     borderColor: 'var(--color-wrong)',
+  },
+  signInButton: {
+    padding: '14px',
+    borderRadius: 'var(--radius)',
+    background: 'var(--color-primary)',
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: 600,
+  },
+  signInButtonDisabled: {
+    opacity: 0.5,
+  },
+  hiddenField: {
+    position: 'absolute',
+    width: 1,
+    height: 1,
+    padding: 0,
+    border: 0,
+    opacity: 0,
+    pointerEvents: 'none',
   },
   error: {
     color: 'var(--color-wrong)',

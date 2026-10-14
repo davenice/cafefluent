@@ -2,7 +2,7 @@ import type { BrowserContext, Route } from '@playwright/test'
 
 // Must match VITE_MODULES_API_URL in .env.e2e.
 export const API_URL = 'https://modules.test/'
-export const TEST_PIN = '246810'
+export const TEST_ADMIN_KEY = 'test-admin-key'
 
 export interface GameSettings {
   words: string[]
@@ -24,12 +24,12 @@ type Mode = 'ok' | 'error' | 'offline'
  * API URL inside the browser. It copies the Lambda's request/response contract,
  * so if the Lambda changes, change this to match (see "Testing" in README.md).
  *
- * Not copied: CloudWatch logging, and the 2 second delay on a wrong PIN.
+ * Not copied: CloudWatch logging, and the 2 second delay on a wrong password.
  */
 export class FakeConfigApi {
   state: ConfigState
   mode: Mode = 'ok'
-  // Bodies of the POSTs that got past the PIN check, for asserting on what was saved.
+  // Bodies of the POSTs that got past the sign-in, for asserting on what was saved.
   readonly posts: unknown[] = []
 
   constructor(initial: Partial<ConfigState> = {}) {
@@ -45,8 +45,9 @@ export class FakeConfigApi {
     const headers = {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': request.headers().origin ?? '*',
-      'Access-Control-Allow-Headers': 'content-type, x-admin-pin',
+      'Access-Control-Allow-Headers': 'content-type, x-admin-key, x-admin-pin',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      Vary: 'Origin',
     }
     const reply = (status: number, body?: unknown) =>
       route.fulfill({ status, headers, body: body === undefined ? '' : JSON.stringify(body) })
@@ -56,7 +57,9 @@ export class FakeConfigApi {
     if (this.mode === 'error') return reply(500, { error: 'Internal error' })
 
     if (request.method() === 'POST') {
-      if (request.headers()['x-admin-pin'] !== TEST_PIN) {
+      // Either header name is accepted, as the Lambda does for one release.
+      const given = request.headers()['x-admin-key'] ?? request.headers()['x-admin-pin']
+      if (!given || given !== TEST_ADMIN_KEY) {
         return reply(401, { error: 'Unauthorized' })
       }
 
@@ -74,7 +77,7 @@ export class FakeConfigApi {
         return reply(200, { ok: true })
       }
 
-      // PIN check only — return current state
+      // Sign-in check only — return current state
       return reply(200, { ok: true, ...this.state })
     }
 

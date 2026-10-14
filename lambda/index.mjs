@@ -1,9 +1,28 @@
-import { createHmac } from 'node:crypto'
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
 import { SSMClient, GetParameterCommand, PutParameterCommand } from '@aws-sdk/client-ssm'
 
 const ssm = new SSMClient()
 const SSM_NAME = '/cafefluent/enabled-modules'
 const GAME_SSM_NAME = '/cafefluent/game-settings'
+
+// --- Admin sign-in -----------------------------------------------------------
+// The admin page sends a password, so the secret can be any length. ADMIN_KEY
+// replaces ADMIN_PIN, and x-admin-key replaces x-admin-pin: both names are
+// accepted for one release so the function and the site can be deployed minutes
+// apart without locking the admins out. Once the site is live, set ADMIN_KEY to
+// a long random value and delete ADMIN_PIN, then drop the old names here.
+
+const sha256 = value => createHash('sha256').update(value).digest()
+
+function adminKeyMatches(event) {
+  const expected = process.env.ADMIN_KEY || process.env.ADMIN_PIN
+  const given = event.headers?.['x-admin-key'] ?? event.headers?.['x-admin-pin']
+  // Fails closed: with no secret configured, nothing can sign in. Hashing first
+  // makes the comparison fixed-length, so neither the secret nor its length
+  // leaks through timing.
+  if (!expected || typeof given !== 'string') return false
+  return timingSafeEqual(sha256(given), sha256(expected))
+}
 
 // --- Usage logging -----------------------------------------------------------
 // One JSON line per request, queryable in CloudWatch Logs Insights.
@@ -48,8 +67,10 @@ function corsHeaders(event) {
   return {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://cafefluent.dandr.org',
-    'Access-Control-Allow-Headers': 'content-type, x-admin-pin',
+    'Access-Control-Allow-Headers': 'content-type, x-admin-key, x-admin-pin',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    // The allowed origin depends on the request, so caches must not share one answer.
+    Vary: 'Origin',
   }
 }
 
@@ -93,8 +114,8 @@ async function handleRequest(event) {
     }
 
     if (method === 'POST') {
-      if (event.headers['x-admin-pin'] !== process.env.ADMIN_PIN) {
-        console.warn(`Failed PIN attempt from client ${clientId(event.requestContext?.http?.sourceIp) ?? 'unknown'}`)
+      if (!adminKeyMatches(event)) {
+        console.warn(`Failed admin sign-in from client ${clientId(event.requestContext?.http?.sourceIp) ?? 'unknown'}`)
         await new Promise(r => setTimeout(r, 2000))
         return { statusCode: 401, headers, body: JSON.stringify({ error: 'Unauthorized' }) }
       }
