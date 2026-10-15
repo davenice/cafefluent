@@ -28,6 +28,9 @@ to the recordings bucket, and the config Lambda's contract is unchanged.
      `node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))"`
      The function URL is open to anyone, so this password is the only thing
      protecting the contributor list. With it unset, every admin request is refused.
+     **Use the same value as the config Lambda's `ADMIN_KEY`.** The admin page signs
+     in once and sends that password to both functions. If the two differ, the
+     modules still load, but Voice contributors says the password wasn't accepted.
    - `BUCKET`: the bucket name
    - `ALLOW_LOCALHOST`: set to `true` only on a function used for local development.
      Leave it off in production, so only the live site is allowed as an origin.
@@ -124,9 +127,10 @@ Every request writes one JSON line to CloudWatch Logs. The line never includes a
 fake copies ETags and conditional writes, because the admin routes rely on them.
 It runs as part of `npm test`.
 
-The contributor page (`record.html`) is tested end to end against
-`e2e/fakeRecordingsApi.ts`, which copies the contributor routes. When you change
-them, change the fake and `e2e/record.spec.ts` to match.
+The contributor page (`record.html`) and the admin page's Voice contributors
+section are tested end to end against `e2e/fakeRecordingsApi.ts`, which copies
+every route. When you change them, change the fake and `e2e/record.spec.ts` and
+`e2e/contributors.spec.ts` to match.
 
 ## Deploy order for the contributor page
 

@@ -57,7 +57,7 @@ There are two kinds of tests. Both run on every pull request.
 
 **End-to-end tests** (Playwright, `npm run test:e2e`) are in `e2e/`. They build the app with `vite build --mode e2e` into `dist-e2e/`, serve it with `vite preview`, and drive it in Chromium and WebKit at phone size. Use these for what component tests can't see: routing, saved progress, module enablement, and the service worker. `npm run test:e2e:ui` opens Playwright's UI for stepping through a test. The first time, install the browsers with `npx playwright install chromium webkit`.
 
-The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the admin password from `TEST_ADMIN_KEY`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**. `e2e/fakeRecordingsApi.ts` does the same for the recordings Lambda's contributor routes, at `https://recordings.test/`.
+The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the admin password from `TEST_ADMIN_KEY`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**. `e2e/fakeRecordingsApi.ts` does the same for the recordings Lambda, at `https://recordings.test/`.
 
 | File | Covers |
 |---|---|
@@ -68,6 +68,7 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | `learner.spec.ts` | A study guide marked complete is remembered |
 | `enablement.spec.ts` | Module enablement on the home and admin pages |
 | `offline.spec.ts` | The last known module config is used offline |
+| `contributors.spec.ts` | The admin page's Voice contributors section: listing, adding and the one-time link, copying it, stopping a link, and the recordings server failing or rejecting the password |
 | `record.spec.ts` | The contributor page: bad and missing links, consent, and (Chromium only, with a fake microphone) clips sent as recorded, kept while offline, sent on the next visit, and a link revoked mid-session; the service worker leaving `record.html` alone |
 
 Most tests import `test` from `e2e/fixtures.ts` rather than from Playwright. It installs the fake config API with every module enabled, and records every `new Audio(src)` the page makes, since headless browsers may never play the sound. The quiz tests answer from the module's `data.json`: `e2e/helpers/quiz.ts` works out the right answer from what is on screen, or from the audio file just asked for. They pause the page's clock (`pauseClock`) and move it on past the pause after each answer, so a 14-question quiz takes well under a second.
@@ -234,7 +235,10 @@ field instead: an SSML fragment that replaces the name wherever it is spoken, ty
 ## Recording real voices
 
 Contributors record every clip in their own voice from a personal link,
-`https://cafefluent.dandr.org/record.html?t=<token>`. They read each phrase on screen; two
+`https://cafefluent.dandr.org/record.html?t=<token>`. The admin page's "Voice contributors"
+section adds someone and shows their link once (only a hash of the token is kept, so a lost
+link is replaced by stopping it and adding them again). It also lists how many clips each
+person has recorded, and stops a link. They read each phrase on screen; two
 seconds of silence saves the clip and shows the next one. Each clip is sent straight to S3
 by the recordings Lambda ([lambda-recordings/README.md](lambda-recordings/README.md)), so
 there is nothing for them to send us.
