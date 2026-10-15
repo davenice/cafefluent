@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "generate:audio": "node scripts/generate-audio.mjs",
     "generate:drink-svgs": "node scripts/generate-drink-svgs.mjs",
+    "fetch:recordings": "node scripts/fetch-recordings.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

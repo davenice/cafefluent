@@ -14,6 +14,7 @@ npm test           # run unit and component tests
 npm run test:watch # tests in watch mode
 npm run test:e2e   # run end-to-end tests in real browsers
 npm run check:content # check every image and audio file the quizzes use exists
+npm run fetch:recordings # download contributors' voice clips into recordings/
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -265,6 +266,20 @@ The microphone needs https or localhost. To test locally, point `VITE_RECORDINGS
 in `.env.local` at a recordings function with `ALLOW_LOCALHOST=true`, and open
 `http://localhost:5173/record.html?t=<token>`.
 Code is in `src/recorder/`, `src/components/RecordPage.tsx` and `src/components/ContributorPage.tsx`.
+
+### Fetching the recordings
+
+```bash
+export AWS_REGION=eu-west-1   # the bucket's region
+npm run fetch:recordings
+```
+
+This copies every clip from the bucket into `recordings/<contributor-id>/<module>/<item>_<variant>.wav`
+(git-ignored). Re-running only downloads new clips and ones recorded again since the last fetch,
+and never deletes anything locally. The bucket defaults to `cafefluent-recordings`; set
+`RECORDINGS_BUCKET` or pass `--bucket=<name>` for another. Your AWS credentials need
+`s3:ListBucket` and `s3:GetObject` on the bucket. Code and tests are in
+`scripts/fetch-recordings.mjs` and `scripts/fetch-recordings.test.mjs`.
 
 ---
 
