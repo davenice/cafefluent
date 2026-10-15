@@ -12,9 +12,11 @@ All text a learner sees or hears (item names, descriptions, module intros, sente
 
 When adding or changing a quiz type, keep the tests in step: the files it loads go in `expectedFiles` in `scripts/content.test.ts`, and how to find its right answer goes in `correctAnswer` in `e2e/helpers/quiz.ts`. The e2e tests pick up new modules and tasks from `src/data/modules.ts` by themselves.
 
-## Changing the config Lambda
+## Changing a Lambda
 
 The e2e tests never call the real Lambda. `e2e/fakeConfigApi.ts` answers in its place and copies the contract of `lambda/index.mjs`: the methods, the sign-in check, the request and response bodies, and the status codes. **If you change the Lambda, update the fake and the e2e tests (`e2e/enablement.spec.ts`) to match in the same change**, as well as `lambda/index.test.mjs`. Otherwise the e2e tests keep passing against the old behaviour, and a mismatch between the app and the Lambda will not be caught.
+
+The same applies to the recordings Lambda: `e2e/fakeRecordingsApi.ts` copies `lambda-recordings/index.mjs`, and its e2e tests are `e2e/record.spec.ts`.
 
 ## Deploying a change that spans a Lambda and the app
 

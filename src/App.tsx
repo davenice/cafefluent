@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react'
 import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import HomePage from './components/HomePage'
 import ModulePage from './components/ModulePage'
@@ -7,9 +6,6 @@ import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
 import DescribeGamePage from './components/DescribeGamePage'
 import UpdatePrompt from './components/UpdatePrompt'
-
-// Voice recorder for volunteers. Loaded on demand: learners never need it.
-const RecordPage = lazy(() => import('./components/RecordPage'))
 
 declare const __BUILD_DATE__: string
 declare const __BUILD_COMMIT__: string
@@ -36,7 +32,6 @@ export default function App() {
         <Route path="/calibrate" element={<CalibratePage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/describe-it" element={<DescribeGamePage />} />
-        <Route path="/record" element={<Suspense fallback={null}><RecordPage /></Suspense>} />
       </Routes>
       <BuildStamp />
       <UpdatePrompt />

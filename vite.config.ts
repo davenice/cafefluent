@@ -34,6 +34,12 @@ export default defineConfig(({ mode }) => ({
     __BUILD_COMMIT__: JSON.stringify(buildCommit),
   },
   base: '/',
+  build: {
+    rolldownOptions: {
+      // record.html is the page contributors' links open; see src/record/main.tsx.
+      input: { main: 'index.html', record: 'record.html' },
+    },
+  },
   server: {
     proxy: {
       '/modules-api': {
@@ -65,9 +71,24 @@ export default defineConfig(({ mode }) => ({
         // runtime cache is populated before the user ever goes offline.
         clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg,webp,json}'],
+        // The contributor page isn't part of the app. Without the denylist the
+        // worker would answer a learner's device opening a contributor link with
+        // the app's index.html.
+        globIgnores: ['**/node_modules/**/*', 'record.html'],
+        navigateFallbackDenylist: [/^\/record\.html/],
         runtimeCaching: configCaching(loadEnv(mode, process.cwd(), 'VITE_').VITE_MODULES_API_URL),
       },
     }),
+    // The PWA plugin links the app manifest from every page. On record.html that
+    // would offer to install the learner app, so take it out there.
+    {
+      name: 'record-page-without-manifest',
+      enforce: 'post',
+      transformIndexHtml: {
+        order: 'post',
+        handler: (html, ctx) => (ctx.path === '/record.html' ? html.replace(/\s*<link rel="manifest"[^>]*>/, '') : html),
+      },
+    },
   ],
   test: {
     environment: 'jsdom',

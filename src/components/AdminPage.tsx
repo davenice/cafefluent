@@ -139,8 +139,6 @@ export default function AdminPage() {
               {checking ? 'Checking…' : 'Sign in'}
             </button>
           </form>
-          {/* Outside the sign-in on purpose: volunteers recording on an installed app can't reach it by URL */}
-          <Link to="/record" style={styles.toolLink}>Voice recorder →</Link>
         </div>
       </div>
     )
@@ -331,12 +329,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: 12,
     cursor: 'pointer',
-  },
-  toolLink: {
-    fontSize: 14,
-    fontWeight: 600,
-    color: 'var(--color-primary)',
-    textDecoration: 'none',
   },
   previewLink: {
     alignSelf: 'flex-start',
