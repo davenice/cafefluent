@@ -19,6 +19,10 @@ to the recordings bucket, and the config Lambda's contract is unchanged.
 3. AWS Console → Lambda → Create function
    - Runtime: Node.js 22.x
    - Architecture: x86_64
+   - Execution role: **Create a new role with basic Lambda permissions** (the
+     default). Don't reuse the config Lambda's role: that would give the config
+     function access to the recordings bucket too, which is what keeping the two
+     functions apart avoids.
 4. Upload `function.zip` as the code source
 5. Configuration → Function URL → Create function URL
    - Auth type: NONE
@@ -34,7 +38,14 @@ to the recordings bucket, and the config Lambda's contract is unchanged.
    - `BUCKET`: the bucket name
    - `ALLOW_LOCALHOST`: set to `true` only on a function used for local development.
      Leave it off in production, so only the live site is allowed as an origin.
-7. Configuration → Permissions → add inline policy:
+7. Add the bucket permissions to the function's role. **Add this policy; don't
+   replace or remove the role's existing one.** The role already has a policy
+   named like `AWSLambdaBasicExecutionRole-…`, which lets the function write to
+   CloudWatch Logs. Without it you lose the request logs and error output.
+   - Configuration → Permissions → click the role name (opens IAM)
+   - Add permissions → Create inline policy → JSON, and paste the policy below,
+     with your bucket name in place of `cafefluent-recordings`
+   - The role then has two policies: the logging one, and this one.
    ```json
    {
      "Version": "2012-10-17",
