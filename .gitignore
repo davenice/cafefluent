@@ -28,5 +28,5 @@ playwright-report/
 *.sln
 *.sw?
 
-# Voice recordings from /#/record, unzipped
+# Contributors' voice recordings, from npm run fetch:recordings
 recordings/
