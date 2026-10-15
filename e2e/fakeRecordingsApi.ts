@@ -88,7 +88,12 @@ export class FakeRecordingsApi {
         const [module, file] = key.split('/')
         return { module, file }
       })
-      return reply(200, { id: contributor.id, name: contributor.name, consented: contributor.consented, clips })
+      const recordedByOthers: Record<string, number> = {}
+      for (const other of this.contributors) {
+        if (other === contributor) continue
+        for (const key of other.clips.keys()) recordedByOthers[key] = (recordedByOthers[key] ?? 0) + 1
+      }
+      return reply(200, { id: contributor.id, name: contributor.name, consented: contributor.consented, clips, recordedByOthers })
     }
 
     if (method === 'POST' && parts.length === 2 && parts[0] === 'me' && parts[1] === 'consent') {

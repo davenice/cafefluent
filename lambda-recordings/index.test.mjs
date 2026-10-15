@@ -314,7 +314,38 @@ describe('contributor', () => {
     const c = await addContributor()
     const res = await request('GET', '/me', { token: c.token })
     expect(res.statusCode).toBe(200)
-    expect(json(res)).toEqual({ id: c.id, name: 'Amira Haddad', consented: false, clips: [] })
+    expect(json(res)).toEqual({ id: c.id, name: 'Amira Haddad', consented: false, clips: [], recordedByOthers: {} })
+  })
+
+  it('counts how many other people have recorded each phrase, not counting their own', async () => {
+    listing.pageSize = 2
+    const [a, b, c] = [await consentingContributor(), await consentingContributor(), await consentingContributor()]
+    for (const who of [a, b]) {
+      await request('PUT', '/clips/allergens/milk_name.wav', { token: who.token, base64: wav() })
+    }
+    await request('PUT', '/clips/allergens/eggs_name.wav', { token: b.token, base64: wav() })
+    await request('PUT', '/clips/coffee/handle_name.wav', { token: c.token, base64: wav() })
+
+    expect(json(await request('GET', '/me', { token: c.token })).recordedByOthers).toEqual({
+      'allergens/milk_name.wav': 2,
+      'allergens/eggs_name.wav': 1,
+    })
+    const forA = json(await request('GET', '/me', { token: a.token }))
+    expect(forA.clips).toEqual([{ module: 'allergens', file: 'milk_name.wav' }])
+    expect(forA.recordedByOthers).toEqual({
+      'allergens/milk_name.wav': 1,
+      'allergens/eggs_name.wav': 1,
+      'coffee/handle_name.wav': 1,
+    })
+  })
+
+  it('never names the other people', async () => {
+    const other = await consentingContributor()
+    await request('PUT', '/clips/allergens/milk_name.wav', { token: other.token, base64: wav() })
+    const me = await addContributor('Sam')
+    const body = (await request('GET', '/me', { token: me.token })).body
+    expect(body).not.toContain(other.id)
+    expect(body).not.toContain('Amira')
   })
 
   it('does not give the token or other contributors away', async () => {

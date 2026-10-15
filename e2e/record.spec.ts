@@ -1,6 +1,9 @@
 import type { Page } from '@playwright/test'
 import { test, expect } from './fixtures'
+import { readFileSync } from 'fs'
 import { FakeRecordingsApi, type FakeContributor } from './fakeRecordingsApi'
+import { MODULES } from '../src/data/modules'
+import { buildScript, phraseKey } from '../src/recorder/script'
 
 declare global {
   interface Window {
@@ -18,6 +21,17 @@ test.beforeEach(async ({ context }) => {
   recordings = new FakeRecordingsApi()
   await recordings.install(context)
 })
+
+/** Every phrase the recorder asks for, built the way the page builds it. */
+function allPhrases() {
+  return buildScript(
+    MODULES.filter((m) => m.audioBase).map((m) => ({
+      id: m.id,
+      title: m.title,
+      data: JSON.parse(readFileSync(`public${m.dataUrl}`, 'utf8')),
+    })),
+  )
+}
 
 const open = (page: Page, contributor: FakeContributor) => page.goto(`/record.html?t=${contributor.token}`)
 
@@ -166,9 +180,39 @@ test.describe('recording', () => {
     await expect(page.getByText(/^1 \/ \d+ recorded/)).toBeVisible()
 
     await page.getByRole('button', { name: 'Review' }).click()
-    const row = page.getByRole('listitem').filter({ hasText: /^Milk/ }).filter({ hasText: 'saved earlier' })
-    await expect(row).toBeVisible()
+    // Recorded phrases are listed first.
+    const row = page.getByRole('listitem').first()
+    await expect(row).toContainText(/^Milk/)
+    await expect(row).toContainText('saved earlier')
     await expect(row.getByRole('button', { name: 'Play' })).toHaveCount(0)
+    await expect(page.getByRole('listitem').nth(1)).toContainText('not recorded')
+  })
+
+  test('asks first for a phrase no one else has recorded', async ({ page }) => {
+    const phrases = allPhrases()
+    const target = phrases[7]
+    const sam = recordings.add('Sam', { consented: true })
+    for (const p of phrases) if (p !== target) sam.clips.set(phraseKey(p), Buffer.alloc(0))
+
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+    await expect(page.getByText(target.text, { exact: true })).toBeVisible()
+  })
+
+  test('uses what others have recorded since the page opened', async ({ page }) => {
+    const phrases = allPhrases()
+    const target = phrases[11]
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await expect(page.getByRole('button', { name: 'Start' })).toBeVisible()
+
+    // Sam records everything but one while Amira's page sits open.
+    const sam = recordings.add('Sam', { consented: true })
+    for (const p of phrases) if (p !== target) sam.clips.set(phraseKey(p), Buffer.alloc(0))
+
+    await startRecording(page)
+    await expect(page.getByText(target.text, { exact: true })).toBeVisible()
   })
 
   test('keeps clips while offline and sends them when the connection is back', async ({ page }) => {

@@ -99,7 +99,7 @@ The admin routes need the `x-admin-key` header. A wrong or missing password gets
 
 Contributor routes need the `x-contributor-token` header from their link. An unknown or revoked token gets a 401.
 
-- **GET `/me`**: returns `{ id, name, consented, clips: [{ module, file }] }`, so a recorder page can resume on any device.
+- **GET `/me`**: returns `{ id, name, consented, clips: [{ module, file }], recordedByOthers }`, so a recorder page can resume on any device. `recordedByOthers` counts how many other contributors have recorded each phrase, keyed by `"<module>/<file>"`, so the recorder can ask for phrases no one has recorded first. It gives counts only, never who. The page treats a missing `recordedByOthers` as no one, so the site and the function can be deployed in either order.
 - **POST `/me/consent`**: records that they agree to their voice being recorded and used in the app.
 - **PUT `/clips/:module/:file`** with the WAV as the body (`Content-Type: audio/wav`): saves the clip, replacing any earlier take.
   - 403 until they have agreed.

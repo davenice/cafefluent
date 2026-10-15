@@ -3,12 +3,12 @@
 // silence saves the clip and moves on. Each clip is saved in the browser, then
 // sent to the server from there (see uploader.ts).
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { openMic, type Mic } from '../recorder/mic'
 import { RecordingSession, measureNoise, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { encodeWav, peakDb, resample } from '../recorder/wav'
-import { loadScript, phraseKey, clipWarnings, speakerOrder, type Phrase, type ClipInfo } from '../recorder/script'
+import { loadScript, phraseKey, clipWarnings, recordingOrder, type Phrase, type ClipInfo } from '../recorder/script'
 import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
 import { Uploader, type UploadStatus } from '../recorder/uploader'
 import type { Me, RecordingsApi } from '../recorder/api'
@@ -43,6 +43,12 @@ function formatDb(db: number): string {
  * The next phrase without a recording: the one after `after` in the speaker's
  * order (or the first, if `after` is null), wrapping round.
  */
+/** Phrase indexes for the review list: the recorded ones first, each group in script order. */
+function reviewOrder(phrases: Phrase[], recorded: Record<string, ClipInfo>): number[] {
+  const indexes = phrases.map((_, i) => i)
+  return [...indexes.filter((i) => recorded[phraseKey(phrases[i])]), ...indexes.filter((i) => !recorded[phraseKey(phrases[i])])]
+}
+
 function nextUnrecorded(order: number[], phrases: Phrase[], recorded: Record<string, ClipInfo>, after: number | null): number | null {
   const start = after === null ? -1 : order.indexOf(after)
   for (let step = 1; step <= order.length; step++) {
@@ -76,7 +82,11 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   const uploaderRef = useRef<Uploader | null>(null)
   const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
   const speaker = contributor.me.id
-  const order = phrases ? speakerOrder(phrases.length, speaker) : []
+  const [recordedByOthers, setRecordedByOthers] = useState(contributor.me.recordedByOthers ?? {})
+  const order = useMemo(
+    () => (phrases ? recordingOrder(phrases, speaker, recordedByOthers) : []),
+    [phrases, speaker, recordedByOthers],
+  )
   const micAvailable = window.isSecureContext && !!navigator.mediaDevices
 
   useEffect(() => {
@@ -120,20 +130,29 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     setStartError(null)
     try {
       requestPersistentStorage()
-      const existing = await listClips(speaker)
+      // What is on the server now, including what other people have recorded
+      // since the page opened. Fetched while the microphone opens, not before:
+      // Safari only lets audio start soon after the tap. Offline, the counts
+      // from when the page opened will do.
+      const latest = contributor.api.me().catch(() => contributor.me)
+      micRef.current ??= await openMic()
+      const [existing, me] = await Promise.all([listClips(speaker), latest])
       const done: Record<string, ClipInfo> = Object.fromEntries(
         existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
       )
-      for (const c of contributor.me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+      for (const c of me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+      const others = me.recordedByOthers ?? {}
       setRecorded(done)
-      micRef.current ??= await openMic()
-      await checkNoise(done)
+      setRecordedByOthers(others)
+      await checkNoise(done, recordingOrder(phrases, speaker, others))
     } catch (e) {
       setStartError(e instanceof Error ? e.message : String(e))
     }
   }
 
-  async function checkNoise(done: Record<string, ClipInfo> = recorded) {
+  // `done` and `phraseOrder` are passed in from start(), whose state updates
+  // haven't reached this render yet.
+  async function checkNoise(done: Record<string, ClipInfo> = recorded, phraseOrder: number[] = order) {
     const mic = micRef.current
     if (!mic || !phrases) return
     sessionRef.current?.stop()
@@ -145,7 +164,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       setStage('too-noisy')
       return
     }
-    startSession(floor, settings, done)
+    startSession(floor, settings, done, phraseOrder)
   }
 
   /** Record in a room that failed the check. The clips may have more background noise. */
@@ -154,12 +173,17 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     startSession(floorDb, { ...settings, quietLimitDb: Math.max(settings.quietLimitDb, floorDb + NOISY_ROOM_MARGIN_DB) })
   }
 
-  function startSession(floor: number, sessionSettings: DetectorSettings, done: Record<string, ClipInfo> = recorded) {
+  function startSession(
+    floor: number,
+    sessionSettings: DetectorSettings,
+    done: Record<string, ClipInfo> = recorded,
+    phraseOrder: number[] = order,
+  ) {
     const mic = micRef.current
     if (!mic || !phrases) return
     const session = new RecordingSession(mic, floor, sessionSettings, (e) => eventHandlerRef.current(e))
     sessionRef.current = session
-    const first = nextUnrecorded(order, phrases, done, null)
+    const first = nextUnrecorded(phraseOrder, phrases, done, null)
     if (first === null) {
       setStage('review')
       return
@@ -467,7 +491,8 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
             <button style={styles.secondaryBtn} onClick={finish}>Finish for now</button>
           </div>
           <ol style={styles.reviewList}>
-            {phrases.map((p, i) => {
+            {reviewOrder(phrases, recorded).map((i) => {
+              const p = phrases[i]
               const clip = recorded[phraseKey(p)]
               const here = clip && clip !== SAVED_ELSEWHERE
               const warnings = here ? clipWarnings(p, clip) : []

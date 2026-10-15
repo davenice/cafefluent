@@ -250,9 +250,12 @@ there is nothing for them to send us.
   the check, with the limit moved 6 dB above its background.
 - The first visit asks the contributor to agree to their voice being used. Nothing is
   saved on the server until they do.
-- Phrases come in a random order seeded by the contributor's id, so several people who only
-  get part way through cover more phrases between them. Opening the link again carries on,
-  on any device: clips already on the server count as done.
+- Phrases no one has recorded yet come first, then ones with one recording, and so on, from
+  counts the recordings Lambda keeps across all contributors (refreshed each time Start is
+  pressed). Within each count the order is a shuffle seeded by the contributor's id, so two
+  people recording at once get different phrases. Opening the link again carries on, on any
+  device: clips already on the server count as done.
+- The review screen lists the recorded phrases first, then the ones still to do.
 - Clips are 22,050 Hz WAVs, about 10 MB for a full set. Each is saved in the browser
   (IndexedDB) first, which works as an outbox: a clip that can't be sent (no connection,
   page closed) is retried, and sent on the next visit at the latest. Leaving the page with
