@@ -123,3 +123,16 @@ Every request writes one JSON line to CloudWatch Logs. The line never includes a
 `index.test.mjs` tests the handler with S3 replaced by an in-memory fake. The
 fake copies ETags and conditional writes, because the admin routes rely on them.
 It runs as part of `npm test`.
+
+The contributor page (`record.html`) is tested end to end against
+`e2e/fakeRecordingsApi.ts`, which copies the contributor routes. When you change
+them, change the fake and `e2e/record.spec.ts` to match.
+
+## Deploy order for the contributor page
+
+`record.html` calls this function at `VITE_RECORDINGS_API_URL`, set in the
+committed `.env`. **Deploy the function first, then set the URL in `.env` and
+deploy the site.** With the URL empty, the page says recording is not open yet,
+so the site can safely go out before the function exists. Pointing it at a
+function that isn't deployed would make every link report a connection error
+instead.

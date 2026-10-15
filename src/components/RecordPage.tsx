@@ -1,6 +1,9 @@
-// Voice recorder (/#/record, not linked from the app). The speaker reads each
-// phrase; two seconds of silence saves the clip and moves on. Clips are kept in
-// the browser until the speaker downloads them as a zip and sends it to us.
+// Voice recorder. The speaker reads each phrase; two seconds of silence saves
+// the clip and moves on. Clips are kept in the browser either way. Then:
+// - at /#/record (not linked from the app), the speaker downloads them as a zip
+//   and sends it to us;
+// - for a contributor, opened from their link (record.html), each clip is sent
+//   to the server as soon as it is saved.
 
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -10,7 +13,15 @@ import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { encodeWav, peakDb, resample } from '../recorder/wav'
 import { loadScript, phraseKey, clipWarnings, speakerOrder, type Phrase, type ClipInfo } from '../recorder/script'
 import { createZip, type ZipEntry } from '../recorder/zip'
-import { listClips, getClip, putClip, requestPersistentStorage } from '../recorder/clipStore'
+import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
+import { Uploader, type UploadStatus } from '../recorder/uploader'
+import type { Me, RecordingsApi } from '../recorder/api'
+
+/** Someone recording from their personal link. */
+export interface Contributor {
+  me: Me
+  api: RecordingsApi
+}
 
 type Stage = 'setup' | 'checking' | 'too-noisy' | 'recording' | 'review'
 
@@ -22,6 +33,11 @@ const SAVE_SAMPLE_RATE = 22050
 function slug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
+
+// A clip on the server but not in this browser: recorded on another device, or
+// before the browser's storage was cleared. It counts as done, but there is
+// nothing here to play.
+const SAVED_ELSEWHERE: ClipInfo = { durationMs: NaN, peakDb: NaN }
 
 function formatDb(db: number): string {
   return `${Math.round(db)} dB`
@@ -40,7 +56,7 @@ function nextUnrecorded(order: number[], phrases: Phrase[], recorded: Record<str
   return null
 }
 
-export default function RecordPage() {
+export default function RecordPage({ contributor }: { contributor?: Contributor }) {
   const [phrases, setPhrases] = useState<Phrase[] | null>(null)
   const [loadError, setLoadError] = useState(false)
   const [speakerName, setSpeakerName] = useState('')
@@ -58,11 +74,14 @@ export default function RecordPage() {
   const [hearing, setHearing] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [zipping, setZipping] = useState(false)
+  const [upload, setUpload] = useState<UploadStatus | null>(null)
 
   const micRef = useRef<Mic | null>(null)
   const sessionRef = useRef<RecordingSession | null>(null)
   const eventHandlerRef = useRef<(e: SessionEvent) => void>(() => {})
-  const speaker = slug(speakerName)
+  const uploaderRef = useRef<Uploader | null>(null)
+  const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
+  const speaker = contributor ? contributor.me.id : slug(speakerName)
   const order = phrases ? speakerOrder(phrases.length, speaker) : []
   const micAvailable = window.isSecureContext && !!navigator.mediaDevices
 
@@ -74,13 +93,45 @@ export default function RecordPage() {
     }
   }, [])
 
+  // Send anything left from an earlier visit, then each clip as it is saved, and
+  // everything waiting whenever the browser comes back online.
+  useEffect(() => {
+    if (!contributor) return
+    const uploader = new Uploader(
+      { pending: () => pendingClips(contributor.me.id), markUploaded },
+      contributor.api,
+      (s) => uploadStatusRef.current(s),
+    )
+    uploaderRef.current = uploader
+    uploader.flush()
+    const onOnline = () => uploader.flush()
+    window.addEventListener('online', onOnline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      uploader.stop()
+    }
+  }, [contributor])
+
+  // Clips not yet sent are safe in the browser and go on the next visit, but
+  // the contributor may not come back.
+  const unsent = upload !== null && upload.pending > 0 && upload.state !== 'revoked'
+  useEffect(() => {
+    if (!unsent) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [unsent])
+
   async function start() {
     if (!phrases || !speaker) return
     setStartError(null)
     try {
       requestPersistentStorage()
       const existing = await listClips(speaker)
-      const done = Object.fromEntries(existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]))
+      const done: Record<string, ClipInfo> = Object.fromEntries(
+        existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
+      )
+      for (const c of contributor?.me.clips ?? []) done[phraseKey(c)] ??= SAVED_ELSEWHERE
       setRecorded(done)
       micRef.current ??= await openMic()
       await checkNoise(done)
@@ -160,10 +211,23 @@ export default function RecordPage() {
         wav: encodeWav(saved, SAVE_SAMPLE_RATE),
         durationMs: Math.round((saved.length / SAVE_SAMPLE_RATE) * 1000),
         peakDb: peakDb(saved),
+        recordedAt: Date.now(),
       })
+      uploaderRef.current?.flush()
     } catch (e) {
       setSaveError(`Could not save “${phrase.text}”: ${e instanceof Error ? e.message : e}`)
-      pause('A clip could not be saved. The device may be out of space. Download the zip, then press Resume.')
+      pause(
+        contributor
+          ? 'A clip could not be saved. The device may be out of space. Press Resume to try again.'
+          : 'A clip could not be saved. The device may be out of space. Download the zip, then press Resume.',
+      )
+    }
+  }
+
+  function handleUploadStatus(s: UploadStatus) {
+    setUpload(s)
+    if (s.state === 'revoked' && stage === 'recording') {
+      pause('This link has stopped working, so your recordings can’t be sent. Ask the person who sent it for a new one.')
     }
   }
 
@@ -210,6 +274,7 @@ export default function RecordPage() {
   // The session calls back from the audio thread; always route to the latest handler.
   useEffect(() => {
     eventHandlerRef.current = handleEvent
+    uploadStatusRef.current = handleUploadStatus
   })
 
   useEffect(() => {
@@ -272,19 +337,23 @@ export default function RecordPage() {
     <div style={styles.page}>
       <div style={styles.header}>
         <h1 style={styles.heading}>Voice recorder</h1>
-        <Link to="/" style={styles.homeLink}>Home</Link>
+        {!contributor && <Link to="/" style={styles.homeLink}>Home</Link>}
       </div>
 
       {!micAvailable && (
         <p style={styles.error}>
-          The microphone only works on https or localhost. Locally, open http://localhost:5173/#/record on this computer.
+          {contributor
+            ? 'The microphone can’t be used on this page. Open your link in Chrome, Safari or Firefox.'
+            : 'The microphone only works on https or localhost. Locally, open http://localhost:5173/#/record on this computer.'}
         </p>
       )}
       {loadError && <p style={styles.error}>Could not load the module data.</p>}
       {saveError && <p style={styles.error}>{saveError}</p>}
+      {contributor && stage !== 'setup' && <UploadLine status={upload} />}
 
       {stage === 'setup' && (
         <div style={styles.card}>
+          {contributor && <p>Hello, {contributor.me.name}.</p>}
           <p>
             {phrases ? `${phrases.length} phrases to record.` : 'Loading phrases…'} Read each phrase out loud. When you stop
             talking for {settings.endSilenceMs / 1000} seconds, the clip is saved and the next phrase appears.
@@ -294,26 +363,38 @@ export default function RecordPage() {
             <li>Keep the microphone about 20 cm from your mouth.</li>
             <li>Space pauses. Backspace records the last phrase again.</li>
           </ul>
-          <label style={styles.field}>
-            Speaker name
-            <input
-              style={styles.input}
-              value={speakerName}
-              onChange={(e) => setSpeakerName(e.target.value)}
-              placeholder="e.g. Sam"
-            />
-          </label>
-          <div style={styles.notice}>
-            <p>
-              <strong>Your recordings are only saved in this browser.</strong> They are not sent anywhere until you
-              download them.
-            </p>
-            <p>
-              If you clear your browser data, or use a private or incognito window, you will lose anything you have not
-              downloaded.
-            </p>
-            <p>Press “Download zip” before you finish your session, and send us the file.</p>
-          </div>
+          {contributor ? (
+            <div style={styles.notice}>
+              <p>
+                <strong>Each recording is sent to us as soon as you make it.</strong> You don’t need to send us
+                anything.
+              </p>
+              <p>You can stop at any time. Open your link again to carry on where you stopped, on any device.</p>
+            </div>
+          ) : (
+            <>
+              <label style={styles.field}>
+                Speaker name
+                <input
+                  style={styles.input}
+                  value={speakerName}
+                  onChange={(e) => setSpeakerName(e.target.value)}
+                  placeholder="e.g. Sam"
+                />
+              </label>
+              <div style={styles.notice}>
+                <p>
+                  <strong>Your recordings are only saved in this browser.</strong> They are not sent anywhere until you
+                  download them.
+                </p>
+                <p>
+                  If you clear your browser data, or use a private or incognito window, you will lose anything you have not
+                  downloaded.
+                </p>
+                <p>Press “Download zip” before you finish your session, and send us the file.</p>
+              </div>
+            </>
+          )}
 
           <details>
             <summary style={styles.muted}>Settings</summary>
@@ -404,9 +485,11 @@ export default function RecordPage() {
               Record last phrase again
             </button>
             <button style={styles.secondaryBtn} onClick={openReview}>Review</button>
-            <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
-              {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
-            </button>
+            {!contributor && (
+              <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
+                {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
+              </button>
+            )}
           </div>
         </>
       )}
@@ -422,26 +505,29 @@ export default function RecordPage() {
                 Continue recording
               </button>
             )}
-            <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
-              {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
-            </button>
+            {!contributor && (
+              <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
+                {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
+              </button>
+            )}
           </div>
           <ol style={styles.reviewList}>
             {phrases.map((p, i) => {
               const clip = recorded[phraseKey(p)]
-              const warnings = clip ? clipWarnings(p, clip) : []
+              const here = clip && clip !== SAVED_ELSEWHERE
+              const warnings = here ? clipWarnings(p, clip) : []
               return (
                 <li key={phraseKey(p)} style={styles.reviewRow}>
                   <div style={styles.reviewText}>
                     <span>{p.text}</span>
                     <span style={styles.muted}>
-                      {p.moduleTitle} · {clip ? `${(clip.durationMs / 1000).toFixed(1)} s` : 'not recorded'}
+                      {p.moduleTitle} · {here ? `${(clip.durationMs / 1000).toFixed(1)} s` : clip ? 'saved earlier' : 'not recorded'}
                     </span>
                     {warnings.map((w) => (
                       <span key={w} style={styles.warning}>{w}</span>
                     ))}
                   </div>
-                  {clip && <button style={styles.smallBtn} onClick={() => play(p)}>Play</button>}
+                  {here && <button style={styles.smallBtn} onClick={() => play(p)}>Play</button>}
                   <button style={styles.smallBtn} onClick={() => rerecord(i)}>{clip ? 'Redo' : 'Record'}</button>
                 </li>
               )
@@ -451,6 +537,33 @@ export default function RecordPage() {
       )}
     </div>
   )
+}
+
+/** How sending to the server is going. */
+function UploadLine({ status }: { status: UploadStatus | null }) {
+  if (!status) return null
+  const clips = (n: number) => `${n} recording${n === 1 ? '' : 's'}`
+  switch (status.state) {
+    case 'revoked':
+      return <p style={styles.error}>This link has stopped working. Ask the person who sent it for a new one.</p>
+    case 'waiting':
+      return (
+        <p style={styles.error}>
+          No connection. {clips(status.pending)} saved on this device will be sent when the connection is back. Keep this
+          page open.
+        </p>
+      )
+    case 'sending':
+      return <p style={styles.muted}>Sending {clips(status.pending)}…</p>
+    case 'idle':
+      return status.failed > 0 ? (
+        <p style={styles.error}>
+          {clips(status.failed)} could not be sent. Open Review and press Redo on any you recorded just now.
+        </p>
+      ) : (
+        <p style={styles.muted}>All recordings sent.</p>
+      )
+  }
 }
 
 function StatusLight({ paused, hearing }: { paused: boolean; hearing: boolean }) {

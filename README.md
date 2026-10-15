@@ -57,7 +57,7 @@ There are two kinds of tests. Both run on every pull request.
 
 **End-to-end tests** (Playwright, `npm run test:e2e`) are in `e2e/`. They build the app with `vite build --mode e2e` into `dist-e2e/`, serve it with `vite preview`, and drive it in Chromium and WebKit at phone size. Use these for what component tests can't see: routing, saved progress, module enablement, and the service worker. `npm run test:e2e:ui` opens Playwright's UI for stepping through a test. The first time, install the browsers with `npx playwright install chromium webkit`.
 
-The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the admin password from `TEST_ADMIN_KEY`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**.
+The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the admin password from `TEST_ADMIN_KEY`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**. `e2e/fakeRecordingsApi.ts` does the same for the recordings Lambda's contributor routes, at `https://recordings.test/`.
 
 | File | Covers |
 |---|---|
@@ -68,6 +68,7 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | `learner.spec.ts` | A study guide marked complete is remembered |
 | `enablement.spec.ts` | Module enablement on the home and admin pages |
 | `offline.spec.ts` | The last known module config is used offline |
+| `record.spec.ts` | The contributor page: bad and missing links, consent, and (Chromium only, with a fake microphone) clips sent as recorded, kept while offline, sent on the next visit, and a link revoked mid-session; the service worker leaving `record.html` alone |
 
 Most tests import `test` from `e2e/fixtures.ts` rather than from Playwright. It installs the fake config API with every module enabled, and records every `new Audio(src)` the page makes, since headless browsers may never play the sound. The quiz tests answer from the module's `data.json`: `e2e/helpers/quiz.ts` works out the right answer from what is on screen, or from the audio file just asked for. They pause the page's clock (`pauseClock`) and move it on past the pause after each answer, so a 14-question quiz takes well under a second.
 
@@ -232,21 +233,38 @@ field instead: an SSML fragment that replaces the name wherever it is spoken, ty
 
 ## Recording real voices
 
-`/#/record` (not linked from the app) lets a volunteer record every clip in their own voice.
-They read each phrase on screen; two seconds of silence saves the clip and shows the next one.
+Contributors record every clip in their own voice from a personal link,
+`https://cafefluent.dandr.org/record.html?t=<token>`. They read each phrase on screen; two
+seconds of silence saves the clip and shows the next one. Each clip is sent straight to S3
+by the recordings Lambda ([lambda-recordings/README.md](lambda-recordings/README.md)), so
+there is nothing for them to send us.
 
 - A 3-second room check refuses to start if the background is louder than the quiet limit
   (−40 dBFS by default), and recording pauses if the room gets noisy.
-- Phrases come in a random order seeded by the speaker's name, so several people who only
-  get part way through cover more phrases between them. Resuming with the same name carries on.
-- Clips are kept in the browser (IndexedDB) as 22,050 Hz WAVs, about 10 MB for a full set.
-  "Download zip" packs whatever is recorded so far, plus a `phrases.json` listing what each file says.
-- Space pauses. Backspace records the last phrase again. The review screen plays back every clip.
+- The first visit asks the contributor to agree to their voice being used. Nothing is
+  saved on the server until they do.
+- Phrases come in a random order seeded by the contributor's id, so several people who only
+  get part way through cover more phrases between them. Opening the link again carries on,
+  on any device: clips already on the server count as done.
+- Clips are 22,050 Hz WAVs, about 10 MB for a full set. Each is saved in the browser
+  (IndexedDB) first, which works as an outbox: a clip that can't be sent (no connection,
+  page closed) is retried, and sent on the next visit at the latest. Leaving the page with
+  clips unsent asks for confirmation.
+- Space pauses. Backspace records the last phrase again. The review screen plays back every
+  clip recorded on this device.
 
-Recordings are moving to the server: contributors will get a personal link, and each clip will be saved to S3 by the recordings Lambda ([lambda-recordings/README.md](lambda-recordings/README.md)) as it is recorded. Until the recorder page uses it, clips still go by zip.
+`record.html` is a separate entry point (`src/record/main.tsx`), not part of the app. The
+service worker neither caches it nor answers for it, so a link opened on a learner's
+device shows the recorder, not the app.
 
-The microphone needs https or localhost, so test locally at `http://localhost:5173/#/record`.
-Code is in `src/recorder/` and `src/components/RecordPage.tsx`.
+The older `/#/record` (not linked from the app) is the same recorder without a link: it
+asks for a name, keeps clips only in the browser, and "Download zip" packs them up with a
+`phrases.json` listing what each file says.
+
+The microphone needs https or localhost. To test locally, point `VITE_RECORDINGS_API_URL`
+in `.env.local` at a recordings function with `ALLOW_LOCALHOST=true`, and open
+`http://localhost:5173/record.html?t=<token>`.
+Code is in `src/recorder/`, `src/components/RecordPage.tsx` and `src/components/ContributorPage.tsx`.
 
 ---
 
