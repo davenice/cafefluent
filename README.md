@@ -51,13 +51,13 @@ which is the quickest way to confirm an update landed.
 
 There are two kinds of tests. Both run on every pull request.
 
-**Unit and component tests** (Vitest, `npm test`) sit next to the code in `src/`, as `*.test.ts(x)`. Components are tested in jsdom with Testing Library. The config Lambda has its own tests in `lambda/index.test.mjs`, with Parameter Store replaced by an in-memory fake.
+**Unit and component tests** (Vitest, `npm test`) sit next to the code in `src/`, as `*.test.ts(x)`. Components are tested in jsdom with Testing Library. The config Lambda has its own tests in `lambda/index.test.mjs`, with Parameter Store replaced by an in-memory fake. The recordings Lambda's are in `lambda-recordings/index.test.mjs`, with S3 replaced the same way.
 
 **Content check** (`scripts/content.test.ts`, part of `npm test`, or alone with `npm run check:content`) works out every file each module's tasks will ask for and fails if any is missing, naming the file and the task that needs it. It covers item, product and diagram images, image legends, and the audio for each item, sentence variant and hotspot. It also checks each task has enough content to ask a question.
 
 **End-to-end tests** (Playwright, `npm run test:e2e`) are in `e2e/`. They build the app with `vite build --mode e2e` into `dist-e2e/`, serve it with `vite preview`, and drive it in Chromium and WebKit at phone size. Use these for what component tests can't see: routing, saved progress, module enablement, and the service worker. `npm run test:e2e:ui` opens Playwright's UI for stepping through a test. The first time, install the browsers with `npx playwright install chromium webkit`.
 
-The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the PIN `246810`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**.
+The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.env.e2e`). That domain never resolves, so the tests can't reach the real Lambda. Instead, `e2e/fakeConfigApi.ts` answers those requests inside the browser. It keeps the config in memory, accepts the admin password from `TEST_ADMIN_KEY`, and can be switched to return errors or drop the connection. It copies the Lambda's contract, so **when you change `lambda/index.mjs`, change the fake and the e2e tests to match**.
 
 | File | Covers |
 |---|---|
@@ -242,6 +242,8 @@ They read each phrase on screen; two seconds of silence saves the clip and shows
 - Clips are kept in the browser (IndexedDB) as 22,050 Hz WAVs, about 10 MB for a full set.
   "Download zip" packs whatever is recorded so far, plus a `phrases.json` listing what each file says.
 - Space pauses. Backspace records the last phrase again. The review screen plays back every clip.
+
+Recordings are moving to the server: contributors will get a personal link, and each clip will be saved to S3 by the recordings Lambda ([lambda-recordings/README.md](lambda-recordings/README.md)) as it is recorded. Until the recorder page uses it, clips still go by zip.
 
 The microphone needs https or localhost, so test locally at `http://localhost:5173/#/record`.
 Code is in `src/recorder/` and `src/components/RecordPage.tsx`.

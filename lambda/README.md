@@ -1,6 +1,6 @@
 # Module config Lambda
 
-GET returns the list of enabled module IDs and the table game settings. POST (PIN-protected) updates them.
+GET returns the list of enabled module IDs and the table game settings. POST (password-protected) updates them.
 
 ## Deploy
 
@@ -12,8 +12,15 @@ GET returns the list of enabled module IDs and the table game settings. POST (PI
 4. Configuration → Function URL → Create function URL
    - Auth type: NONE
 5. Configuration → Environment variables → add:
-   - `ADMIN_PIN` — a short numeric PIN known only to the instructor
+   - `ADMIN_KEY` — the admin password. The admin page takes any length, so make it
+     long: `node -e "console.log(require('node:crypto').randomBytes(24).toString('base64url'))"`
    - `LOG_HMAC_KEY` — any long random string; used to pseudonymise caller IPs in logs
+
+   `ADMIN_PIN` is read as a fallback so the old six-digit PIN keeps working until
+   `ADMIN_KEY` is set. Once it is, delete `ADMIN_PIN`: a six-digit PIN is short
+   enough to guess by brute force, because the function URL is open to anyone and
+   the 2 second delay on a wrong answer does not slow down attempts made in
+   parallel.
 6. Configuration → Permissions → add inline policy:
    ```json
    {
@@ -83,7 +90,22 @@ The e2e tests use a copy of this contract in `e2e/fakeConfigApi.ts`, and
 both, and the e2e tests in `e2e/enablement.spec.ts`.
 
 - **GET** — returns `{ enabledModules: string[], game: GameSettings | null }` (read by the app on startup)
-- **POST with empty body + `x-admin-pin` header** — PIN check; returns `{ ok: true, enabledModules, game }`
-- **POST with `{ enabledModules, game }` + `x-admin-pin` header** — saves either or both to SSM; returns `{ ok: true }`
+- **POST with empty body + `x-admin-key` header** — sign-in check; returns `{ ok: true, enabledModules, game }`
+- **POST with `{ enabledModules, game }` + `x-admin-key` header** — saves either or both to SSM; returns `{ ok: true }`
+
+`x-admin-pin` is still accepted alongside `x-admin-key`, and the admin page sends
+the password under both names, so a page on the new code still signs in against a
+function on the old code. That is what makes local development work before this
+function is redeployed.
+
+Deploy this function before the site, though. The browser preflights the real
+cross-origin call, and a function still on the old code does not list
+`x-admin-key` as an allowed header, so it would refuse the new page's request
+before the password was ever checked. Local development is not affected, because
+the Vite proxy makes the call same-origin and no preflight happens.
+
+Drop both old names, here and in the admin page, once the function and the site
+are on the new code. A wrong or missing password gets a 401 after a 2 second
+delay. With no secret configured at all, every POST is refused.
 
 `GameSettings` is `{ words: string[], seconds: number, turns: number }`.

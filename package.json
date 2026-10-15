@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "@aws-sdk/client-polly": "^3.1053.0",
+    "@aws-sdk/client-s3": "^3.1152.0",
     "@aws-sdk/client-ssm": "^3.1149.0",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
