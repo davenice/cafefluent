@@ -1,4 +1,5 @@
 import type { BrowserContext, Route } from '@playwright/test'
+import { TEST_ADMIN_KEY } from './fakeConfigApi'
 
 // Must match VITE_RECORDINGS_API_URL in .env.e2e.
 export const RECORDINGS_API_URL = 'https://recordings.test/'
@@ -7,6 +8,7 @@ export interface FakeContributor {
   id: string
   name: string
   token: string
+  created: string
   revoked: boolean
   consented: boolean
   /** Saved clips, keyed by "<module>/<file>". */
@@ -28,11 +30,14 @@ const MAX_CLIPS = 600
  * browser. It copies the Lambda's request/response contract, so if the Lambda
  * changes, change this to match (see "Testing" in README.md).
  *
- * Not copied: the admin routes (no e2e test uses them yet), S3, and logging.
+ * The admin password is the config fake's TEST_ADMIN_KEY, as both functions
+ * share one ADMIN_KEY. Not copied: token hashing, S3, and logging.
  */
 export class FakeRecordingsApi {
   readonly contributors: FakeContributor[] = []
   mode: Mode = 'ok'
+  /** Accepted admin password. Change it to test the two functions' passwords not matching. */
+  adminKey = TEST_ADMIN_KEY
 
   add(name: string, { consented = false } = {}): FakeContributor {
     const n = this.contributors.length + 1
@@ -40,6 +45,7 @@ export class FakeRecordingsApi {
       id: `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-00000${n}`,
       name,
       token: `test-token-${n}`,
+      created: '2026-10-01T09:00:00.000Z',
       revoked: false,
       consented,
       clips: new Map(),
@@ -70,6 +76,7 @@ export class FakeRecordingsApi {
     if (this.mode === 'error') return reply(500, { error: 'Internal error' })
 
     const parts = new URL(request.url()).pathname.split('/').filter(Boolean)
+    if (parts[0] === 'contributors') return this.handleAdmin(route, method, parts.slice(1), reply)
     if (parts[0] !== 'me' && parts[0] !== 'clips') return reply(404, { error: 'Not found' })
 
     const token = request.headers()['x-contributor-token']
@@ -104,6 +111,35 @@ export class FakeRecordingsApi {
         && bytes.toString('ascii', 8, 12) === 'WAVE'
       if (!isWav) return reply(400, { error: 'Not a WAV file' })
       contributor.clips.set(key, bytes)
+      return reply(200, { ok: true })
+    }
+
+    return reply(404, { error: 'Not found' })
+  }
+
+  private handleAdmin(route: Route, method: string, rest: string[], reply: (status: number, body?: unknown) => Promise<void>) {
+    if (route.request().headers()['x-admin-key'] !== this.adminKey) return reply(401, { error: 'Unauthorized' })
+
+    const publicContributor = (c: FakeContributor) => ({ id: c.id, name: c.name, created: c.created, revoked: c.revoked })
+
+    if (method === 'GET' && rest.length === 0) {
+      return reply(200, {
+        contributors: this.contributors.map(c => ({ ...publicContributor(c), consented: c.consented, clips: c.clips.size })),
+      })
+    }
+
+    if (method === 'POST' && rest.length === 0) {
+      const body = route.request().postData() ? route.request().postDataJSON() : {}
+      const name = typeof body.name === 'string' ? body.name.trim() : ''
+      if (!name || name.length > 60) return reply(400, { error: 'Name must be 1 to 60 characters' })
+      const contributor = this.add(name)
+      return reply(201, { contributor: publicContributor(contributor), token: contributor.token })
+    }
+
+    if (method === 'DELETE' && rest.length === 1) {
+      const contributor = this.contributors.find(c => c.id === decodeURIComponent(rest[0]))
+      if (!contributor) return reply(404, { error: 'No such contributor' })
+      contributor.revoked = true
       return reply(200, { ok: true })
     }
 

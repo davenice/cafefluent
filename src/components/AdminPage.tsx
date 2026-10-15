@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { MODULES, DESCRIBE_GAME } from '../data/modules'
 import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/settings'
+import ContributorsSection from './ContributorsSection'
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
 
@@ -231,6 +232,7 @@ export default function AdminPage() {
           {saving ? 'Saving…' : 'Save'}
         </button>
       </footer>
+      <ContributorsSection adminKey={adminKey} />
     </div>
   )
 }

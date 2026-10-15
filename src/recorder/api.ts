@@ -54,3 +54,57 @@ export class RecordingsApi {
     await this.call('PUT', `clips/${module}/${file}`, wav, 'audio/wav')
   }
 }
+
+/** A contributor as the admin routes list them. The token is never listed. */
+export interface ContributorSummary {
+  id: string
+  name: string
+  created: string
+  revoked: boolean
+  consented: boolean
+  /** How many clips they have saved. */
+  clips: number
+}
+
+/** Client for the admin routes, signed in with the same password as the config Lambda. */
+export class RecordingsAdminApi {
+  private readonly base: URL
+  private readonly adminKey: string
+
+  constructor(baseUrl: string, adminKey: string) {
+    this.base = new URL(baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`, window.location.href)
+    this.adminKey = adminKey
+  }
+
+  private async call(method: string, path: string, body?: unknown): Promise<Response> {
+    const res = await fetch(new URL(path, this.base), {
+      method,
+      headers: { 'x-admin-key': this.adminKey, ...(body === undefined ? {} : { 'content-type': 'application/json' }) },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    })
+    if (!res.ok) {
+      const message = await res.json().then((b) => b?.error, () => undefined)
+      throw new ApiError(res.status, message ?? `HTTP ${res.status}`)
+    }
+    return res
+  }
+
+  async list(): Promise<ContributorSummary[]> {
+    return (await (await this.call('GET', 'contributors')).json()).contributors
+  }
+
+  /** Add someone. Their token comes back here and never again. */
+  async add(name: string): Promise<{ contributor: ContributorSummary; token: string }> {
+    const { contributor, token } = await (await this.call('POST', 'contributors', { name })).json()
+    return { contributor: { ...contributor, consented: false, clips: 0 }, token }
+  }
+
+  async revoke(id: string): Promise<void> {
+    await this.call('DELETE', `contributors/${encodeURIComponent(id)}`)
+  }
+}
+
+/** The address a contributor's link opens. */
+export function contributorLink(token: string): string {
+  return new URL(`/record.html?t=${encodeURIComponent(token)}`, window.location.origin).href
+}
