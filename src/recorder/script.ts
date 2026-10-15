@@ -69,7 +69,7 @@ export async function loadScript(): Promise<Phrase[]> {
 }
 
 /**
- * The order to ask for phrases in: a shuffle seeded by the speaker's name. Each
+ * The order to ask for phrases in: a shuffle seeded by the contributor's id. Each
  * speaker gets a different order, so if several people only get part way
  * through, between them they cover more phrases. The same speaker always gets
  * the same order, so resuming carries on where they left off.

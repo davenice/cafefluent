@@ -257,10 +257,6 @@ there is nothing for them to send us.
 service worker neither caches it nor answers for it, so a link opened on a learner's
 device shows the recorder, not the app.
 
-The older `/#/record` (not linked from the app) is the same recorder without a link: it
-asks for a name, keeps clips only in the browser, and "Download zip" packs them up with a
-`phrases.json` listing what each file says.
-
 The microphone needs https or localhost. To test locally, point `VITE_RECORDINGS_API_URL`
 in `.env.local` at a recordings function with `ALLOW_LOCALHOST=true`, and open
 `http://localhost:5173/record.html?t=<token>`.

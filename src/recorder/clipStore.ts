@@ -1,6 +1,6 @@
-// Recorded clips, kept in the browser (IndexedDB). Survives reloads, so a session
-// can be paused and resumed. A speaker without a link downloads them as a zip; a
-// contributor's are sent to the server, and this is the outbox they wait in.
+// Recorded clips, kept in the browser (IndexedDB) as an outbox until they are on
+// the server. Survives reloads, so a clip that couldn't be sent goes on the next
+// visit, and the review screen can play back this device's takes.
 
 import type { ClipInfo } from './script'
 
@@ -11,7 +11,7 @@ export interface StoredClip extends ClipInfo {
   wav: ArrayBuffer
   /** When this take was recorded (ms since 1970). Tells a take apart from the one that replaced it. */
   recordedAt: number
-  /** Saved on the server. Only contributor clips are ever sent. */
+  /** Saved on the server. */
   uploaded?: boolean
 }
 

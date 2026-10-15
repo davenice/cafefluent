@@ -1,18 +1,14 @@
-// Voice recorder. The speaker reads each phrase; two seconds of silence saves
-// the clip and moves on. Clips are kept in the browser either way. Then:
-// - at /#/record (not linked from the app), the speaker downloads them as a zip
-//   and sends it to us;
-// - for a contributor, opened from their link (record.html), each clip is sent
-//   to the server as soon as it is saved.
+// Voice recorder for a contributor, opened from their personal link
+// (record.html, via ContributorPage). They read each phrase; two seconds of
+// silence saves the clip and moves on. Each clip is saved in the browser, then
+// sent to the server from there (see uploader.ts).
 
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import { openMic, type Mic } from '../recorder/mic'
 import { RecordingSession, measureNoise, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { encodeWav, peakDb, resample } from '../recorder/wav'
 import { loadScript, phraseKey, clipWarnings, speakerOrder, type Phrase, type ClipInfo } from '../recorder/script'
-import { createZip, type ZipEntry } from '../recorder/zip'
 import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
 import { Uploader, type UploadStatus } from '../recorder/uploader'
 import type { Me, RecordingsApi } from '../recorder/api'
@@ -29,10 +25,6 @@ const NOISE_CHECK_MS = 3000
 // The rate the app's mp3s use. Recording at the mic's rate (usually 48 kHz)
 // would double the download size for no audible gain.
 const SAVE_SAMPLE_RATE = 22050
-
-function slug(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
-}
 
 // A clip on the server but not in this browser: recorded on another device, or
 // before the browser's storage was cleared. It counts as done, but there is
@@ -56,10 +48,9 @@ function nextUnrecorded(order: number[], phrases: Phrase[], recorded: Record<str
   return null
 }
 
-export default function RecordPage({ contributor }: { contributor?: Contributor }) {
+export default function RecordPage({ contributor }: { contributor: Contributor }) {
   const [phrases, setPhrases] = useState<Phrase[] | null>(null)
   const [loadError, setLoadError] = useState(false)
-  const [speakerName, setSpeakerName] = useState('')
   const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_SETTINGS)
   const [stage, setStage] = useState<Stage>('setup')
   const [startError, setStartError] = useState<string | null>(null)
@@ -73,7 +64,6 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
   const [pauseReason, setPauseReason] = useState<string | null>(null)
   const [hearing, setHearing] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [zipping, setZipping] = useState(false)
   const [upload, setUpload] = useState<UploadStatus | null>(null)
 
   const micRef = useRef<Mic | null>(null)
@@ -81,7 +71,7 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
   const eventHandlerRef = useRef<(e: SessionEvent) => void>(() => {})
   const uploaderRef = useRef<Uploader | null>(null)
   const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
-  const speaker = contributor ? contributor.me.id : slug(speakerName)
+  const speaker = contributor.me.id
   const order = phrases ? speakerOrder(phrases.length, speaker) : []
   const micAvailable = window.isSecureContext && !!navigator.mediaDevices
 
@@ -96,7 +86,6 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
   // Send anything left from an earlier visit, then each clip as it is saved, and
   // everything waiting whenever the browser comes back online.
   useEffect(() => {
-    if (!contributor) return
     const uploader = new Uploader(
       { pending: () => pendingClips(contributor.me.id), markUploaded },
       contributor.api,
@@ -131,7 +120,7 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
       const done: Record<string, ClipInfo> = Object.fromEntries(
         existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
       )
-      for (const c of contributor?.me.clips ?? []) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+      for (const c of contributor.me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
       setRecorded(done)
       micRef.current ??= await openMic()
       await checkNoise(done)
@@ -216,11 +205,7 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
       uploaderRef.current?.flush()
     } catch (e) {
       setSaveError(`Could not save “${phrase.text}”: ${e instanceof Error ? e.message : e}`)
-      pause(
-        contributor
-          ? 'A clip could not be saved. The device may be out of space. Press Resume to try again.'
-          : 'A clip could not be saved. The device may be out of space. Download the zip, then press Resume.',
-      )
+      pause('A clip could not be saved. The device may be out of space. Press Resume to try again.')
     }
   }
 
@@ -294,34 +279,6 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
     return () => window.removeEventListener('keydown', onKey)
   })
 
-  /** Everything recorded so far, plus a list of what each file says. */
-  async function downloadZip() {
-    if (!phrases) return
-    setZipping(true)
-    try {
-      const stored = new Map((await listClips(speaker)).map((c) => [phraseKey(c), c]))
-      // Only phrases still in the script, in script order.
-      const clips = phrases.filter((p) => stored.has(phraseKey(p)))
-      const entries: ZipEntry[] = clips.map((p) => ({
-        name: `${speaker}/${p.module}/${p.file}`,
-        data: new Uint8Array(stored.get(phraseKey(p))!.wav),
-      }))
-      const list = clips.map(({ module, file, text }) => ({ module, file, text }))
-      entries.push({ name: `${speaker}/phrases.json`, data: new TextEncoder().encode(JSON.stringify(list, null, 2) + '\n') })
-
-      const url = URL.createObjectURL(createZip(entries))
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `cafefluent-${speaker}.zip`
-      link.click()
-      setTimeout(() => URL.revokeObjectURL(url), 1000)
-    } catch (e) {
-      setSaveError(`Could not make the zip: ${e instanceof Error ? e.message : e}`)
-    } finally {
-      setZipping(false)
-    }
-  }
-
   async function play(phrase: Phrase) {
     const clip = await getClip(speaker, phrase.module, phrase.file)
     if (!clip) return
@@ -335,25 +292,20 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
 
   return (
     <div style={styles.page}>
-      <div style={styles.header}>
-        <h1 style={styles.heading}>Voice recorder</h1>
-        {!contributor && <Link to="/" style={styles.homeLink}>Home</Link>}
-      </div>
+      <h1 style={styles.heading}>Voice recorder</h1>
 
       {!micAvailable && (
         <p style={styles.error}>
-          {contributor
-            ? 'The microphone can’t be used on this page. Open your link in Chrome, Safari or Firefox.'
-            : 'The microphone only works on https or localhost. Locally, open http://localhost:5173/#/record on this computer.'}
+          The microphone can’t be used on this page. Open your link in Chrome, Safari or Firefox.
         </p>
       )}
       {loadError && <p style={styles.error}>Could not load the module data.</p>}
       {saveError && <p style={styles.error}>{saveError}</p>}
-      {contributor && stage !== 'setup' && <UploadLine status={upload} />}
+      {stage !== 'setup' && <UploadLine status={upload} />}
 
       {stage === 'setup' && (
         <div style={styles.card}>
-          {contributor && <p>Hello, {contributor.me.name}.</p>}
+          <p>Hello, {contributor.me.name}.</p>
           <p>
             {phrases ? `${phrases.length} phrases to record.` : 'Loading phrases…'} Read each phrase out loud. When you stop
             talking for {settings.endSilenceMs / 1000} seconds, the clip is saved and the next phrase appears.
@@ -363,38 +315,13 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
             <li>Keep the microphone about 20 cm from your mouth.</li>
             <li>Space pauses. Backspace records the last phrase again.</li>
           </ul>
-          {contributor ? (
-            <div style={styles.notice}>
-              <p>
-                <strong>Each recording is sent to us as soon as you make it.</strong> You don’t need to send us
-                anything.
-              </p>
-              <p>You can stop at any time. Open your link again to carry on where you stopped, on any device.</p>
-            </div>
-          ) : (
-            <>
-              <label style={styles.field}>
-                Speaker name
-                <input
-                  style={styles.input}
-                  value={speakerName}
-                  onChange={(e) => setSpeakerName(e.target.value)}
-                  placeholder="e.g. Sam"
-                />
-              </label>
-              <div style={styles.notice}>
-                <p>
-                  <strong>Your recordings are only saved in this browser.</strong> They are not sent anywhere until you
-                  download them.
-                </p>
-                <p>
-                  If you clear your browser data, or use a private or incognito window, you will lose anything you have not
-                  downloaded.
-                </p>
-                <p>Press “Download zip” before you finish your session, and send us the file.</p>
-              </div>
-            </>
-          )}
+          <div style={styles.notice}>
+            <p>
+              <strong>Each recording is sent to us as soon as you make it.</strong> You don’t need to send us
+              anything.
+            </p>
+            <p>You can stop at any time. Open your link again to carry on where you stopped, on any device.</p>
+          </div>
 
           <details>
             <summary style={styles.muted}>Settings</summary>
@@ -485,11 +412,6 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
               Record last phrase again
             </button>
             <button style={styles.secondaryBtn} onClick={openReview}>Review</button>
-            {!contributor && (
-              <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
-                {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
-              </button>
-            )}
           </div>
         </>
       )}
@@ -503,11 +425,6 @@ export default function RecordPage({ contributor }: { contributor?: Contributor 
             {doneCount < phrases.length && (
               <button style={styles.primaryBtn} onClick={() => rerecord(nextUnrecorded(order, phrases, recorded, index) ?? 0)}>
                 Continue recording
-              </button>
-            )}
-            {!contributor && (
-              <button style={styles.secondaryBtn} disabled={doneCount === 0 || zipping} onClick={downloadZip}>
-                {zipping ? 'Making zip…' : `Download zip (${doneCount})`}
               </button>
             )}
           </div>
@@ -618,9 +535,7 @@ function Progress({ phrases, recorded, current }: { phrases: Phrase[]; recorded:
 
 const styles: Record<string, React.CSSProperties> = {
   page: { padding: '24px 16px 48px', display: 'flex', flexDirection: 'column', gap: 16, maxWidth: 720, margin: '0 auto' },
-  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' },
   heading: { fontSize: 20, fontWeight: 700 },
-  homeLink: { fontSize: 14, color: 'var(--color-muted)' },
   card: { background: 'var(--color-surface)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 },
   tips: { paddingLeft: 20, fontSize: 14, display: 'flex', flexDirection: 'column', gap: 4 },
   field: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 14 },
