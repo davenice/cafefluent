@@ -21,14 +21,24 @@ GET returns the list of enabled module IDs and the table game settings. POST (pa
    enough to guess by brute force, because the function URL is open to anyone and
    the 2 second delay on a wrong answer does not slow down attempts made in
    parallel.
-6. Configuration → Permissions → add inline policy:
+6. Add the Parameter Store permissions to the function's role. **Add this policy;
+   don't replace or remove the role's existing one.** The role already has a
+   policy named like `AWSLambdaBasicExecutionRole-…`, which lets the function
+   write to CloudWatch Logs, and the usage logging below depends on it.
+   - Configuration → Permissions → click the role name (opens IAM)
+   - Add permissions → Create inline policy → JSON, and paste:
    ```json
    {
-     "Effect": "Allow",
-     "Action": ["ssm:GetParameter", "ssm:PutParameter"],
-     "Resource": [
-       "arn:aws:ssm:*:*:parameter/cafefluent/enabled-modules",
-       "arn:aws:ssm:*:*:parameter/cafefluent/game-settings"
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": ["ssm:GetParameter", "ssm:PutParameter"],
+         "Resource": [
+           "arn:aws:ssm:*:*:parameter/cafefluent/enabled-modules",
+           "arn:aws:ssm:*:*:parameter/cafefluent/game-settings"
+         ]
+       }
      ]
    }
    ```
