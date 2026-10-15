@@ -34,7 +34,8 @@ export const DEFAULT_SETTINGS: DetectorSettings = {
   maxClipMs: 10000,
   preRollMs: 300,
   tailMs: 300,
-  quietLimitDb: -40,
+  // From trying it in ordinary rooms: −40 turned away rooms that recorded fine.
+  quietLimitDb: -35,
 }
 
 // A very clean input can measure near digital silence, which would put the

@@ -244,8 +244,10 @@ seconds of silence saves the clip and shows the next one. Each clip is sent stra
 by the recordings Lambda ([lambda-recordings/README.md](lambda-recordings/README.md)), so
 there is nothing for them to send us.
 
-- A 3-second room check refuses to start if the background is louder than the quiet limit
-  (−40 dBFS by default), and recording pauses if the room gets noisy.
+- A 3-second room check stops if the background is louder than the quiet limit (−35 dBFS
+  by default; set in Settings as "35", since phone number pads have no minus key), and
+  recording pauses if the room gets noisy. "Record anyway" carries on in a room that failed
+  the check, with the limit moved 6 dB above its background.
 - The first visit asks the contributor to agree to their voice being used. Nothing is
   saved on the server until they do.
 - Phrases come in a random order seeded by the contributor's id, so several people who only
@@ -257,6 +259,8 @@ there is nothing for them to send us.
   clips unsent asks for confirmation.
 - Space pauses. Backspace records the last phrase again. The review screen plays back every
   clip recorded on this device.
+- "Finish for now" stops recording and lets go of the microphone. It shows how many phrases
+  are done, and tells the contributor to open their link again to carry on.
 
 `record.html` is a separate entry point (`src/record/main.tsx`), not part of the app. The
 service worker neither caches it nor answers for it, so a link opened on a learner's

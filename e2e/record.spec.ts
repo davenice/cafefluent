@@ -3,7 +3,11 @@ import { test, expect } from './fixtures'
 import { FakeRecordingsApi, type FakeContributor } from './fakeRecordingsApi'
 
 declare global {
-  interface Window { __speak: (on: boolean) => void }
+  interface Window {
+    __speak: (on: boolean) => void
+    __background: (gain: number) => void
+    __micStream: MediaStream | null
+  }
 }
 
 // The contributor page (record.html), opened from a personal link.
@@ -19,29 +23,48 @@ const open = (page: Page, contributor: FakeContributor) => page.goto(`/record.ht
 
 /**
  * Replaces the microphone with a tone the test turns on and off with
- * `window.__speak`, standing in for someone reading a phrase. Silent until then,
- * so the room check passes.
+ * `window.__speak`, standing in for someone reading a phrase, over a background
+ * hum set with `window.__background`. Silent until then, so the room check
+ * passes. The stream is kept in `window.__micStream`, to check it is let go.
  */
 async function fakeMic(page: Page) {
   await page.addInitScript(() => {
-    let gain: GainNode | null = null
+    let speech: GainNode | null = null
+    let hum: GainNode | null = null
+    // Set before the mic opens, so a noisy room can be there from the start.
+    let backgroundGain = 0
+    window.__micStream = null
     window.__speak = (on) => {
-      if (gain) gain.gain.value = on ? 0.3 : 0
+      if (speech) speech.gain.value = on ? 0.8 : 0
+    }
+    window.__background = (gain) => {
+      backgroundGain = gain
+      if (hum) hum.gain.value = gain
     }
     navigator.mediaDevices.getUserMedia = async () => {
       const ctx = new AudioContext()
       await ctx.resume()
-      const tone = ctx.createOscillator()
-      tone.frequency.value = 220
-      gain = ctx.createGain()
-      gain.gain.value = 0
       const out = ctx.createMediaStreamDestination()
-      tone.connect(gain).connect(out)
-      tone.start()
+      const voice = ctx.createOscillator()
+      voice.frequency.value = 220
+      speech = ctx.createGain()
+      speech.gain.value = 0
+      voice.connect(speech).connect(out)
+      voice.start()
+      const fan = ctx.createOscillator()
+      fan.frequency.value = 90
+      hum = ctx.createGain()
+      hum.gain.value = backgroundGain
+      fan.connect(hum).connect(out)
+      fan.start()
+      window.__micStream = out.stream
       return out.stream
     }
   })
 }
+
+// A hum at this level measures about −29 dB: too loud for the default limit of −35.
+const NOISY_ROOM = 0.05
 
 /**
  * Drop or restore the connection. The fake API is told too, since Playwright's
@@ -190,6 +213,84 @@ test.describe('recording', () => {
     await expect(page.getByText('This link has stopped working. Ask the person who sent it for a new one.')).toBeVisible()
     await expect(page.getByRole('button', { name: 'Resume' })).toBeVisible()
     expect(contributor.clips.size).toBe(0)
+  })
+})
+
+test.describe('finishing and pausing', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the fake microphone needs Chromium')
+  test.beforeEach(async ({ page }) => fakeMic(page))
+
+  test('finishes for now: lets go of the microphone and says how to come back', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+    await readPhrase(page)
+    await expect(page.getByText('All recordings sent.')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Finish for now' }).click()
+    await expect(page.getByText('Thank you, Amira!')).toBeVisible()
+    await expect(page.getByText(/^You have recorded 1 of \d+ phrases\.$/)).toBeVisible()
+    await expect(page.getByText('To record more another time, open your link again.')).toBeVisible()
+    expect(await page.evaluate(() => window.__micStream!.getTracks().every((t) => t.readyState === 'ended'))).toBe(true)
+
+    // Coming straight back opens the microphone again, after a new room check.
+    await page.getByRole('button', { name: 'Record more now' }).click()
+    await expect(page.getByText('Ready: read the phrase')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(/^1 \/ \d+ recorded/)).toBeVisible()
+  })
+
+  test('can finish from the review screen', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+    await page.getByRole('button', { name: 'Review' }).click()
+    await page.getByRole('button', { name: 'Finish for now' }).click()
+    await expect(page.getByText('Thank you, Amira!')).toBeVisible()
+  })
+
+  test('says what to do when paused', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+
+    await page.getByRole('button', { name: 'Pause' }).click()
+    await expect(page.getByText(/Paused\. Press Resume when you are ready\. If you have finished for today, press Finish for now\./)).toBeVisible()
+    await page.getByRole('button', { name: 'Resume' }).click()
+    await expect(page.getByText(/Press Resume when you are ready/)).toHaveCount(0)
+  })
+})
+
+test.describe('a noisy room', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the fake microphone needs Chromium')
+  test.beforeEach(async ({ page }) => {
+    await fakeMic(page)
+    await page.addInitScript((gain) => window.__background(gain), NOISY_ROOM)
+  })
+
+  test('can be recorded in anyway', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await page.getByRole('button', { name: 'Start' }).click()
+    await expect(page.getByText(/The room is too noisy/)).toBeVisible({ timeout: 10_000 })
+
+    await page.getByRole('button', { name: 'Record anyway' }).click()
+    await expect(page.getByText('Ready: read the phrase')).toBeVisible()
+    // The hum carries on, but doesn't pause recording.
+    await readPhrase(page)
+    await expect(page.getByText('All recordings sent.')).toBeVisible()
+    expect(contributor.clips.size).toBe(1)
+  })
+
+  test('passes the room check with a looser limit typed into the settings', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await page.getByText('Settings').click()
+    const limit = page.getByLabel(/Quiet room limit/)
+    await expect(limit).toHaveValue('35')
+    await limit.fill('25')
+    await expect(page.getByText(/25 means the background must be quieter than -25 dB/)).toBeVisible()
+
+    await startRecording(page)
   })
 })
 
