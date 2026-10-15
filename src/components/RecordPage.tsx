@@ -12,6 +12,7 @@ import { loadScript, phraseKey, clipWarnings, speakerOrder, type Phrase, type Cl
 import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
 import { Uploader, type UploadStatus } from '../recorder/uploader'
 import type { Me, RecordingsApi } from '../recorder/api'
+import NumberField from './NumberField'
 
 /** Someone recording from their personal link. */
 export interface Contributor {
@@ -19,9 +20,12 @@ export interface Contributor {
   api: RecordingsApi
 }
 
-type Stage = 'setup' | 'checking' | 'too-noisy' | 'recording' | 'review'
+type Stage = 'setup' | 'checking' | 'too-noisy' | 'recording' | 'review' | 'finished'
 
 const NOISE_CHECK_MS = 3000
+// Recording in a room that failed the check: how far above its background the
+// limit moves, so ordinary ups and downs in the noise don't pause every clip.
+const NOISY_ROOM_MARGIN_DB = 6
 // The rate the app's mp3s use. Recording at the mic's rate (usually 48 kHz)
 // would double the download size for no audible gain.
 const SAVE_SAMPLE_RATE = 22050
@@ -141,7 +145,19 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       setStage('too-noisy')
       return
     }
-    const session = new RecordingSession(mic, floor, settings, (e) => eventHandlerRef.current(e))
+    startSession(floor, settings, done)
+  }
+
+  /** Record in a room that failed the check. The clips may have more background noise. */
+  function recordAnyway() {
+    if (floorDb === null) return
+    startSession(floorDb, { ...settings, quietLimitDb: Math.max(settings.quietLimitDb, floorDb + NOISY_ROOM_MARGIN_DB) })
+  }
+
+  function startSession(floor: number, sessionSettings: DetectorSettings, done: Record<string, ClipInfo> = recorded) {
+    const mic = micRef.current
+    if (!mic || !phrases) return
+    const session = new RecordingSession(mic, floor, sessionSettings, (e) => eventHandlerRef.current(e))
     sessionRef.current = session
     const first = nextUnrecorded(order, phrases, done, null)
     if (first === null) {
@@ -188,6 +204,18 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   function openReview() {
     pause()
     setStage('review')
+  }
+
+  /** Stop for today: let go of the microphone and say how to carry on later. */
+  function finish() {
+    sessionRef.current?.stop()
+    sessionRef.current = null
+    micRef.current?.close()
+    micRef.current = null
+    setPaused(false)
+    setPauseReason(null)
+    setHearing(false)
+    setStage('finished')
   }
 
   async function saveClip(phrase: Phrase, samples: Float32Array, sampleRate: number) {
@@ -326,34 +354,32 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           <details>
             <summary style={styles.muted}>Settings</summary>
             <div style={styles.settings}>
-              <label style={styles.field}>
-                Silence that ends a clip (seconds)
-                <input
-                  style={styles.input}
-                  type="number"
-                  step={0.25}
-                  value={settings.endSilenceMs / 1000}
-                  onChange={(e) => setSettings({ ...settings, endSilenceMs: Number(e.target.value) * 1000 })}
-                />
-              </label>
-              <label style={styles.field}>
-                Speech threshold (dB above background)
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={settings.onsetDb}
-                  onChange={(e) => setSettings({ ...settings, onsetDb: Number(e.target.value), releaseDb: Number(e.target.value) - 5 })}
-                />
-              </label>
-              <label style={styles.field}>
-                Quiet room limit (dBFS)
-                <input
-                  style={styles.input}
-                  type="number"
-                  value={settings.quietLimitDb}
-                  onChange={(e) => setSettings({ ...settings, quietLimitDb: Number(e.target.value) })}
-                />
-              </label>
+              <NumberField
+                label="Silence that ends a clip (seconds)"
+                value={settings.endSilenceMs / 1000}
+                min={0.5}
+                max={5}
+                onChange={(n) => setSettings({ ...settings, endSilenceMs: n * 1000 })}
+                style={fieldStyles}
+              />
+              <NumberField
+                label="Speech threshold (dB above background)"
+                value={settings.onsetDb}
+                min={6}
+                max={40}
+                onChange={(n) => setSettings({ ...settings, onsetDb: n, releaseDb: n - 5 })}
+                style={fieldStyles}
+              />
+              {/* Shown as a positive number: phone number pads have no minus key. */}
+              <NumberField
+                label="Quiet room limit (dB below full volume)"
+                hint={`${-settings.quietLimitDb} means the background must be quieter than ${formatDb(settings.quietLimitDb)}. A lower number lets in a noisier room.`}
+                value={-settings.quietLimitDb}
+                min={20}
+                max={70}
+                onChange={(n) => setSettings({ ...settings, quietLimitDb: -n })}
+                style={fieldStyles}
+              />
             </div>
           </details>
 
@@ -377,7 +403,11 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
             The room is too noisy: {formatDb(floorDb)}. It needs to be below {formatDb(settings.quietLimitDb)}.
           </p>
           <p>Close doors and windows, turn off fans or music, or move somewhere quieter.</p>
-          <button style={styles.primaryBtn} onClick={() => checkNoise()}>Check again</button>
+          <div style={styles.buttons}>
+            <button style={styles.primaryBtn} onClick={() => checkNoise()}>Check again</button>
+            <button style={styles.secondaryBtn} onClick={recordAnyway}>Record anyway</button>
+          </div>
+          <p style={styles.muted}>If you record anyway, we may hear the background noise in your recordings.</p>
         </div>
       )}
 
@@ -398,6 +428,12 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           </div>
 
           {pauseReason && <p style={styles.error}>{pauseReason}</p>}
+          {paused && !pauseReason && (
+            <p style={styles.pausedHint}>
+              Paused. Press <strong>Resume</strong> when you are ready. If you have finished for today, press{' '}
+              <strong>Finish for now</strong>.
+            </p>
+          )}
           <LevelMeter db={level} threshold={floorDb !== null ? floorDb + settings.onsetDb : undefined} />
 
           <div style={styles.buttons}>
@@ -412,6 +448,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
               Record last phrase again
             </button>
             <button style={styles.secondaryBtn} onClick={openReview}>Review</button>
+            <button style={styles.secondaryBtn} onClick={finish}>Finish for now</button>
           </div>
         </>
       )}
@@ -427,6 +464,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
                 Continue recording
               </button>
             )}
+            <button style={styles.secondaryBtn} onClick={finish}>Finish for now</button>
           </div>
           <ol style={styles.reviewList}>
             {phrases.map((p, i) => {
@@ -451,6 +489,30 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
             })}
           </ol>
         </>
+      )}
+
+      {stage === 'finished' && phrases && (
+        <div style={styles.card}>
+          <p style={styles.finishedTitle}>Thank you, {contributor.me.name}!</p>
+          <p>
+            {doneCount === phrases.length
+              ? 'You have recorded every phrase.'
+              : `You have recorded ${doneCount} of ${phrases.length} phrases.`}
+          </p>
+          {unsent && <p><strong>Keep this page open until it says “All recordings sent”.</strong></p>}
+          {doneCount < phrases.length && (
+            <div style={styles.notice}>
+              <p>
+                <strong>To record more another time, open your link again.</strong> It works on any device. You will
+                start where you stopped.
+              </p>
+              <p>Add this page to your bookmarks so you can find it again.</p>
+            </div>
+          )}
+          {doneCount < phrases.length && (
+            <button style={styles.primaryBtn} onClick={start}>Record more now</button>
+          )}
+        </div>
       )}
     </div>
   )
@@ -541,6 +603,9 @@ const styles: Record<string, React.CSSProperties> = {
   field: { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 14 },
   input: { padding: '8px 10px', fontSize: 16, borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)' },
   settings: { display: 'flex', flexDirection: 'column', gap: 10, marginTop: 10 },
+  hint: { fontSize: 12, color: 'var(--color-muted)' },
+  pausedHint: { fontSize: 15, padding: 12, borderRadius: 'var(--radius-sm)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' },
+  finishedTitle: { fontSize: 20, fontWeight: 700 },
   muted: { fontSize: 13, color: 'var(--color-muted)' },
   error: { fontSize: 14, color: 'var(--color-wrong)' },
   notice: { fontSize: 14, padding: 12, borderRadius: 'var(--radius-sm)', background: '#fff8e1', border: '1px solid #f0c36d', display: 'flex', flexDirection: 'column', gap: 6 },
@@ -564,3 +629,5 @@ const styles: Record<string, React.CSSProperties> = {
   reviewRow: { display: 'flex', alignItems: 'center', gap: 8, paddingBottom: 8, borderBottom: '1px solid var(--color-border)' },
   reviewText: { flex: 1, display: 'flex', flexDirection: 'column', gap: 2 },
 }
+
+const fieldStyles = { field: styles.field, input: styles.input, hint: styles.hint }

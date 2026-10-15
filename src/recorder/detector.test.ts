@@ -51,10 +51,12 @@ describe('SegmentDetector', () => {
   })
 
   it('reports when the background rises above the quiet limit', () => {
-    // The room started at −50; now it is at −38: over the −40 limit but under the
-    // −35 speech threshold, so it is not taken for speech.
-    const d = new SegmentDetector(-50, FRAME_MS)
-    const events = feed(d, -38, 3000)
+    // The room is now just over the quiet limit, having started 12 dB below
+    // that: under the speech threshold (15 dB over the start), so it is not
+    // taken for speech.
+    const level = DEFAULT_SETTINGS.quietLimitDb + 2
+    const d = new SegmentDetector(level - 12, FRAME_MS)
+    const events = feed(d, level, 3000)
     expect(events[0]).toMatchObject({ type: 'noisy' })
   })
 
