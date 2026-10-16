@@ -15,6 +15,7 @@ npm run test:watch # tests in watch mode
 npm run test:e2e   # run end-to-end tests in real browsers
 npm run check:content # check every image and audio file the quizzes use exists
 npm run fetch:recordings # download contributors' voice clips into recordings/
+npm run review:recordings # listen to the audio options for each phrase (local only)
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -281,6 +282,35 @@ and never deletes anything locally. The bucket defaults to `cafefluent-recording
 `s3:ListBucket` and `s3:GetObject` on the bucket. Code and tests are in
 `scripts/fetch-recordings.mjs` and `scripts/fetch-recordings.test.mjs`.
 
+### Reviewing the recordings
+
+```bash
+npm run review:recordings   # dev server, opening http://localhost:5173/review.html
+```
+
+A local page listing every phrase the app speaks with its audio options side by side: the
+generated Polly clip the app plays today, and each contributor's recording of it from
+`recordings/`. Play one, or **Play all** to hear them one after another. Filter by module,
+and by recorded, not recorded, or worth a listen.
+
+Each recording shows its length, peak and average level, and any silence before or after the
+words, and is flagged if it is quiet, may be clipped, or is long for the number of words
+(`clipWarnings` in `src/recorder/script.ts`, the same check the contributor's own review
+screen uses). The generated clips are not measured: they come out of Polly at a consistent
+level, so there is nothing to compare between them.
+
+Levels are shown to tell you how the voices compare, not to decide anything in the page.
+Nothing here changes a file: evening out loudness and trimming silence belong to the step
+that turns a recording into the mp3 the app plays, which doesn't exist yet.
+
+It is local only, and only works under the dev server, which measures and serves the clips
+(`scripts/reviewRecordings.ts`). `review.html` is not in the production build and
+`recordings/` is git-ignored, so neither is ever deployed. Run `npm run fetch:recordings`
+first, and again to pick up new clips.
+
+Contributors appear under the id that names their folder in `recordings/`, which is their
+name plus six characters (`dave-n-db6f0b`).
+
 ---
 
 ## Project structure
@@ -295,6 +325,8 @@ public/
 
 scripts/
   generate-audio.mjs    ← AWS Polly TTS generator (offline, run manually)
+  fetch-recordings.mjs  ← download contributors' clips from S3 into recordings/
+  reviewRecordings.ts   ← dev-server side of review.html: measures and serves recordings/
 
 src/
   data/modules.ts       ← module registry (add new modules here)
@@ -313,6 +345,7 @@ src/
       DiagramLabel.tsx      ← label hotspots on a diagram
       DiagramAudio.tsx      ← hear a part name → tap it on the diagram
       questionBuilders.ts   ← pure question-building logic (shared, tested)
+  review/               ← review.html: the audio options for each phrase (dev only)
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle
 
