@@ -4,6 +4,13 @@
 import type { Mic } from './mic'
 import { SegmentDetector, levelDb, noiseFloorDb, type DetectorSettings } from './detector'
 
+// Whether the microphone is still going is read from the microphone itself
+// (Mic.isLive). This is the backstop for one that says it is live but delivers
+// nothing, so it is generous: the audio runs on its own thread, and a busy page
+// can take a while to read the frames it has already recorded.
+export const SILENT_MIC_MS = 5000
+export const WATCHDOG_INTERVAL_MS = 250
+
 export type SessionEvent =
   | { type: 'level'; db: number }
   | { type: 'speech-start' }
@@ -12,17 +19,32 @@ export type SessionEvent =
   | { type: 'too-long' }
   | { type: 'noisy'; ambientDb: number }
 
-/** Listen for `durationMs` and return the background level in dBFS. */
+/**
+ * Listen for `durationMs` and return the background level in dBFS. Rejects if
+ * the audio stops part-way: a check that never finished would otherwise leave
+ * the page waiting for quiet for ever.
+ */
 export function measureNoise(mic: Mic, durationMs: number, onLevel: (db: number) => void): Promise<number> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const levels: number[] = []
     const needed = Math.ceil(durationMs / mic.frameMs)
+    const stop = () => {
+      mic.onFrame = () => {}
+      clearInterval(watchdog)
+    }
+    let lastFrame = Date.now()
+    const watchdog = setInterval(() => {
+      if (mic.isLive() && Date.now() - lastFrame < SILENT_MIC_MS) return
+      stop()
+      reject(new Error('The microphone stopped.'))
+    }, WATCHDOG_INTERVAL_MS)
     mic.onFrame = (samples) => {
+      lastFrame = Date.now()
       const db = levelDb(samples)
       onLevel(db)
       levels.push(db)
       if (levels.length === needed) {
-        mic.onFrame = () => {}
+        stop()
         resolve(noiseFloorDb(levels))
       }
     }

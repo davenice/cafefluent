@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { openMic, type Mic } from '../recorder/mic'
-import { RecordingSession, measureNoise, type SessionEvent } from '../recorder/session'
+import { RecordingSession, measureNoise, SILENT_MIC_MS, WATCHDOG_INTERVAL_MS, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { encodeWav, peakDb, resample } from '../recorder/wav'
 import { loadScript, phraseKey, clipWarnings, recordingOrder, type Phrase, type ClipInfo } from '../recorder/script'
@@ -26,6 +26,13 @@ const NOISE_CHECK_MS = 3000
 // Recording in a room that failed the check: how far above its background the
 // limit moves, so ordinary ups and downs in the noise don't pause every clip.
 const NOISY_ROOM_MARGIN_DB = 6
+// Leaving the page stops the audio: the browser suspends the audio context
+// while the page is in the background, and the device may give the microphone
+// to another app. Nothing tells the page, and a stopped microphone looks just
+// like a quiet room, so say what happened and open it again on the next tap.
+const MIC_STOPPED_PAUSED = 'The microphone stopped. This happens when the page is left for a while. Press Resume to turn it on again.'
+const MIC_STOPPED_SETUP = 'The microphone stopped. Press Start to try again.'
+
 // The rate the app's mp3s use. Recording at the mic's rate (usually 48 kHz)
 // would double the download size for no audible gain.
 const SAVE_SAMPLE_RATE = 22050
@@ -81,6 +88,8 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   const eventHandlerRef = useRef<(e: SessionEvent) => void>(() => {})
   const uploaderRef = useRef<Uploader | null>(null)
   const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
+  const pauseRef = useRef<(reason?: string | null) => void>(() => {})
+  const lastFrameRef = useRef(0)
   const speaker = contributor.me.id
   const [recordedByOthers, setRecordedByOthers] = useState(contributor.me.recordedByOthers ?? {})
   const order = useMemo(
@@ -135,7 +144,10 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       // Safari only lets audio start soon after the tap. Offline, the counts
       // from when the page opened will do.
       const latest = contributor.api.me().catch(() => contributor.me)
-      micRef.current ??= await openMic()
+      // An earlier visit's microphone may have been stopped since; opening it
+      // again needs a tap, which is this one.
+      if (micRef.current) await micRef.current.revive()
+      else micRef.current = await openMic()
       const [existing, me] = await Promise.all([listClips(speaker), latest])
       const done: Record<string, ClipInfo> = Object.fromEntries(
         existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
@@ -158,7 +170,14 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     sessionRef.current?.stop()
     sessionRef.current = null
     setStage('checking')
-    const floor = await measureNoise(mic, NOISE_CHECK_MS, setLevel)
+    let floor: number
+    try {
+      floor = await measureNoise(mic, NOISE_CHECK_MS, setLevel)
+    } catch {
+      setStage('setup')
+      setStartError(MIC_STOPPED_SETUP)
+      return
+    }
     setFloorDb(floor)
     if (floor > settings.quietLimitDb) {
       setStage('too-noisy')
@@ -203,10 +222,18 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     setHearing(false)
   }
 
-  function resume() {
+  async function resume() {
+    setPauseReason(null)
+    try {
+      await micRef.current?.revive()
+    } catch (e) {
+      setPauseReason(
+        `The microphone could not start again: ${e instanceof Error ? e.message : e}. Check that nothing else is using it, then press Resume.`,
+      )
+      return
+    }
     sessionRef.current?.resume()
     setPaused(false)
-    setPauseReason(null)
   }
 
   /** Go back and record the phrase just done again, then return here. */
@@ -272,6 +299,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     if (!phrases) return
     switch (e.type) {
       case 'level':
+        lastFrameRef.current = Date.now()
         if (stage === 'recording') setLevel(e.db)
         break
       case 'speech-start':
@@ -312,7 +340,41 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   useEffect(() => {
     eventHandlerRef.current = handleEvent
     uploadStatusRef.current = handleUploadStatus
+    pauseRef.current = pause
   })
+
+  // Stop while the page is in the background rather than record into nothing,
+  // and on the way back say if the microphone needs turning on again.
+  useEffect(() => {
+    if (stage !== 'recording') return
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        if (!paused) pause()
+      } else if (!pauseReason && !micRef.current?.isLive()) {
+        // Only when there is nothing more important to say: a revoked link or a
+        // noisy room still needs the microphone opening again, but Resume does
+        // that anyway.
+        setPauseReason(MIC_STOPPED_PAUSED)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  })
+
+  // Backgrounding isn't the only way the audio stops: a call or another app can
+  // take the microphone while the page is open.
+  useEffect(() => {
+    if (stage !== 'recording' || paused) return
+    // Frames take a moment to start, here and after every Resume.
+    lastFrameRef.current = Date.now()
+    const watchdog = setInterval(() => {
+      const mic = micRef.current
+      if (!mic) return
+      if (mic.isLive() && Date.now() - lastFrameRef.current < SILENT_MIC_MS) return
+      pauseRef.current(MIC_STOPPED_PAUSED)
+    }, WATCHDOG_INTERVAL_MS)
+    return () => clearInterval(watchdog)
+  }, [stage, paused])
 
   useEffect(() => {
     if (stage !== 'recording') return

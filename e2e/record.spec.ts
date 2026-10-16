@@ -105,6 +105,17 @@ async function readPhrase(page: Page) {
   await expect(page.getByText('Ready: read the phrase')).toBeVisible({ timeout: 5_000 })
 }
 
+/** Pretend the page went into the background, or came back from it. */
+async function setHidden(page: Page, hidden: boolean) {
+  await page.evaluate((h) => {
+    Object.defineProperty(document, 'visibilityState', { value: h ? 'hidden' : 'visible', configurable: true })
+    document.dispatchEvent(new Event('visibilitychange'))
+  }, hidden)
+}
+
+/** The device takes the microphone away, as it does when another app wants it. */
+const stopMic = (page: Page) => page.evaluate(() => window.__micStream!.getTracks().forEach((t) => t.stop()))
+
 test('without a token, asks for the personal link', async ({ page }) => {
   await page.goto('/record.html')
   await expect(page.getByText('This page needs your personal link.')).toBeVisible()
@@ -301,6 +312,71 @@ test.describe('finishing and pausing', () => {
     await expect(page.getByText(/Paused\. Press Resume when you are ready\. If you have finished for today, press Finish for now\./)).toBeVisible()
     await page.getByRole('button', { name: 'Resume' }).click()
     await expect(page.getByText(/Press Resume when you are ready/)).toHaveCount(0)
+  })
+})
+
+test.describe('leaving the page and coming back', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the fake microphone needs Chromium')
+  test.beforeEach(async ({ page }) => fakeMic(page))
+
+  test('pauses while the page is in the background', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+
+    await setHidden(page, true)
+    await expect(page.getByText('Paused', { exact: true })).toBeVisible()
+
+    // The microphone survived, so there is nothing to explain.
+    await setHidden(page, false)
+    await expect(page.getByText(/The microphone stopped/)).toHaveCount(0)
+    await page.getByRole('button', { name: 'Resume' }).click()
+    await readPhrase(page)
+    await expect(page.getByText('All recordings sent.')).toBeVisible()
+    expect(contributor.clips.size).toBe(1)
+  })
+
+  test('opens the microphone again when the device took it away', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+
+    await setHidden(page, true)
+    await stopMic(page)
+    await setHidden(page, false)
+    await expect(page.getByText(/^The microphone stopped\./)).toBeVisible()
+
+    // Resume opens a new stream, in the tap, and recording carries on.
+    await page.getByRole('button', { name: 'Resume' }).click()
+    await readPhrase(page)
+    expect(await page.evaluate(() => window.__micStream!.getAudioTracks()[0].readyState)).toBe('live')
+    expect(contributor.clips.size).toBe(1)
+  })
+
+  test('notices the microphone stopping while the page is open', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+
+    await stopMic(page)
+    await expect(page.getByText(/^The microphone stopped\./)).toBeVisible({ timeout: 5_000 })
+    await page.getByRole('button', { name: 'Resume' }).click()
+    await readPhrase(page)
+    expect(contributor.clips.size).toBe(1)
+  })
+
+  test('goes back to the start if the microphone stops during the room check', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await page.getByRole('button', { name: 'Start' }).click()
+    await expect(page.getByText(/Checking the room/)).toBeVisible()
+
+    await stopMic(page)
+    await expect(page.getByText('The microphone stopped. Press Start to try again.')).toBeVisible({ timeout: 10_000 })
+    // Start opens it again, rather than reusing the one that stopped.
+    await startRecording(page)
+    await readPhrase(page)
+    expect(contributor.clips.size).toBe(1)
   })
 })
 

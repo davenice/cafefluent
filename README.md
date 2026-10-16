@@ -264,6 +264,13 @@ there is nothing for them to send us.
   clip recorded on this device.
 - "Finish for now" stops recording and lets go of the microphone. It shows how many phrases
   are done, and tells the contributor to open their link again to carry on.
+- Recording pauses while the page is in the background, and starts the microphone again on
+  Resume. Leaving the page stops the audio: the browser suspends the audio context, and the
+  device may give the microphone to another app (a call, the assistant). Nothing tells the
+  page, and a stopped microphone looks exactly like a quiet room — the level meter holds its
+  last value and no clip is ever saved — so the page watches `Mic.isLive()` while recording
+  and says that the microphone stopped. Resuming opens a new stream on the same audio
+  context, from the tap, since both resuming audio and `getUserMedia` can need a gesture.
 
 `record.html` is a separate entry point (`src/record/main.tsx`), not part of the app. The
 service worker neither caches it nor answers for it, so a link opened on a learner's
