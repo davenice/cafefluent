@@ -92,6 +92,18 @@ export function speakerOrder(count: number, speaker: string): number[] {
   return order
 }
 
+/**
+ * The order to ask for phrases in: the ones the fewest other people have
+ * recorded first, so each new voice goes where it is most needed. Phrases with
+ * the same count keep the speaker's own shuffle, so two people starting at the
+ * same time still get different phrases.
+ */
+export function recordingOrder(phrases: Phrase[], speaker: string, recordedByOthers: Record<string, number> = {}): number[] {
+  const count = (i: number) => recordedByOthers[phraseKey(phrases[i])] ?? 0
+  // Array sort is stable, so ties stay in shuffled order.
+  return speakerOrder(phrases.length, speaker).sort((a, b) => count(a) - count(b))
+}
+
 export function phraseKey(p: { module: string; file: string }): string {
   return `${p.module}/${p.file}`
 }

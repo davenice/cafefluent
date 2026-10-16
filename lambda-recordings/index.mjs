@@ -291,14 +291,19 @@ async function adminRoute(method, rest, event, reply) {
 async function contributorRoute(method, parts, event, contributor, reply) {
   const { id } = contributor
 
-  // GET /me: who they are, whether they have agreed, and what they have recorded
+  // GET /me: who they are, whether they have agreed, what they have recorded,
+  // and how many other people have recorded each phrase, so the recorder can ask
+  // for the ones nobody has done yet. Counts only: never who.
   if (method === 'GET' && parts.length === 1 && parts[0] === 'me') {
-    const [clipKeys, consentKeys] = await Promise.all([listKeys(clipPrefix(id)), listKeys(consentKey(id))])
-    const clips = clipKeys.map(key => {
-      const [module, file] = key.slice(clipPrefix(id).length).split('/')
-      return { module, file }
-    })
-    return reply(200, { id, name: contributor.name, consented: consentKeys.length > 0, clips })
+    const [clipKeys, consentKeys] = await Promise.all([listKeys('clips/'), listKeys(consentKey(id))])
+    const clips = []
+    const recordedByOthers = {}
+    for (const key of clipKeys) {
+      const [, owner, module, file] = key.split('/')
+      if (owner === id) clips.push({ module, file })
+      else recordedByOthers[`${module}/${file}`] = (recordedByOthers[`${module}/${file}`] ?? 0) + 1
+    }
+    return reply(200, { id, name: contributor.name, consented: consentKeys.length > 0, clips, recordedByOthers })
   }
 
   // POST /me/consent: they agree to their voice being recorded and used in the app

@@ -1,4 +1,4 @@
-import { buildScript, clipWarnings, speakerOrder } from './script'
+import { buildScript, clipWarnings, recordingOrder, speakerOrder } from './script'
 import { encodeWav, peakDb } from './wav'
 
 describe('buildScript', () => {
@@ -42,6 +42,35 @@ describe('speakerOrder', () => {
   it('gives the same speaker the same order, and different speakers different ones', () => {
     expect(speakerOrder(118, 'sam')).toEqual(speakerOrder(118, 'sam'))
     expect(speakerOrder(118, 'sam')).not.toEqual(speakerOrder(118, 'alex'))
+  })
+})
+
+describe('recordingOrder', () => {
+  const phrases = buildScript([
+    { id: 'bread', title: 'Bread', data: { variants: ['name'], items: 'abcdefgh'.split('').map((id) => ({ id, name: id })) } },
+  ])
+  const key = (i: number) => `bread/${phrases[i].file}`
+
+  it('is the speaker’s shuffle when no one else has recorded anything', () => {
+    expect(recordingOrder(phrases, 'sam')).toEqual(speakerOrder(phrases.length, 'sam'))
+    expect(recordingOrder(phrases, 'sam', {})).toEqual(speakerOrder(phrases.length, 'sam'))
+  })
+
+  it('asks for what the fewest others have recorded first, keeping the shuffle within each count', () => {
+    const counts = { [key(0)]: 2, [key(1)]: 1, [key(2)]: 1, [key(3)]: 3 }
+    const order = recordingOrder(phrases, 'sam', counts)
+    const shuffled = speakerOrder(phrases.length, 'sam')
+    const inShuffle = (ids: number[]) => shuffled.filter((i) => ids.includes(i))
+
+    expect(order).toEqual([...inShuffle([4, 5, 6, 7]), ...inShuffle([1, 2]), 0, 3])
+  })
+
+  it('gives two speakers the same priorities but different phrases within them', () => {
+    const counts = { [key(0)]: 1, [key(1)]: 1 }
+    const sam = recordingOrder(phrases, 'sam', counts)
+    const alex = recordingOrder(phrases, 'alex', counts)
+    expect(new Set(sam.slice(0, 6))).toEqual(new Set(alex.slice(0, 6)))
+    expect(sam.slice(0, 6)).not.toEqual(alex.slice(0, 6))
   })
 })
 

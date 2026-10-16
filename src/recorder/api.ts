@@ -8,6 +8,11 @@ export interface Me {
   consented: boolean
   /** Clips already saved on the server, from this device or another. */
   clips: { module: string; file: string }[]
+  /**
+   * How many other contributors have recorded each phrase, keyed by
+   * "<module>/<file>". Missing from a function deployed before it was added.
+   */
+  recordedByOthers?: Record<string, number>
 }
 
 /** The Lambda answered, but not with success. A network failure is a TypeError from fetch instead. */

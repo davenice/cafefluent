@@ -3,12 +3,12 @@
 // silence saves the clip and moves on. Each clip is saved in the browser, then
 // sent to the server from there (see uploader.ts).
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { openMic, type Mic } from '../recorder/mic'
-import { RecordingSession, measureNoise, type SessionEvent } from '../recorder/session'
+import { RecordingSession, measureNoise, SILENT_MIC_MS, WATCHDOG_INTERVAL_MS, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { encodeWav, peakDb, resample } from '../recorder/wav'
-import { loadScript, phraseKey, clipWarnings, speakerOrder, type Phrase, type ClipInfo } from '../recorder/script'
+import { loadScript, phraseKey, clipWarnings, recordingOrder, type Phrase, type ClipInfo } from '../recorder/script'
 import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
 import { Uploader, type UploadStatus } from '../recorder/uploader'
 import type { Me, RecordingsApi } from '../recorder/api'
@@ -26,6 +26,13 @@ const NOISE_CHECK_MS = 3000
 // Recording in a room that failed the check: how far above its background the
 // limit moves, so ordinary ups and downs in the noise don't pause every clip.
 const NOISY_ROOM_MARGIN_DB = 6
+// Leaving the page stops the audio: the browser suspends the audio context
+// while the page is in the background, and the device may give the microphone
+// to another app. Nothing tells the page, and a stopped microphone looks just
+// like a quiet room, so say what happened and open it again on the next tap.
+const MIC_STOPPED_PAUSED = 'The microphone stopped. This happens when the page is left for a while. Press Resume to turn it on again.'
+const MIC_STOPPED_SETUP = 'The microphone stopped. Press Start to try again.'
+
 // The rate the app's mp3s use. Recording at the mic's rate (usually 48 kHz)
 // would double the download size for no audible gain.
 const SAVE_SAMPLE_RATE = 22050
@@ -43,6 +50,12 @@ function formatDb(db: number): string {
  * The next phrase without a recording: the one after `after` in the speaker's
  * order (or the first, if `after` is null), wrapping round.
  */
+/** Phrase indexes for the review list: the recorded ones first, each group in script order. */
+function reviewOrder(phrases: Phrase[], recorded: Record<string, ClipInfo>): number[] {
+  const indexes = phrases.map((_, i) => i)
+  return [...indexes.filter((i) => recorded[phraseKey(phrases[i])]), ...indexes.filter((i) => !recorded[phraseKey(phrases[i])])]
+}
+
 function nextUnrecorded(order: number[], phrases: Phrase[], recorded: Record<string, ClipInfo>, after: number | null): number | null {
   const start = after === null ? -1 : order.indexOf(after)
   for (let step = 1; step <= order.length; step++) {
@@ -75,8 +88,14 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   const eventHandlerRef = useRef<(e: SessionEvent) => void>(() => {})
   const uploaderRef = useRef<Uploader | null>(null)
   const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
+  const pauseRef = useRef<(reason?: string | null) => void>(() => {})
+  const lastFrameRef = useRef(0)
   const speaker = contributor.me.id
-  const order = phrases ? speakerOrder(phrases.length, speaker) : []
+  const [recordedByOthers, setRecordedByOthers] = useState(contributor.me.recordedByOthers ?? {})
+  const order = useMemo(
+    () => (phrases ? recordingOrder(phrases, speaker, recordedByOthers) : []),
+    [phrases, speaker, recordedByOthers],
+  )
   const micAvailable = window.isSecureContext && !!navigator.mediaDevices
 
   useEffect(() => {
@@ -120,32 +139,51 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     setStartError(null)
     try {
       requestPersistentStorage()
-      const existing = await listClips(speaker)
+      // What is on the server now, including what other people have recorded
+      // since the page opened. Fetched while the microphone opens, not before:
+      // Safari only lets audio start soon after the tap. Offline, the counts
+      // from when the page opened will do.
+      const latest = contributor.api.me().catch(() => contributor.me)
+      // An earlier visit's microphone may have been stopped since; opening it
+      // again needs a tap, which is this one.
+      if (micRef.current) await micRef.current.revive()
+      else micRef.current = await openMic()
+      const [existing, me] = await Promise.all([listClips(speaker), latest])
       const done: Record<string, ClipInfo> = Object.fromEntries(
         existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
       )
-      for (const c of contributor.me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+      for (const c of me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+      const others = me.recordedByOthers ?? {}
       setRecorded(done)
-      micRef.current ??= await openMic()
-      await checkNoise(done)
+      setRecordedByOthers(others)
+      await checkNoise(done, recordingOrder(phrases, speaker, others))
     } catch (e) {
       setStartError(e instanceof Error ? e.message : String(e))
     }
   }
 
-  async function checkNoise(done: Record<string, ClipInfo> = recorded) {
+  // `done` and `phraseOrder` are passed in from start(), whose state updates
+  // haven't reached this render yet.
+  async function checkNoise(done: Record<string, ClipInfo> = recorded, phraseOrder: number[] = order) {
     const mic = micRef.current
     if (!mic || !phrases) return
     sessionRef.current?.stop()
     sessionRef.current = null
     setStage('checking')
-    const floor = await measureNoise(mic, NOISE_CHECK_MS, setLevel)
+    let floor: number
+    try {
+      floor = await measureNoise(mic, NOISE_CHECK_MS, setLevel)
+    } catch {
+      setStage('setup')
+      setStartError(MIC_STOPPED_SETUP)
+      return
+    }
     setFloorDb(floor)
     if (floor > settings.quietLimitDb) {
       setStage('too-noisy')
       return
     }
-    startSession(floor, settings, done)
+    startSession(floor, settings, done, phraseOrder)
   }
 
   /** Record in a room that failed the check. The clips may have more background noise. */
@@ -154,12 +192,17 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     startSession(floorDb, { ...settings, quietLimitDb: Math.max(settings.quietLimitDb, floorDb + NOISY_ROOM_MARGIN_DB) })
   }
 
-  function startSession(floor: number, sessionSettings: DetectorSettings, done: Record<string, ClipInfo> = recorded) {
+  function startSession(
+    floor: number,
+    sessionSettings: DetectorSettings,
+    done: Record<string, ClipInfo> = recorded,
+    phraseOrder: number[] = order,
+  ) {
     const mic = micRef.current
     if (!mic || !phrases) return
     const session = new RecordingSession(mic, floor, sessionSettings, (e) => eventHandlerRef.current(e))
     sessionRef.current = session
-    const first = nextUnrecorded(order, phrases, done, null)
+    const first = nextUnrecorded(phraseOrder, phrases, done, null)
     if (first === null) {
       setStage('review')
       return
@@ -179,10 +222,18 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     setHearing(false)
   }
 
-  function resume() {
+  async function resume() {
+    setPauseReason(null)
+    try {
+      await micRef.current?.revive()
+    } catch (e) {
+      setPauseReason(
+        `The microphone could not start again: ${e instanceof Error ? e.message : e}. Check that nothing else is using it, then press Resume.`,
+      )
+      return
+    }
     sessionRef.current?.resume()
     setPaused(false)
-    setPauseReason(null)
   }
 
   /** Go back and record the phrase just done again, then return here. */
@@ -248,6 +299,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     if (!phrases) return
     switch (e.type) {
       case 'level':
+        lastFrameRef.current = Date.now()
         if (stage === 'recording') setLevel(e.db)
         break
       case 'speech-start':
@@ -288,7 +340,41 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   useEffect(() => {
     eventHandlerRef.current = handleEvent
     uploadStatusRef.current = handleUploadStatus
+    pauseRef.current = pause
   })
+
+  // Stop while the page is in the background rather than record into nothing,
+  // and on the way back say if the microphone needs turning on again.
+  useEffect(() => {
+    if (stage !== 'recording') return
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        if (!paused) pause()
+      } else if (!pauseReason && !micRef.current?.isLive()) {
+        // Only when there is nothing more important to say: a revoked link or a
+        // noisy room still needs the microphone opening again, but Resume does
+        // that anyway.
+        setPauseReason(MIC_STOPPED_PAUSED)
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  })
+
+  // Backgrounding isn't the only way the audio stops: a call or another app can
+  // take the microphone while the page is open.
+  useEffect(() => {
+    if (stage !== 'recording' || paused) return
+    // Frames take a moment to start, here and after every Resume.
+    lastFrameRef.current = Date.now()
+    const watchdog = setInterval(() => {
+      const mic = micRef.current
+      if (!mic) return
+      if (mic.isLive() && Date.now() - lastFrameRef.current < SILENT_MIC_MS) return
+      pauseRef.current(MIC_STOPPED_PAUSED)
+    }, WATCHDOG_INTERVAL_MS)
+    return () => clearInterval(watchdog)
+  }, [stage, paused])
 
   useEffect(() => {
     if (stage !== 'recording') return
@@ -467,7 +553,8 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
             <button style={styles.secondaryBtn} onClick={finish}>Finish for now</button>
           </div>
           <ol style={styles.reviewList}>
-            {phrases.map((p, i) => {
+            {reviewOrder(phrases, recorded).map((i) => {
+              const p = phrases[i]
               const clip = recorded[phraseKey(p)]
               const here = clip && clip !== SAVED_ELSEWHERE
               const warnings = here ? clipWarnings(p, clip) : []
