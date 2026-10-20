@@ -60,6 +60,15 @@ describe('SegmentDetector', () => {
     expect(events[0]).toMatchObject({ type: 'noisy' })
   })
 
+  it('hears quiet speech from a microphone with no gain of its own', () => {
+    // A phone that delivers unprocessed audio: the room measures near digital
+    // silence and the speech comes in 30 dB below where another device puts it.
+    // The threshold has to follow the room, or quiet words are never heard.
+    const d = new SegmentDetector(-100, FRAME_MS)
+    expect(feed(d, -58, 800)).toEqual([{ type: 'speech-start' }])
+    expect(feed(d, -100, 2000)).toMatchObject([{ type: 'clip' }])
+  })
+
   it('drops a clip in progress on reset', () => {
     const d = new SegmentDetector(FLOOR, FRAME_MS)
     feed(d, SPEECH, 500)

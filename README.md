@@ -260,6 +260,21 @@ there is nothing for them to send us.
   (IndexedDB) first, which works as an outbox: a clip that can't be sent (no connection,
   page closed) is retried, and sent on the next visit at the latest. Leaving the page with
   clips unsent asks for confirmation.
+- Every clip is saved at a standard level, so one contributor's recordings don't play back
+  far quieter than another's in the same quiz. The gain puts the level of all but the
+  loudest 1% of samples at −8 dBFS, measured that way rather than by the peak so one lip
+  smack can't set it, and is applied to the floats before the 16-bit conversion, so lifting
+  a quiet recording costs nothing. Microphones differ by more than 30 dB: a phone that hands
+  over unprocessed audio — which is what asking for no echo cancellation, noise suppression
+  or automatic gain gets, and what the room check needs — can come in 35–40 dB below another
+  device reading the same words. The level the microphone gave is kept with the clip, so the
+  review screen can say "Microphone very quiet", which it does only when even the largest
+  gain allowed (45 dB) can't bring the clip up to level.
+- Speech is detected relative to the measured background, never at a fixed level, for the
+  same reason. The floor limit (−90 dBFS, which stops a silent input putting the threshold
+  under someone's breathing) has to stay below what such a microphone measures in a quiet
+  room, near −100 dBFS: above it, the limit rather than the room sets the threshold, and
+  quiet words land underneath it and are never heard.
 - Space pauses. Backspace records the last phrase again. The review screen plays back every
   clip recorded on this device.
 - "Finish for now" stops recording and lets go of the microphone. It shows how many phrases

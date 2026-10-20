@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { openMic, type Mic } from '../recorder/mic'
 import { RecordingSession, measureNoise, SILENT_MIC_MS, WATCHDOG_INTERVAL_MS, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
-import { encodeWav, peakDb, resample } from '../recorder/wav'
+import { applyGain, encodeWav, normaliseGainDb, peakDb, resample } from '../recorder/wav'
 import { loadScript, phraseKey, clipWarnings, recordingOrder, type Phrase, type ClipInfo } from '../recorder/script'
 import { listClips, getClip, putClip, pendingClips, markUploaded, requestPersistentStorage } from '../recorder/clipStore'
 import { Uploader, type UploadStatus } from '../recorder/uploader'
@@ -276,8 +276,13 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
         speaker,
         module: phrase.module,
         file: phrase.file,
-        wav: encodeWav(saved, SAVE_SAMPLE_RATE),
+        // Saved at a standard level: microphones differ by more than 30 dB, and
+        // without this one contributor's clips play back far quieter than
+        // another's in the same quiz.
+        wav: encodeWav(applyGain(saved, normaliseGainDb(saved)), SAVE_SAMPLE_RATE),
         durationMs: Math.round((saved.length / SAVE_SAMPLE_RATE) * 1000),
+        // The level the microphone gave us, before that gain: the warnings are
+        // about the recording, not the file.
         peakDb: peakDb(saved),
         recordedAt: Date.now(),
       })

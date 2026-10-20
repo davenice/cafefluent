@@ -1,5 +1,5 @@
 import { buildScript, clipWarnings, recordingOrder, speakerOrder } from './script'
-import { encodeWav, peakDb } from './wav'
+import { applyGain, encodeWav, loudLevelDb, normaliseGainDb, peakDb, NORMALISE_TARGET_DB, MAX_GAIN_DB } from './wav'
 
 describe('buildScript', () => {
   it('gives each item every sentence variant unless the module lists its own', () => {
@@ -82,8 +82,12 @@ describe('clipWarnings', () => {
   })
 
   it('flags long, quiet and distorted clips', () => {
-    expect(clipWarnings(phrase, { durationMs: 5000, peakDb: -40 })).toEqual(['Long for the words', 'Quiet'])
+    expect(clipWarnings(phrase, { durationMs: 5000, peakDb: -60 })).toEqual(['Long for the words', 'Microphone very quiet'])
     expect(clipWarnings(phrase, { durationMs: 1000, peakDb: 0 })).toEqual(['May be distorted'])
+  })
+
+  it('passes a quiet recording that normalising brings up to level', () => {
+    expect(clipWarnings(phrase, { durationMs: 1200, peakDb: -40 })).toEqual([])
   })
 })
 
@@ -99,5 +103,47 @@ describe('encodeWav', () => {
 
   it('measures the peak level', () => {
     expect(peakDb(new Float32Array([0.5, -1]))).toBeCloseTo(0)
+  })
+})
+
+describe('normalising', () => {
+  /** A second of a tone at `amplitude`, with `spikes` full-scale samples in it. */
+  function clip(amplitude: number, spikes = 0): Float32Array {
+    const samples = new Float32Array(22050)
+    for (let i = 0; i < samples.length; i++) samples[i] = amplitude * Math.sin((i * 2 * Math.PI * 220) / 22050)
+    for (let i = 0; i < spikes; i++) samples[i * 100] = 1
+    return samples
+  }
+
+  it('brings a quiet recording up to the target and a loud one down', () => {
+    const quiet = clip(0.01)   // about -40 dBFS
+    const loud = clip(0.9)
+    expect(normaliseGainDb(quiet)).toBeGreaterThan(25)
+    expect(normaliseGainDb(loud)).toBeLessThan(0)
+    for (const samples of [quiet, loud]) {
+      expect(loudLevelDb(applyGain(samples, normaliseGainDb(samples)))).toBeCloseTo(NORMALISE_TARGET_DB, 1)
+    }
+  })
+
+  it('leaves headroom, so a normalised clip does not reach full scale', () => {
+    const samples = applyGain(clip(0.01), normaliseGainDb(clip(0.01)))
+    expect(peakDb(samples)).toBeLessThan(0)
+  })
+
+  it('sets the level by the speech, not by one transient', () => {
+    // A quiet reading with a few clicks at full scale: peak normalising would
+    // find nothing to do, and the words would stay quiet.
+    const samples = clip(0.01, 5)
+    expect(peakDb(samples)).toBeCloseTo(0)
+    expect(normaliseGainDb(samples)).toBeGreaterThan(25)
+  })
+
+  it('caps the gain, so a clip of near-silence is not lifted into noise', () => {
+    expect(normaliseGainDb(clip(1e-6))).toBe(MAX_GAIN_DB)
+  })
+
+  it('leaves an empty clip alone', () => {
+    expect(normaliseGainDb(new Float32Array(0))).toBe(0)
+    expect(applyGain(new Float32Array(0), 6)).toEqual(new Float32Array(0))
   })
 })

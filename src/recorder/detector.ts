@@ -38,9 +38,14 @@ export const DEFAULT_SETTINGS: DetectorSettings = {
   quietLimitDb: -35,
 }
 
-// A very clean input can measure near digital silence, which would put the
-// speech threshold low enough for breathing to trigger it.
-const MIN_FLOOR_DB = -70
+// How low the background is allowed to read, since the speech threshold sits a
+// fixed distance above it: a very clean input can measure near digital silence,
+// which would put the threshold under someone's breathing. It has to stay below
+// what a microphone with no gain of its own reads in a quiet room, though — one
+// phone measured −100 dBFS, with speech at −52 — because above that it is the
+// limit rather than the room that sets the threshold, and quiet words land
+// underneath it and are never heard.
+const MIN_FLOOR_DB = -90
 
 // How quickly the background estimate follows the room, in ms.
 const AMBIENT_TIME_CONSTANT_MS = 1000
