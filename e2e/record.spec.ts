@@ -4,6 +4,7 @@ import { readFileSync } from 'fs'
 import { FakeRecordingsApi, type FakeContributor } from './fakeRecordingsApi'
 import { MODULES } from '../src/data/modules'
 import { buildScript, phraseKey } from '../src/recorder/script'
+import { NORMALISE_TARGET_DB } from '../src/recorder/wav'
 
 declare global {
   interface Window {
@@ -105,6 +106,17 @@ async function readPhrase(page: Page) {
   await expect(page.getByText('Ready: read the phrase')).toBeVisible({ timeout: 5_000 })
 }
 
+/**
+ * How loud a saved clip is, in dBFS, measured the way the recorder does
+ * (`loudLevelDb`): the level with the loudest 1% of samples left out.
+ */
+function loudLevelDb(wav: Buffer): number {
+  const samples = []
+  for (let i = 44; i + 1 < wav.length; i += 2) samples.push(Math.abs(wav.readInt16LE(i)) / 32768)
+  samples.sort((a, b) => a - b)
+  return 20 * Math.log10(Math.max(samples[Math.floor(samples.length * 0.99)], 1e-10))
+}
+
 /** Pretend the page went into the background, or came back from it. */
 async function setHidden(page: Page, hidden: boolean) {
   await page.evaluate((h) => {
@@ -181,6 +193,21 @@ test.describe('recording', () => {
     const [key, wav] = [...contributor.clips][0]
     expect(key).toMatch(/^[a-z-]+\/[a-z0-9-]+_[a-z0-9-]+\.wav$/)
     expect(wav.toString('ascii', 0, 4)).toBe('RIFF')
+  })
+
+  test('saves the clip at a standard level, whatever the microphone gave', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await startRecording(page)
+
+    // The fake microphone speaks at 0.8, about -2 dBFS: without normalising,
+    // the saved clip would come out at that level and a quieter microphone
+    // (an Android giving unprocessed audio) 30 dB below it.
+    await readPhrase(page)
+    await expect(page.getByText('All recordings sent.')).toBeVisible()
+
+    const [, wav] = [...contributor.clips][0]
+    expect(loudLevelDb(wav)).toBeCloseTo(NORMALISE_TARGET_DB, 0)
   })
 
   test('counts clips saved on another device as done', async ({ page }) => {

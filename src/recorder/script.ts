@@ -118,7 +118,9 @@ export function clipWarnings(phrase: Phrase, clip: ClipInfo): string[] {
   const warnings: string[] = []
   const words = phrase.text.split(/\s+/).length
   if (clip.durationMs > 1500 + 700 * words) warnings.push('Long for the words')
-  if (clip.peakDb < -30) warnings.push('Quiet')
+  // Clips are saved at a standard level, so a quiet recording is only a problem
+  // once it is too quiet for that gain to bring up (see MAX_GAIN_DB).
+  if (clip.peakDb < -50) warnings.push('Microphone very quiet')
   if (clip.peakDb > -0.5) warnings.push('May be distorted')
   return warnings
 }

@@ -36,6 +36,54 @@ export function peakDb(samples: Float32Array): number {
   return 20 * Math.log10(Math.max(peak, 1e-10))
 }
 
+/** The level a saved clip is brought to, in dBFS, measured as `loudLevelDb`. */
+export const NORMALISE_TARGET_DB = -8
+
+// Enough for a microphone that applies no gain of its own: a phone asked for
+// unprocessed audio can come in 35–40 dB below the same words on another
+// device. Not so much that a clip of nothing but room noise is lifted into
+// something audible.
+export const MAX_GAIN_DB = 45
+
+/**
+ * How loud a clip is, in dBFS, ignoring its loudest 1% of samples. A plain peak
+ * would be set by one lip smack or a knock on the table; this sits about 5 dB
+ * under the peak of speech and barely moves with a single transient, so it is
+ * what the level is set by.
+ */
+export function loudLevelDb(samples: Float32Array): number {
+  if (samples.length === 0) return -Infinity
+  const magnitudes = new Float32Array(samples.length)
+  for (let i = 0; i < samples.length; i++) magnitudes[i] = Math.abs(samples[i])
+  magnitudes.sort()
+  return 20 * Math.log10(Math.max(magnitudes[Math.floor(magnitudes.length * 0.99)], 1e-10))
+}
+
+/**
+ * The gain (dB) that brings a clip to the standard level, so one speaker's
+ * clips don't play back far quieter than another's. Negative for a clip that is
+ * louder than the target. Apply it before encoding: the samples are still
+ * floats there, so lifting a quiet recording costs nothing, while the same gain
+ * applied after the 16-bit conversion would bring the quantisation noise with it.
+ */
+export function normaliseGainDb(samples: Float32Array): number {
+  const level = loudLevelDb(samples)
+  if (!Number.isFinite(level)) return 0
+  return Math.min(NORMALISE_TARGET_DB - level, MAX_GAIN_DB)
+}
+
+/**
+ * The samples with `gainDb` applied. The target leaves headroom for the 1% above
+ * `loudLevelDb`, and encodeWav clamps anything that still goes over.
+ */
+export function applyGain(samples: Float32Array, gainDb: number): Float32Array {
+  if (gainDb === 0) return samples
+  const factor = 10 ** (gainDb / 20)
+  const out = new Float32Array(samples.length)
+  for (let i = 0; i < samples.length; i++) out[i] = samples[i] * factor
+  return out
+}
+
 /** Convert to another sample rate using the browser's own resampler. */
 export async function resample(samples: Float32Array, fromRate: number, toRate: number): Promise<Float32Array> {
   if (fromRate === toRate) return samples
