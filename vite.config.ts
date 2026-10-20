@@ -3,6 +3,8 @@ import { loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'child_process'
+import { join } from 'node:path'
+import { recordingsReview } from './scripts/reviewRecordings'
 
 const buildDate = new Date().toISOString().slice(0, 10)
 const buildCommit = execSync('git rev-parse --short HEAD').toString().trim()
@@ -51,6 +53,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Dev only: serves recordings/ to review.html. Neither is in the build.
+    recordingsReview({ dir: join(import.meta.dirname, 'recordings') }),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['icons/*.png', 'content/**/*'],
@@ -79,14 +83,15 @@ export default defineConfig(({ mode }) => ({
         runtimeCaching: configCaching(loadEnv(mode, process.cwd(), 'VITE_').VITE_MODULES_API_URL),
       },
     }),
-    // The PWA plugin links the app manifest from every page. On record.html that
-    // would offer to install the learner app, so take it out there.
+    // The PWA plugin links the app manifest from every page. On the pages that
+    // aren't the learner app that would offer to install it, so take it out there.
     {
-      name: 'record-page-without-manifest',
+      name: 'other-pages-without-manifest',
       enforce: 'post',
       transformIndexHtml: {
         order: 'post',
-        handler: (html, ctx) => (ctx.path === '/record.html' ? html.replace(/\s*<link rel="manifest"[^>]*>/, '') : html),
+        handler: (html, ctx) =>
+          ctx.path === '/record.html' || ctx.path === '/review.html' ? html.replace(/\s*<link rel="manifest"[^>]*>/, '') : html,
       },
     },
   ],
