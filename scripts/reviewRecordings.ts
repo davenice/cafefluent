@@ -1,168 +1,147 @@
-// Serves the clips in recordings/ to the review page, with each one measured.
-// A dev-server plugin only: review.html is not part of the production build, and
-// recordings/ is git-ignored and never deployed.
+// Serves the review page everything it needs from disk: the clips in
+// recordings/ with each one measured, the prepared copies in
+// recordings-prepared/, and the decisions file it reads and writes.
+//
+// A dev-server plugin only: review.html is not part of the production build,
+// and recordings/ is git-ignored and never deployed.
 
-import { readdir, readFile, stat } from 'node:fs/promises'
-import { join } from 'node:path'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { dirname } from 'node:path'
 import type { Connect, Plugin } from 'vite'
+import type { IncomingMessage, ServerResponse } from 'node:http'
+import { clipKey, clipPath, clipRef, scanRecordings, type Clip } from './recordings.ts'
+import { readManifest, type Manifest, type PreparedClip } from './prepareRecordings.ts'
+import {
+  applyPatch,
+  emptyDecisions,
+  parseDecisions,
+  parsePatch,
+  serialiseDecisions,
+  type Decisions,
+} from '../src/review/decisions.ts'
 
-/** The layout fetch-recordings writes: recordings/<contributor>/<module>/<item>_<variant>.wav */
-const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/
-const CLIP_FILE = /^[a-z0-9]+(-[a-z0-9]+)*_[a-z0-9]+(-[a-z0-9]+)*\.wav$/
+/** A request body big enough for the whole export manifest, and no bigger. */
+const MAX_BODY = 8 * 1024 * 1024
 
-/** Anything quieter than this counts as silence when measuring the ends. */
-const SILENCE_DB = -45
-const WINDOW_MS = 20
-
-export interface ClipStats {
-  durationMs: number
-  /** Loudest sample, in dBFS. Above about -0.5 the recording may be clipped. */
-  peakDb: number
-  /** Average level over the clip, in dBFS: how loud it actually sounds. */
-  rmsDb: number
-  /** Silence before the first sound and after the last, in ms. */
-  leadMs: number
-  tailMs: number
+export interface ReviewClip extends Clip {
+  /** What the prepare step made of it, when it has been run. */
+  prepared?: PreparedClip
 }
 
-export interface Clip extends ClipStats {
-  contributor: string
-  module: string
-  file: string
-  bytes: number
-  /** When it was recorded, from the file's time (fetch-recordings sets it from S3). */
-  recorded: string
+export interface ReviewState {
+  clips: ReviewClip[]
+  /** When the prepare step last ran and what it did, or null if it hasn't. */
+  prepared: { at: string; recipe: Manifest['recipe'] } | null
+  decisions: Decisions
 }
 
-const db = (level: number) => 20 * Math.log10(Math.max(level, 1e-10))
-const round = (n: number) => Math.round(n * 10) / 10
-
-/**
- * Measure a 16-bit PCM WAV, the only kind the recorder makes (see src/recorder/wav.ts).
- * Returns null for anything else, so one odd file doesn't stop the listing.
- */
-export function wavStats(bytes: Uint8Array): ClipStats | null {
-  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-  const tag = (at: number) => String.fromCharCode(...bytes.subarray(at, at + 4))
-  if (bytes.byteLength < 44 || tag(0) !== 'RIFF' || tag(8) !== 'WAVE') return null
-
-  // Walk the chunks rather than assuming the 44-byte header: other tools write
-  // LIST or fact chunks before the samples.
-  let channels = 0
-  let sampleRate = 0
-  let bits = 0
-  let format = 0
-  let data: { at: number; size: number } | null = null
-  for (let at = 12; at + 8 <= bytes.byteLength; ) {
-    const id = tag(at)
-    const size = view.getUint32(at + 4, true)
-    const body = at + 8
-    if (id === 'fmt ' && size >= 16) {
-      format = view.getUint16(body, true)
-      channels = view.getUint16(body + 2, true)
-      sampleRate = view.getUint32(body + 4, true)
-      bits = view.getUint16(body + 14, true)
-    } else if (id === 'data') {
-      data = { at: body, size: Math.min(size, bytes.byteLength - body) }
-    }
-    at = body + size + (size % 2) // chunks are padded to an even length
-  }
-  if (format !== 1 || bits !== 16 || channels < 1 || !sampleRate || !data) return null
-
-  const frames = Math.floor(data.size / 2 / channels)
-  if (!frames) return null
-
-  // Mono-sum first, so a stereo file measures the same as the mono one we expect.
-  const window = Math.max(1, Math.round((sampleRate * WINDOW_MS) / 1000))
-  const quiet = 10 ** (SILENCE_DB / 20)
-  let peak = 0
-  let sumOfSquares = 0
-  let windowSquares = 0
-  let firstLoud = -1
-  let lastLoud = -1
-  for (let f = 0; f < frames; f++) {
-    let sample = 0
-    for (let c = 0; c < channels; c++) sample += view.getInt16(data.at + (f * channels + c) * 2, true) / 0x8000
-    sample /= channels
-    peak = Math.max(peak, Math.abs(sample))
-    sumOfSquares += sample * sample
-    windowSquares += sample * sample
-    if (f % window === window - 1 || f === frames - 1) {
-      const windowed = Math.sqrt(windowSquares / window)
-      if (windowed > quiet) {
-        if (firstLoud < 0) firstLoud = f + 1 - window
-        lastLoud = f + 1
-      }
-      windowSquares = 0
-    }
-  }
-
-  const ms = (f: number) => Math.round((f / sampleRate) * 1000)
+/** Everything the page loads in one go: clips, what prepare did, and the decisions. */
+export async function reviewState({
+  dir,
+  preparedDir,
+  decisionsFile,
+}: {
+  dir: string
+  preparedDir: string
+  decisionsFile: string
+}): Promise<ReviewState> {
+  const [clips, manifest, decisions] = await Promise.all([
+    scanRecordings(dir),
+    readManifest(preparedDir),
+    readDecisions(decisionsFile),
+  ])
   return {
-    durationMs: ms(frames),
-    peakDb: round(db(peak)),
-    rmsDb: round(db(Math.sqrt(sumOfSquares / frames))),
-    leadMs: firstLoud < 0 ? ms(frames) : ms(firstLoud),
-    tailMs: lastLoud < 0 ? 0 : ms(frames - lastLoud),
+    clips: clips.map((clip) => {
+      const prepared = manifest?.clips[clipKey(clip)]
+      return prepared ? { ...clip, prepared } : clip
+    }),
+    prepared: manifest ? { at: manifest.prepared, recipe: manifest.recipe } : null,
+    decisions,
   }
 }
 
-/** Every clip under `dir`, measured. Files that aren't clips are left out. */
-export async function scanRecordings(dir: string): Promise<Clip[]> {
-  const clips: Clip[] = []
-  for (const contributor of await listDir(dir)) {
-    if (!SLUG.test(contributor)) continue
-    for (const module of await listDir(join(dir, contributor))) {
-      if (!SLUG.test(module)) continue
-      for (const file of await listDir(join(dir, contributor, module))) {
-        if (!CLIP_FILE.test(file)) continue
-        const path = join(dir, contributor, module, file)
-        const [info, bytes] = await Promise.all([stat(path), readFile(path)])
-        const stats = wavStats(bytes)
-        if (!stats) continue
-        clips.push({ contributor, module, file, bytes: info.size, recorded: info.mtime.toISOString(), ...stats })
-      }
-    }
+/** The decisions file, or empty decisions when there isn't one yet. */
+export async function readDecisions(file: string): Promise<Decisions> {
+  const text = await readFile(file, 'utf8').catch(() => null)
+  if (text === null) return emptyDecisions()
+  try {
+    return parseDecisions(JSON.parse(text))
+  } catch {
+    // A file we can't read is not a file to overwrite: say so instead.
+    throw new Error(`${file} is not valid JSON. Fix or delete it.`)
   }
-  return clips.sort((a, b) => `${a.contributor}/${a.module}/${a.file}`.localeCompare(`${b.contributor}/${b.module}/${b.file}`))
 }
 
-async function listDir(path: string): Promise<string[]> {
-  return (await readdir(path, { withFileTypes: true }).catch(() => [])).map((e) => e.name).sort()
+export async function writeDecisions(file: string, decisions: Decisions): Promise<void> {
+  await mkdir(dirname(file), { recursive: true })
+  await writeFile(file, serialiseDecisions(decisions))
+}
+
+export interface ReviewPaths {
+  dir: string
+  preparedDir: string
+  decisionsFile: string
+  exportFile: string
 }
 
 /**
- * `GET /recordings-api/clips.json` lists every local clip, and
- * `GET /recordings/<contributor>/<module>/<file>.wav` plays one. Both are only
- * ever answered by the dev server; see README, "Reviewing the recordings".
+ * `GET  /recordings-api/review.json`   the clips, the prepared stats and the decisions
+ * `POST /recordings-api/decisions`     apply one change and save; answers with the decisions
+ * `POST /recordings-api/export`        write the picked set as a manifest
+ * `GET  /recordings/<contributor>/<module>/<file>.wav`   a clip as it was recorded
+ * `GET  /prepared/<contributor>/<module>/<file>.wav`     its trimmed, levelled copy
+ *
+ * All only ever answered by the dev server; see README, "Reviewing the recordings".
  */
-export function recordingsReview({ dir }: { dir: string }): Plugin {
-  const middleware: Connect.NextHandleFunction = (req, res, next) => {
+export function reviewMiddleware({ dir, preparedDir, decisionsFile, exportFile }: ReviewPaths): Connect.NextHandleFunction {
+  return (req, res, next) => {
     const path = (req.url ?? '').split('?')[0]
-    if (path === '/recordings-api/clips.json') {
-      scanRecordings(dir).then(
-        (clips) => {
-          res.setHeader('Content-Type', 'application/json')
-          res.setHeader('Cache-Control', 'no-store')
-          res.end(JSON.stringify({ clips }))
-        },
-        (err: Error) => {
-          res.statusCode = 500
-          res.end(JSON.stringify({ error: err.message }))
-        },
-      )
+    const method = req.method ?? 'GET'
+
+    if (path === '/recordings-api/review.json' && method === 'GET') {
+      void answer(res, () => reviewState({ dir, preparedDir, decisionsFile }))
       return
     }
-    if (path.startsWith('/recordings/')) {
+
+    if (path === '/recordings-api/decisions' && method === 'POST') {
+      void answer(res, async () => {
+        const patch = parsePatch(await readJsonBody(req))
+        if (!patch) throw new BadRequest('Not a change I know how to make')
+        // Read, apply and write together: the page sends one change at a time,
+        // so the file stays the record even after it is edited by hand.
+        const decisions = applyPatch(await readDecisions(decisionsFile), patch)
+        await writeDecisions(decisionsFile, decisions)
+        return { decisions }
+      })
+      return
+    }
+
+    if (path === '/recordings-api/export' && method === 'POST') {
+      void answer(res, async () => {
+        const body = (await readJsonBody(req)) as { picked?: unknown }
+        if (!Array.isArray(body?.picked)) throw new BadRequest('An export needs a list of picks')
+        await mkdir(dirname(exportFile), { recursive: true })
+        await writeFile(exportFile, `${JSON.stringify({ exported: new Date().toISOString(), ...body }, null, 2)}\n`)
+        return { file: exportFile, picked: body.picked.length }
+      })
+      return
+    }
+
+    const audio = path.startsWith('/recordings/')
+      ? { from: dir, parts: path.slice('/recordings/'.length) }
+      : path.startsWith('/prepared/')
+        ? { from: preparedDir, parts: path.slice('/prepared/'.length) }
+        : null
+    if (audio) {
       // A key from the bucket is a path on disk here, so only serve what matches
       // the layout exactly: no traversal, no other file types.
-      const [contributor, module, file, ...rest] = path.slice('/recordings/'.length).split('/')
-      if (rest.length || !SLUG.test(contributor ?? '') || !SLUG.test(module ?? '') || !CLIP_FILE.test(file ?? '')) {
+      const ref = clipRef(audio.parts.split('/'))
+      if (!ref) {
         res.statusCode = 404
         res.end('Not a clip')
         return
       }
-      readFile(join(dir, contributor, module, file)).then(
+      readFile(clipPath(audio.from, ref)).then(
         (bytes) => {
           res.setHeader('Content-Type', 'audio/wav')
           res.setHeader('Cache-Control', 'no-store')
@@ -177,12 +156,46 @@ export function recordingsReview({ dir }: { dir: string }): Plugin {
     }
     next()
   }
+}
 
+/** Dev only: review.html is not in the production build. */
+export function recordingsReview(paths: ReviewPaths): Plugin {
   return {
     name: 'recordings-review',
     apply: 'serve',
     configureServer: (server) => {
-      server.middlewares.use(middleware)
+      server.middlewares.use(reviewMiddleware(paths))
     },
+  }
+}
+
+/** A message for the page rather than something that went wrong on our side. */
+class BadRequest extends Error {}
+
+async function answer(res: ServerResponse, work: () => Promise<unknown>): Promise<void> {
+  try {
+    const body = await work()
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Cache-Control', 'no-store')
+    res.end(JSON.stringify(body))
+  } catch (err) {
+    res.statusCode = err instanceof BadRequest ? 400 : 500
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ error: (err as Error).message }))
+  }
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = []
+  let size = 0
+  for await (const chunk of req) {
+    size += (chunk as Buffer).length
+    if (size > MAX_BODY) throw new BadRequest('That request is too big')
+    chunks.push(chunk as Buffer)
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8') || 'null')
+  } catch {
+    throw new BadRequest('That request is not JSON')
   }
 }

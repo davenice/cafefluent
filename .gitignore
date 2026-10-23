@@ -28,5 +28,8 @@ playwright-report/
 *.sln
 *.sw?
 
-# Contributors' voice recordings, from npm run fetch:recordings
+# Contributors' voice recordings, from npm run fetch:recordings, and the
+# trimmed copies npm run prepare:recordings makes from them. The review
+# decisions in audio-review.json are committed: those can't be fetched again.
 recordings/
+recordings-prepared/
