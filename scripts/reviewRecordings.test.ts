@@ -6,7 +6,7 @@ import { join } from 'node:path'
 import { Readable } from 'node:stream'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import type { Connect } from 'vite'
-import { readDecisions, reviewMiddleware, reviewState } from './reviewRecordings.ts'
+import { loadDecisions, readDecisions, reviewMiddleware, reviewState } from './reviewRecordings.ts'
 import { prepareRecordings } from './prepareRecordings.ts'
 import { tone, wav } from './wavFixtures.ts'
 
@@ -90,16 +90,65 @@ describe('the review dev server', () => {
       phrases: { 'allergens/milk_name.wav': { pick: 'amira-3f9a1c' } },
     })
 
-    expect(JSON.parse(await readFile(paths.decisionsFile, 'utf8')).phrases['allergens/milk_name.wav'].pick).toBe('amira-3f9a1c')
     const state = (await call(middleware, { url: '/recordings-api/review.json' })).json()
     expect(state.decisions).toMatchObject({ phrases: { 'allergens/milk_name.wav': { pick: 'amira-3f9a1c' } } })
+  })
+
+  it('writes the voice without its name, since the file is committed', async () => {
+    await call(middleware, { url: '/recordings-api/decisions', method: 'POST', body: pick })
+    await call(middleware, {
+      url: '/recordings-api/decisions',
+      method: 'POST',
+      body: { type: 'hide', contributor: 'amira-3f9a1c', hidden: true },
+    })
+
+    const text = await readFile(paths.decisionsFile, 'utf8')
+    expect(text).not.toContain('amira')
+    const file = JSON.parse(text)
+    expect(file.phrases['allergens/milk_name.wav'].pick).toBe('3f9a1c')
+    expect(file.hiddenVoices).toEqual(['3f9a1c'])
+  })
+
+  it('puts a name back in the decisions file without one', async () => {
+    await writeFile(
+      paths.decisionsFile,
+      JSON.stringify({ version: 1, hiddenVoices: ['3f9a1c'], phrases: { 'allergens/milk_name.wav': { pick: '3f9a1c' } } }),
+    )
+    const state = (await call(middleware, { url: '/recordings-api/review.json' })).json() as unknown as Awaited<
+      ReturnType<typeof reviewState>
+    >
+    expect(state.decisions.hiddenVoices).toEqual(['amira-3f9a1c'])
+    expect(state.decisions.phrases['allergens/milk_name.wav'].pick).toBe('amira-3f9a1c')
+  })
+
+  it('takes the names out of a file that still has them, next time the page loads', async () => {
+    await writeFile(
+      paths.decisionsFile,
+      JSON.stringify({ version: 1, hiddenVoices: [], phrases: { 'allergens/milk_name.wav': { pick: 'amira-3f9a1c' } } }),
+    )
+    await call(middleware, { url: '/recordings-api/review.json' })
+    expect(await readFile(paths.decisionsFile, 'utf8')).not.toContain('amira')
+    // And the decision itself is still there.
+    expect(await loadDecisions(paths)).toMatchObject({
+      phrases: { 'allergens/milk_name.wav': { pick: 'amira-3f9a1c' } },
+    })
+  })
+
+  it('keeps a decision about a voice whose recordings are not here', async () => {
+    await writeFile(
+      paths.decisionsFile,
+      JSON.stringify({ version: 1, hiddenVoices: [], phrases: { 'bread/bap_name.wav': { bad: ['9c0de1'] } } }),
+    )
+    await call(middleware, { url: '/recordings-api/review.json' })
+    const file = JSON.parse(await readFile(paths.decisionsFile, 'utf8'))
+    expect(file.phrases['bread/bap_name.wav'].bad).toEqual(['9c0de1'])
   })
 
   it('applies each change to what is on disk, so an edit by hand is kept', async () => {
     await call(middleware, { url: '/recordings-api/decisions', method: 'POST', body: pick })
     // Someone else — or the same reviewer in another tab — hides a voice.
     const file = JSON.parse(await readFile(paths.decisionsFile, 'utf8'))
-    await writeFile(paths.decisionsFile, JSON.stringify({ ...file, hiddenVoices: ['sam-00ab12'] }))
+    await writeFile(paths.decisionsFile, JSON.stringify({ ...file, hiddenVoices: ['00ab12'] }))
 
     const res = await call(middleware, {
       url: '/recordings-api/decisions',
@@ -107,8 +156,9 @@ describe('the review dev server', () => {
       body: { type: 'bad', phrase: 'bread/bap_name.wav', source: 'sam-00ab12', bad: true },
     })
     const decisions = res.json().decisions as unknown as { hiddenVoices: string[]; phrases: Record<string, unknown> }
-    expect(decisions.hiddenVoices).toEqual(['sam-00ab12'])
     expect(Object.keys(decisions.phrases)).toEqual(['allergens/milk_name.wav', 'bread/bap_name.wav'])
+    // sam has no folder in recordings/, so there is no name to put back.
+    expect(decisions.hiddenVoices).toEqual(['00ab12'])
   })
 
   it('refuses a change it does not understand', async () => {

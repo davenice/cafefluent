@@ -394,6 +394,15 @@ at a time, each applied to what is on disk, so editing the file by hand between 
 safe. If a save fails the page says so and keeps the change on screen, so clicking it again
 sends it again. The model and its rules are in `src/review/decisions.ts`, tested on their own.
 
+**No contributor's name is committed.** A contributor id is their name plus six random
+characters, and this repo is public, so the file names each voice by those six characters
+alone — `"pick": "db6f0b"` — and the dev server puts the id back on the way to the page, by
+matching the folders in `recordings/`. Opening the page also writes back a file that still
+has names in it, so one load cleans it. A decision about a voice whose recordings aren't
+here is kept as the file has it, rather than dropped. If two contributors ever drew the same
+six characters the server refuses to save and says to rename one, rather than write a file
+where one voice's decisions could be read back as another's.
+
 **Export picks** writes `recordings-prepared/picks.json`: a line per decided phrase with the
 module, item, variant, the chosen contributor, the clip to take it from, and the `.mp3` the
 app plays, plus lists of the phrases still to pick, the ones where every recording was marked

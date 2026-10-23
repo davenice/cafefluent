@@ -1,4 +1,14 @@
-import { applyPatch, emptyDecisions, parseDecisions, parsePatch, serialiseDecisions, type Decisions } from './decisions'
+import {
+  applyPatch,
+  emptyDecisions,
+  parseDecisions,
+  parsePatch,
+  renameVoices,
+  serialiseDecisions,
+  voiceAlias,
+  voiceAliases,
+  type Decisions,
+} from './decisions'
 
 const NOW = '2026-10-23T09:00:00.000Z'
 const apply = (decisions: Decisions, ...patches: Parameters<typeof applyPatch>[1][]) =>
@@ -138,5 +148,61 @@ describe('serialiseDecisions', () => {
     expect(text.indexOf('allergens/milk_name.wav')).toBeLessThan(text.indexOf('bread/bap_name.wav'))
     expect(text.endsWith('\n')).toBe(true)
     expect(parseDecisions(JSON.parse(text))).toEqual(decisions)
+  })
+})
+
+describe('voiceAlias', () => {
+  it('keeps the six characters the recordings function adds, and drops the name', () => {
+    expect(voiceAlias('amira-k-3f9a1c')).toBe('3f9a1c')
+    expect(voiceAlias('ravi-patel-through-sam-d77e2b')).toBe('d77e2b')
+    expect(voiceAlias('tryout2-6cae0f')).toBe('6cae0f')
+  })
+
+  it('leaves a folder that is not one of its ids alone', () => {
+    expect(voiceAlias('someone')).toBe('someone')
+    expect(voiceAlias('amira-k-3f9a1')).toBe('amira-k-3f9a1')
+  })
+})
+
+describe('voiceAliases', () => {
+  it('maps each contributor both ways', () => {
+    const { expand, collapse } = voiceAliases(['amira-3f9a1c', 'sam-00ab12'])
+    expect(expand).toEqual({ '3f9a1c': 'amira-3f9a1c', '00ab12': 'sam-00ab12' })
+    expect(collapse).toEqual({ 'amira-3f9a1c': '3f9a1c', 'sam-00ab12': '00ab12' })
+  })
+
+  it('refuses to let two voices share one name in the file', () => {
+    expect(() => voiceAliases(['amira-3f9a1c', 'sam-3f9a1c'])).toThrow(/Rename one of them/)
+  })
+
+  it('does not mind being given the same contributor twice', () => {
+    expect(() => voiceAliases(['amira-3f9a1c', 'amira-3f9a1c'])).not.toThrow()
+  })
+})
+
+describe('renameVoices', () => {
+  const decisions = apply(
+    emptyDecisions(),
+    { type: 'pick', phrase: 'allergens/milk_name.wav', source: 'amira-3f9a1c' },
+    { type: 'bad', phrase: 'allergens/milk_name.wav', source: 'sam-00ab12', bad: true },
+    { type: 'bad', phrase: 'bread/bap_name.wav', source: 'generated', bad: true },
+    { type: 'hide', contributor: 'sam-00ab12', hidden: true },
+  )
+  const { collapse, expand } = voiceAliases(['amira-3f9a1c', 'sam-00ab12'])
+
+  it('takes the names out, and puts them back', () => {
+    const stored = renameVoices(decisions, collapse)
+    expect(JSON.stringify(stored)).not.toMatch(/amira|sam/)
+    expect(stored.phrases['allergens/milk_name.wav']).toEqual({ pick: '3f9a1c', bad: ['00ab12'], updated: NOW })
+    expect(stored.hiddenVoices).toEqual(['00ab12'])
+    expect(renameVoices(stored, expand)).toEqual(decisions)
+  })
+
+  it('leaves the generated clip and an unknown voice as they are', () => {
+    const stored = renameVoices(decisions, collapse)
+    expect(stored.phrases['bread/bap_name.wav'].bad).toEqual(['generated'])
+    // A voice with no folder in recordings/ keeps whatever the file called it.
+    const unknown = renameVoices(parseDecisions({ phrases: { 'bread/bap_name.wav': { bad: ['9c0de1'] } } }), expand)
+    expect(unknown.phrases['bread/bap_name.wav'].bad).toEqual(['9c0de1'])
   })
 })

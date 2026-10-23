@@ -40,6 +40,11 @@ export function clipKey({ contributor, module, file }: ClipRef): string {
   return `${contributor}/${module}/${file}`
 }
 
+/** The contributors with a folder in `dir`, in name order. */
+export async function listVoices(dir: string): Promise<string[]> {
+  return (await listDir(dir)).filter((name) => SLUG.test(name))
+}
+
 /** Every clip under `dir`, in a stable order. Files that aren't clips are left out. */
 export async function listClips(dir: string): Promise<ClipRef[]> {
   const clips: ClipRef[] = []

@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hiddenVoices": [
+    "6cae0f",
+    "db6f0b"
+  ],
+  "phrases": {
+    "bread/wrap_name.wav": {
+      "bad": [
+        "a6eb6e"
+      ],
+      "updated": "2026-10-23T07:53:33.696Z"
+    },
+    "coffee-drinks/americano_name.wav": {
+      "bad": [
+        "d77e2b"
+      ],
+      "updated": "2026-10-23T07:54:08.972Z"
+    },
+    "coffee-drinks/cappuccino_name.wav": {
+      "bad": [
+        "170bdb"
+      ],
+      "updated": "2026-10-23T07:54:00.725Z"
+    }
+  }
+}

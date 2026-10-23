@@ -7,6 +7,11 @@
 // The file is small and hand-editable, so parseDecisions takes anything
 // sensible and ignores the rest.
 //
+// A contributor's id is their name plus six random characters, and the repo is
+// public, so the file names voices by those six characters alone and the dev
+// server puts the names back on the way out (see voiceAliases). Nothing a
+// volunteer is called ends up committed.
+//
 // Plain data and plain functions, no browser and no filesystem: the page edits
 // decisions here and the dev server applies the same patch before writing the
 // file (scripts/reviewRecordings.ts), so the two can't drift.
@@ -37,6 +42,70 @@ export type Patch =
   | { type: 'pick'; phrase: string; source: string | null }
   | { type: 'bad'; phrase: string; source: string; bad: boolean }
   | { type: 'hide'; contributor: string; hidden: boolean }
+
+/**
+ * The random part of a contributor id: the six characters the recordings
+ * function adds to their name (`amira-k-3f9a1c` → `3f9a1c`). Anything not shaped
+ * like one of its ids is left alone, so a folder put in recordings/ by hand
+ * still works — under whatever it is called.
+ */
+export function voiceAlias(contributor: string): string {
+  return /-([0-9a-f]{6})$/.exec(contributor)?.[1] ?? contributor
+}
+
+export interface VoiceAliases {
+  /** What the file says → the contributor id the page and the clips use. */
+  expand: Record<string, string>
+  /** The other way, for writing the file. */
+  collapse: Record<string, string>
+}
+
+/**
+ * The two-way map between contributor ids and what stands for them in the file.
+ *
+ * Throws if two contributors share those six characters, rather than write a
+ * file where one voice's decisions could be read back as another's. The
+ * recordings function draws them at random from three bytes and checks the whole
+ * id is new, so for a handful of voices this is a one-in-a-million event with a
+ * clear way out: rename one of them in the bucket.
+ */
+export function voiceAliases(contributors: string[]): VoiceAliases {
+  const expand: Record<string, string> = {}
+  const collapse: Record<string, string> = {}
+  for (const contributor of contributors) {
+    const alias = voiceAlias(contributor)
+    const clash = expand[alias]
+    if (clash !== undefined && clash !== contributor) {
+      throw new Error(`${clash} and ${contributor} would both be "${alias}" in the decisions. Rename one of them.`)
+    }
+    expand[alias] = contributor
+    collapse[contributor] = alias
+  }
+  return { expand, collapse }
+}
+
+/**
+ * The decisions with every voice renamed through `map`. Anything the map doesn't
+ * cover is kept as it is: 'generated' is not a voice, and a decision about a
+ * voice whose recordings aren't here is still a decision worth keeping.
+ */
+export function renameVoices(decisions: Decisions, map: Record<string, string>): Decisions {
+  const rename = (source: string) => map[source] ?? source
+  return {
+    ...decisions,
+    hiddenVoices: decisions.hiddenVoices.map(rename).sort(),
+    phrases: Object.fromEntries(
+      Object.entries(decisions.phrases).map(([phrase, { pick, bad, updated }]) => [
+        phrase,
+        {
+          ...(pick ? { pick: rename(pick) } : {}),
+          ...(bad ? { bad: bad.map(rename).sort() } : {}),
+          ...(updated ? { updated } : {}),
+        },
+      ]),
+    ),
+  }
+}
 
 export function emptyDecisions(): Decisions {
   return { version: DECISIONS_VERSION, hiddenVoices: [], phrases: {} }

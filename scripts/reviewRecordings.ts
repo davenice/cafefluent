@@ -9,14 +9,16 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { Connect, Plugin } from 'vite'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { clipKey, clipPath, clipRef, scanRecordings, type Clip } from './recordings.ts'
+import { clipKey, clipPath, clipRef, listVoices, scanRecordings, type Clip } from './recordings.ts'
 import { readManifest, type Manifest, type PreparedClip } from './prepareRecordings.ts'
 import {
   applyPatch,
   emptyDecisions,
   parseDecisions,
   parsePatch,
+  renameVoices,
   serialiseDecisions,
+  voiceAliases,
   type Decisions,
 } from '../src/review/decisions.ts'
 
@@ -48,7 +50,9 @@ export async function reviewState({
   const [clips, manifest, decisions] = await Promise.all([
     scanRecordings(dir),
     readManifest(preparedDir),
-    readDecisions(decisionsFile),
+    // Loading the page is also when a file still holding names is written back
+    // without them, so one load after fetching new voices is enough to clean it.
+    loadDecisions({ dir, decisionsFile, rewrite: true }),
   ])
   return {
     clips: clips.map((clip) => {
@@ -60,7 +64,50 @@ export async function reviewState({
   }
 }
 
-/** The decisions file, or empty decisions when there isn't one yet. */
+/**
+ * The decisions as the page wants them, with each voice under its contributor
+ * id. The file holds the six characters alone, so a name is never committed;
+ * with `rewrite`, a file that still has names in it is written back without them.
+ */
+export async function loadDecisions({
+  dir,
+  decisionsFile,
+  rewrite = false,
+}: {
+  dir: string
+  decisionsFile: string
+  rewrite?: boolean
+}): Promise<Decisions> {
+  const [stored, { expand, collapse }] = await Promise.all([readDecisions(decisionsFile), aliases(dir)])
+  if (rewrite) {
+    const named = serialiseDecisions(renameVoices(stored, collapse))
+    if (named !== serialiseDecisions(stored)) await writeDecisions(decisionsFile, renameVoices(stored, collapse))
+  }
+  return renameVoices(stored, expand)
+}
+
+/** Apply one change from the page and save it, answering with the decisions as they now stand. */
+export async function saveDecision({
+  dir,
+  decisionsFile,
+  patch,
+}: {
+  dir: string
+  decisionsFile: string
+  patch: Parameters<typeof applyPatch>[1]
+}): Promise<Decisions> {
+  const { expand, collapse } = await aliases(dir)
+  // Read, apply and write together, so the file stays the record even after it
+  // is edited by hand between one decision and the next.
+  const stored = await readDecisions(decisionsFile)
+  const decided = applyPatch(renameVoices(stored, expand), patch)
+  await writeDecisions(decisionsFile, renameVoices(decided, collapse))
+  return decided
+}
+
+const aliases = async (dir: string) => voiceAliases(await listVoices(dir))
+
+/** The decisions file as it is stored, or empty decisions when there isn't one yet. */
 export async function readDecisions(file: string): Promise<Decisions> {
   const text = await readFile(file, 'utf8').catch(() => null)
   if (text === null) return emptyDecisions()
@@ -107,11 +154,7 @@ export function reviewMiddleware({ dir, preparedDir, decisionsFile, exportFile }
       void answer(res, async () => {
         const patch = parsePatch(await readJsonBody(req))
         if (!patch) throw new BadRequest('Not a change I know how to make')
-        // Read, apply and write together: the page sends one change at a time,
-        // so the file stays the record even after it is edited by hand.
-        const decisions = applyPatch(await readDecisions(decisionsFile), patch)
-        await writeDecisions(decisionsFile, decisions)
-        return { decisions }
+        return { decisions: await saveDecision({ dir, decisionsFile, patch }) }
       })
       return
     }
