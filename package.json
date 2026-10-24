@@ -11,6 +11,7 @@
     "generate:audio": "node scripts/generate-audio.mjs",
     "generate:drink-svgs": "node scripts/generate-drink-svgs.mjs",
     "fetch:recordings": "node scripts/fetch-recordings.mjs",
+    "prepare:recordings": "node scripts/prepareRecordings.ts",
     "review:recordings": "vite --open /review.html",
     "test": "vitest run",
     "test:watch": "vitest",

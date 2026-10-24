@@ -1,5 +1,10 @@
-// 16-bit mono PCM WAV. The import step converts to mp3 later, so we keep
-// the recording lossless until then.
+// 16-bit mono PCM WAV, and the levels that go with it. The import step
+// converts to mp3 later, so we keep the recording lossless until then.
+//
+// Plain arithmetic, nothing from the browser: scripts/wav.ts reads and rewrites
+// the saved clips in Node with the same functions, so a clip prepared offline
+// comes out at the level the recorder was aiming for. Anything needing the
+// audio engine goes in resample.ts.
 
 export function encodeWav(samples: Float32Array, sampleRate: number): ArrayBuffer {
   const buffer = new ArrayBuffer(44 + samples.length * 2)
@@ -82,17 +87,4 @@ export function applyGain(samples: Float32Array, gainDb: number): Float32Array {
   const out = new Float32Array(samples.length)
   for (let i = 0; i < samples.length; i++) out[i] = samples[i] * factor
   return out
-}
-
-/** Convert to another sample rate using the browser's own resampler. */
-export async function resample(samples: Float32Array, fromRate: number, toRate: number): Promise<Float32Array> {
-  if (fromRate === toRate) return samples
-  const ctx = new OfflineAudioContext(1, Math.ceil((samples.length * toRate) / fromRate), toRate)
-  const buffer = ctx.createBuffer(1, samples.length, fromRate)
-  buffer.getChannelData(0).set(samples)
-  const source = ctx.createBufferSource()
-  source.buffer = buffer
-  source.connect(ctx.destination)
-  source.start()
-  return (await ctx.startRendering()).getChannelData(0)
 }

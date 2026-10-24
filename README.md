@@ -15,7 +15,8 @@ npm run test:watch # tests in watch mode
 npm run test:e2e   # run end-to-end tests in real browsers
 npm run check:content # check every image and audio file the quizzes use exists
 npm run fetch:recordings # download contributors' voice clips into recordings/
-npm run review:recordings # listen to the audio options for each phrase (local only)
+npm run prepare:recordings # trim and even out the levels of the downloaded clips
+npm run review:recordings # listen to the options for each phrase and pick one (local only)
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -311,31 +312,116 @@ and never deletes anything locally. The bucket defaults to `cafefluent-recording
 `s3:ListBucket` and `s3:GetObject` on the bucket. Code and tests are in
 `scripts/fetch-recordings.mjs` and `scripts/fetch-recordings.test.mjs`.
 
+### Preparing the recordings
+
+```bash
+npm run prepare:recordings            # trim and even out the levels
+npm run prepare:recordings -- --force # do every clip again
+```
+
+Writes a trimmed, level-matched copy of every clip in `recordings/` to
+`recordings-prepared/<contributor>/<module>/<item>_<variant>.wav` (git-ignored), plus
+`prepared.json` saying what it did to each one. Re-running only does the new clips and the
+ones recorded again since last time; it takes about a second for a few hundred clips.
+
+What it does to a clip, in order (`prepareClip` in `scripts/wav.ts`):
+
+1. **Level it**, with the same functions the recorder uses in the browser
+   (`src/recorder/wav.ts`): bring the clip to `NORMALISE_TARGET_DB`, measured by
+   `loudLevelDb`, which ignores the loudest 1% of samples so one lip smack doesn't set the
+   level. Never more than `MAX_GAIN_DB` of lift.
+2. **Find the words** in that levelled copy, by windowed RMS against `SILENCE_DB`.
+   Levelling first is the point: the threshold is a fixed level, and on a microphone that
+   applies no gain of its own a whole clip can sit below it. Looking for the words in the
+   clip as it arrived found none at all in the quietest voices we have, which is how this
+   step came to be written this way round.
+3. **Trim** to those words with `PAD_MS` of silence left either side, cutting the original
+   rather than the levelled copy. A clip with no words in it even once lifted is levelled
+   but never trimmed, and is marked `"note": "no words found"` so review can still play it.
+4. **Level again** on what is left, and encode. `loudLevelDb` moves a little when the
+   silence goes, and the clip we keep should be measured as the clip we keep. Both gains are
+   applied to the floats, before the 16-bit conversion, so lifting a quiet recording doesn't
+   bring quantisation noise up with it.
+
+The target leaves headroom for the loudest 1% and no more, so a clip with a sharper peak
+than that has its loudest moments clamped — the same thing the recorder does to the clip it
+saves. The run says how many, rather than quietening every clip to avoid it. Measurements in
+`prepared.json` are read back from the file that was written, so they are what is in it.
+
+`RECIPE` in `scripts/wav.ts` is stamped into `prepared.json`: change any of it and the next
+run re-does every clip, with no flag to remember.
+
+**Not part of `fetch:recordings` on purpose.** That step skips a download by comparing the
+local file's size and time against the object in S3, which a processed file would never
+match, so every run would download everything again. Keeping the originals also means the
+trim rule can change without re-downloading, and there is still something to listen to when
+a trim sounds like it cut a word short.
+
 ### Reviewing the recordings
 
 ```bash
+npm run prepare:recordings
 npm run review:recordings   # dev server, opening http://localhost:5173/review.html
 ```
 
-A local page listing every phrase the app speaks with its audio options side by side: the
-generated Polly clip the app plays today, and each contributor's recording of it from
-`recordings/`. Play one, or **Play all** to hear them one after another. Filter by module,
-and by recorded, not recorded, or worth a listen.
+A local page listing every phrase the app speaks with its audio options in equal boxes side
+by side: the generated Polly clip the app plays today, and each contributor's recording of
+it. Play one, or **Play all** to hear the contenders one after another.
 
-Each recording shows its length, peak and average level, and any silence before or after the
-words, and is flagged if it is quiet, may be clipped, or is long for the number of words
-(`clipWarnings` in `src/recorder/script.ts`, the same check the contributor's own review
-screen uses). The generated clips are not measured: they come out of Polly at a consistent
-level, so there is nothing to compare between them.
+What you can decide about each option:
 
-Levels are shown to tell you how the voices compare, not to decide anything in the page.
-Nothing here changes a file: evening out loudness and trimming silence belong to the step
-that turns a recording into the mp3 the app plays, which doesn't exist yet.
+- **Pick** marks it as the one to use for that phrase. One pick per phrase; picking another
+  moves it. Clicking **Picked ✓** takes the pick away again.
+- **Bad** marks a recording as no good — a misread word, a noise, a bad take. Marking the
+  picked one bad takes the pick away, and picking a bad one clears the mark: holding both
+  would only mean one of them was stale. Bad takes stay in view and can still be played on
+  their own, but **Play all** leaves them out.
+- **Hide** on a voice leaves that contributor out of the page altogether. Their picks are
+  kept, and the voice stays in the list at the top, which is how you bring it back.
+
+**Show** filters to *Still to pick* (a phrase with a recording that is neither picked nor
+marked bad), *Picked*, *Recorded*, *Not recorded*, or *Worth a listen*. *Still to pick* is
+the opening view, so fetching more clips and reloading shows what there is left to do. A
+phrase whose every recording is marked bad counts as dealt with and drops out of it.
+
+**Listen to** switches between the prepared clips and the recordings they were made from,
+for checking a trim that sounds wrong. Each box shows the measurements of whichever you are
+listening to, and what preparing it did (`+4 dB, 200ms of silence off`).
+
+Decisions are saved as they are made, to `audio-review.json` at the top of the repo, which
+**is committed**: the recordings can be fetched again, a listening decision can't. One change
+at a time, each applied to what is on disk, so editing the file by hand between clicks is
+safe. If a save fails the page says so and keeps the change on screen, so clicking it again
+sends it again. The model and its rules are in `src/review/decisions.ts`, tested on their own.
+
+**No contributor's name is committed.** A contributor id is their name plus six random
+characters, and this repo is public, so the file names each voice by those six characters
+alone — `"pick": "db6f0b"` — and the dev server puts the id back on the way to the page, by
+matching the folders in `recordings/`. Opening the page also writes back a file that still
+has names in it, so one load cleans it. A decision about a voice whose recordings aren't
+here is kept as the file has it, rather than dropped. If two contributors ever drew the same
+six characters the server refuses to save and says to rename one, rather than write a file
+where one voice's decisions could be read back as another's.
+
+**Export picks** writes `recordings-prepared/picks.json`: a line per decided phrase with the
+module, item, variant, the chosen contributor, the clip to take it from, and the `.mp3` the
+app plays, plus lists of the phrases still to pick, the ones where every recording was marked
+bad, and the ones nobody has recorded. That file is what the import step will read — it needs
+to know nothing about reviewing. Picking **Generated voice** is a decision too: it records
+that no recording beat Polly, with no clip to take.
+
+Each recording is also flagged if it is quiet, may be clipped, or is long for the number of
+words (`clipWarnings` in `src/recorder/script.ts`, the same check the contributor's own review
+screen uses). Length is judged on the prepared clip, since trimming is what takes a clip that
+was only long because of its silence back under; quietness is judged on the recording as it
+arrived, since that is what the microphone did. The generated clips are not measured: they
+come out of Polly at a consistent level, so there is nothing to compare between them.
 
 It is local only, and only works under the dev server, which measures and serves the clips
-(`scripts/reviewRecordings.ts`). `review.html` is not in the production build and
-`recordings/` is git-ignored, so neither is ever deployed. Run `npm run fetch:recordings`
-first, and again to pick up new clips.
+and keeps the decisions file (`scripts/reviewRecordings.ts`). `review.html` is not in the
+production build and `recordings/` is git-ignored, so neither is ever deployed. Run
+`npm run fetch:recordings` first, then `npm run prepare:recordings`, and both again to pick
+up new clips.
 
 Contributors appear under the id that names their folder in `recordings/`, which is their
 name plus six characters (`dave-n-db6f0b`).
@@ -355,7 +441,12 @@ public/
 scripts/
   generate-audio.mjs    ← AWS Polly TTS generator (offline, run manually)
   fetch-recordings.mjs  ← download contributors' clips from S3 into recordings/
-  reviewRecordings.ts   ← dev-server side of review.html: measures and serves recordings/
+  wav.ts                ← read, measure, trim and level a saved clip from Node
+  recordings.ts         ← the recordings/ layout: walking it and measuring it
+  prepareRecordings.ts  ← trimmed, levelled copies in recordings-prepared/
+  reviewRecordings.ts   ← dev-server side of review.html: clips, prepared copies, decisions
+
+audio-review.json       ← which recording wins each phrase (committed; see "Reviewing")
 
 src/
   data/modules.ts       ← module registry (add new modules here)
@@ -375,6 +466,8 @@ src/
       DiagramAudio.tsx      ← hear a part name → tap it on the diagram
       questionBuilders.ts   ← pure question-building logic (shared, tested)
   review/               ← review.html: the audio options for each phrase (dev only)
+    clips.ts            ← the options for each phrase, the filters and the export set
+    decisions.ts        ← picks, bad takes and hidden voices; also used by the dev server
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle
 

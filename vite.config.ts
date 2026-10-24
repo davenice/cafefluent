@@ -53,8 +53,14 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    // Dev only: serves recordings/ to review.html. Neither is in the build.
-    recordingsReview({ dir: join(import.meta.dirname, 'recordings') }),
+    // Dev only: serves recordings/ and the prepared copies to review.html, and
+    // keeps the decisions file. None of it is in the build.
+    recordingsReview({
+      dir: join(import.meta.dirname, 'recordings'),
+      preparedDir: join(import.meta.dirname, 'recordings-prepared'),
+      decisionsFile: join(import.meta.dirname, 'audio-review.json'),
+      exportFile: join(import.meta.dirname, 'recordings-prepared', 'picks.json'),
+    }),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['icons/*.png', 'content/**/*'],
