@@ -5,15 +5,6 @@ import { SENTENCE_TEMPLATES, SENTENCE_VARIANTS, type SentenceVariant } from '../
 
 type Variant = SentenceVariant
 
-const BLANK_TEMPLATES: Record<Variant, string> = {
-  allergic:       "I'm allergic to …",
-  intolerant:     "I'm intolerant to …",
-  'must-not-eat': "I mustn't eat …",
-  'cant-eat':     "I can't eat …",
-  'allergy-to':   "I have an allergy to …",
-  'cant-have':    "I can't have …",
-}
-
 interface Props {
   items: AllergenItem[]
   audioBase: string
@@ -111,11 +102,11 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
     <div style={styles.container}>
       <div style={styles.prompt}>
         <p style={styles.counter}>{index + 1} of {questions.length}</p>
-        <p style={styles.sentence}>
-          {answerState !== 'unanswered'
-            ? SENTENCE_TEMPLATES[question.variant](question.answer.name)
-            : BLANK_TEMPLATES[question.variant]}
-        </p>
+        {/* Nothing to read before answering: the sentence is there to be
+            heard, and the written frame gave away half of it. */}
+        {answerState !== 'unanswered' && (
+          <p style={styles.sentence}>{SENTENCE_TEMPLATES[question.variant](question.answer.name)}</p>
+        )}
         <button
           style={{ ...styles.playBtn, ...(isPlaying ? styles.playBtnActive : {}) }}
           onClick={playAudio}
