@@ -8,7 +8,7 @@ type Variant = SentenceVariant
 const BLANK_TEMPLATES: Record<Variant, string> = {
   allergic:       "I'm allergic to …",
   intolerant:     "I'm intolerant to …",
-  'must-not-eat': "I must not eat …",
+  'must-not-eat': "I mustn't eat …",
   'cant-eat':     "I can't eat …",
   'allergy-to':   "I have an allergy to …",
   'cant-have':    "I can't have …",

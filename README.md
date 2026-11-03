@@ -109,7 +109,7 @@ The 14 major food allergens (EU/UK regulation).
 | 2 | Hear the word spoken → choose the written word | **Done** |
 | 3 | Hear a sentence ("I'm allergic to…") → choose the correct image | **Done** |
 
-Task 3 varies the phrasing: *I'm allergic to / I'm intolerant to / I must not eat / I can't eat / I have an allergy to.*
+Task 3 varies the phrasing: *I'm allergic to / I'm intolerant to / I mustn't eat / I can't eat / I have an allergy to.*
 
 Audio files are pre-generated offline and committed to `public/content/<module>/audio/`. See [Generating audio](#generating-audio) below.
 
@@ -191,10 +191,16 @@ Add entries to the `VARIANTS` object in the script:
 ```js
 allergic:    (name) => `I'm allergic to ${name}`,
 intolerant:  (name) => `I'm intolerant to ${name}`,
-'must-not-eat': (name) => `I must not eat ${name}`,
+'must-not-eat': (name) => `I mustn't eat ${name}`,
 ```
 
 Re-running will generate only the new variants; existing files are untouched.
+
+Changing the wording of a variant that already has clips therefore changes only what
+the screen and the voice recorder's script say. The mp3s keep the old wording until
+they are deleted or regenerated with `--force`. The five `*_must-not-eat.mp3` clips are
+in that state now: the screen says *I mustn't eat*, the generated voice still says *I
+must not eat*, and `manifest.json` records what each clip actually says.
 
 Each allergen only uses some of the sentences, so learners hear a mix without every
 sentence being recorded for every allergen. An item's `variants` in `data.json` lists the

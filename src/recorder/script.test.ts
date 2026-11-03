@@ -11,7 +11,7 @@ describe('buildScript', () => {
       ['nuts_name.wav', 'Tree nuts'],
       ['nuts_allergic.wav', "I'm allergic to tree nuts"],
       ['nuts_intolerant.wav', "I'm intolerant to tree nuts"],
-      ['nuts_must-not-eat.wav', 'I must not eat tree nuts'],
+      ['nuts_must-not-eat.wav', "I mustn't eat tree nuts"],
       ['nuts_cant-eat.wav', "I can't eat tree nuts"],
       ['nuts_allergy-to.wav', 'I have an allergy to tree nuts'],
       ['nuts_cant-have.wav', "I can't have tree nuts"],

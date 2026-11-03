@@ -54,7 +54,7 @@ const VARIANTS = {
   // Sentence variants for Task 3 — keep in sync with SENTENCE_TEMPLATES in src/data/sentenceVariants.ts
   allergic:       (audioName) => `I'm allergic to ${audioName}`,
   intolerant:     (audioName) => `I'm intolerant to ${audioName}`,
-  'must-not-eat': (audioName) => `I must not eat ${audioName}`,
+  'must-not-eat': (audioName) => `I mustn't eat ${audioName}`,
   'cant-eat':     (audioName) => `I can't eat ${audioName}`,
   'allergy-to':   (audioName) => `I have an allergy to ${audioName}`,
   'cant-have':    (audioName) => `I can't have ${audioName}`,
