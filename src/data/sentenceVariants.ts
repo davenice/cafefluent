@@ -6,7 +6,7 @@ export type SentenceVariant = 'allergic' | 'intolerant' | 'must-not-eat' | 'cant
 export const SENTENCE_TEMPLATES: Record<SentenceVariant, (name: string) => string> = {
   allergic:       (name) => `I'm allergic to ${name.toLowerCase()}`,
   intolerant:     (name) => `I'm intolerant to ${name.toLowerCase()}`,
-  'must-not-eat': (name) => `I must not eat ${name.toLowerCase()}`,
+  'must-not-eat': (name) => `I mustn't eat ${name.toLowerCase()}`,
   'cant-eat':     (name) => `I can't eat ${name.toLowerCase()}`,
   'allergy-to':   (name) => `I have an allergy to ${name.toLowerCase()}`,
   'cant-have':    (name) => `I can't have ${name.toLowerCase()}`,

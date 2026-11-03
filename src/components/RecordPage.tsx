@@ -91,6 +91,9 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   const uploadStatusRef = useRef<(s: UploadStatus) => void>(() => {})
   const pauseRef = useRef<(reason?: string | null) => void>(() => {})
   const lastFrameRef = useRef(0)
+  // The phrase to land on once the microphone is open, set when a recording is
+  // started from a review opened before the microphone was.
+  const startAtRef = useRef<number | null>(null)
   const speaker = contributor.me.id
   const [recordedByOthers, setRecordedByOthers] = useState(contributor.me.recordedByOthers ?? {})
   const order = useMemo(
@@ -106,6 +109,23 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       micRef.current?.close()
     }
   }, [])
+
+  // What this contributor has recorded already: the clips in this browser, and
+  // the ones the server listed when the page opened. Known before the
+  // microphone is asked for, so someone coming back can go straight to Review
+  // and listen. start() fetches it again, fresher, and wins over this.
+  useEffect(() => {
+    if (!speaker) return
+    listClips(speaker)
+      .then((existing) => {
+        const done: Record<string, ClipInfo> = Object.fromEntries(
+          existing.map((c) => [phraseKey(c), { durationMs: c.durationMs, peakDb: c.peakDb }]),
+        )
+        for (const c of contributor.me.clips) done[phraseKey(c)] ??= SAVED_ELSEWHERE
+        setRecorded((current) => ({ ...done, ...current }))
+      })
+      .catch(() => {})
+  }, [contributor, speaker])
 
   // Send anything left from an earlier visit, then each clip as it is saved, and
   // everything waiting whenever the browser comes back online.
@@ -159,6 +179,10 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       setRecordedByOthers(others)
       await checkNoise(done, recordingOrder(phrases, speaker, others))
     } catch (e) {
+      startAtRef.current = null
+      // Back to the start card, which is where the message is shown: start() is
+      // also reached from Review and from the finished card.
+      setStage('setup')
       setStartError(e instanceof Error ? e.message : String(e))
     }
   }
@@ -203,7 +227,9 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     if (!mic || !phrases) return
     const session = new RecordingSession(mic, floor, sessionSettings, (e) => eventHandlerRef.current(e))
     sessionRef.current = session
-    const first = nextUnrecorded(phraseOrder, phrases, done, null)
+    const startAt = startAtRef.current
+    startAtRef.current = null
+    const first = startAt ?? nextUnrecorded(phraseOrder, phrases, done, null)
     if (first === null) {
       setStage('review')
       return
@@ -248,6 +274,13 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
 
   function rerecord(i: number) {
     setReturnTo(null)
+    if (!sessionRef.current) {
+      // Review was opened without recording first, so the microphone and the
+      // room check still have to happen; then we land on this phrase.
+      startAtRef.current = i
+      start()
+      return
+    }
     setIndex(i)
     setStage('recording')
     resume()
@@ -430,6 +463,12 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
             {phrases ? `${phrases.length} phrases to record.` : 'Loading phrases…'} Read each phrase out loud. When you stop
             talking for {settings.endSilenceMs / 1000} seconds, the clip is saved and the next phrase appears.
           </p>
+          {phrases && doneCount > 0 && (
+            <p>
+              You have recorded {doneCount} of them so far. You can carry on, or review what you have
+              already recorded.
+            </p>
+          )}
           <ul style={styles.tips}>
             <li>Use a quiet room with soft furnishings.</li>
             <li>Keep the microphone about 20 cm from your mouth.</li>
@@ -476,9 +515,18 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           </details>
 
           {startError && <p style={styles.error}>{startError}</p>}
-          <button style={styles.primaryBtn} disabled={!phrases || !speaker || !micAvailable} onClick={start}>
-            Start
-          </button>
+          <div style={styles.buttons}>
+            <button style={styles.primaryBtn} disabled={!phrases || !speaker || !micAvailable} onClick={() => start()}>
+              Start
+            </button>
+            {/* Coming back: listen to what you recorded before, without the
+                microphone or the room check. */}
+            {phrases && doneCount > 0 && (
+              <button style={styles.secondaryBtn} onClick={() => setStage('review')}>
+                Review your recordings
+              </button>
+            )}
+          </div>
         </div>
       )}
 

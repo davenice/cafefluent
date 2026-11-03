@@ -172,6 +172,8 @@ test('takes a contributor who has agreed straight to the recorder', async ({ pag
   await open(page, contributor)
   await expect(page.getByText('Hello, Amira.', { exact: true })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Start' })).toBeVisible()
+  // Nothing recorded yet, so there is nothing to review.
+  await expect(page.getByRole('button', { name: 'Review your recordings' })).toHaveCount(0)
 })
 
 test.describe('recording', () => {
@@ -339,6 +341,51 @@ test.describe('finishing and pausing', () => {
     await expect(page.getByText(/Paused\. Press Resume when you are ready\. If you have finished for today, press Finish for now\./)).toBeVisible()
     await page.getByRole('button', { name: 'Resume' }).click()
     await expect(page.getByText(/Press Resume when you are ready/)).toHaveCount(0)
+  })
+})
+
+test.describe('coming back later', () => {
+  test.skip(({ browserName }) => browserName !== 'chromium', 'the fake microphone needs Chromium')
+  test.beforeEach(async ({ page }) => fakeMic(page))
+
+  /** Record one phrase, then open the link again as if on another day. */
+  async function recordOneAndReturn(page: Page, contributor: FakeContributor) {
+    await open(page, contributor)
+    await startRecording(page)
+    await readPhrase(page)
+    await expect(page.getByText('All recordings sent.')).toBeVisible()
+    await open(page, contributor)
+  }
+
+  test('offers a review of what was recorded before, without the microphone', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await recordOneAndReturn(page, contributor)
+
+    await expect(page.getByText(/You have recorded 1 of them so far/)).toBeVisible()
+    await page.getByRole('button', { name: 'Review your recordings' }).click()
+
+    // The clip recorded on this device is still there to play, and no
+    // microphone was asked for and no room check run to get here.
+    const row = page.getByRole('listitem').first()
+    await expect(row).toContainText(/\d\.\d s/)
+    await expect(row.getByRole('button', { name: 'Play' })).toBeVisible()
+    expect(await page.evaluate(() => window.__micStream === null)).toBe(true)
+  })
+
+  test('opens the microphone when recording starts from that review', async ({ page }) => {
+    const contributor = recordings.add('Amira', { consented: true })
+    await recordOneAndReturn(page, contributor)
+    await page.getByRole('button', { name: 'Review your recordings' }).click()
+
+    const row = page.getByRole('listitem').filter({ hasText: 'not recorded' }).first()
+    const phrase = (await row.locator('span').first().innerText()).trim()
+    await row.getByRole('button', { name: 'Record' }).click()
+
+    // The room is checked first, and then it is that phrase on screen.
+    await expect(page.getByText('Ready: read the phrase')).toBeVisible({ timeout: 10_000 })
+    await expect(page.getByText(phrase, { exact: true })).toBeVisible()
+    await readPhrase(page)
+    await expect.poll(() => contributor.clips.size).toBe(2)
   })
 })
 
