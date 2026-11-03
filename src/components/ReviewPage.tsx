@@ -1,24 +1,28 @@
 // review.html: listen to every audio option for each phrase — the generated
 // clip the app plays today, and each contributor's recording of it — pick the
-// one to use, and mark the ones that are no good. Local only; the clips and the
-// decisions file come through the dev server (scripts/reviewRecordings.ts).
+// one to use, and mark the ones that are no good.
+//
+// Never part of the app's build. It runs in two places, and src/review/backend.ts
+// is the difference between them: under the dev server, which reads the clips off
+// disk and writes audio-review.json as you go, and in the offline zip someone
+// else is sent, where everything is inlined and the decisions are downloaded at
+// the end. Everything below is common to both.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { loadScript, phraseKey, type Phrase } from '../recorder/script'
+import { phraseKey, type Phrase } from '../recorder/script'
+import { pickBackend, type Loaded, type ReviewBackend } from '../review/backend'
 import {
-  buildExport,
   buildRows,
   filterRows,
   progress,
   voices,
-  type Clip,
   type Option,
   type PlayWhich,
   type Row,
   type Show,
   type Voice,
 } from '../review/clips'
-import { applyPatch, emptyDecisions, GENERATED, parseDecisions, type Decisions, type Patch } from '../review/decisions'
+import { applyPatch, emptyDecisions, GENERATED, type Patch } from '../review/decisions'
 
 const SHOW_LABELS: Record<Show, string> = {
   all: 'All phrases',
@@ -29,15 +33,13 @@ const SHOW_LABELS: Record<Show, string> = {
   picked: 'Picked',
 }
 
-interface ReviewState {
-  clips: Clip[]
-  prepared: { at: string } | null
-  decisions: Decisions
-}
-
-export default function ReviewPage() {
+export default function ReviewPage({ backend }: { backend?: ReviewBackend } = {}) {
+  // Held for the life of the page: the bundle's backend keeps the decisions
+  // made so far, and a new one each render would both lose them and set the
+  // load effect going again.
+  const chosen = useMemo(() => backend ?? pickBackend(), [backend])
   const [phrases, setPhrases] = useState<Phrase[] | null>(null)
-  const [state, setState] = useState<ReviewState | null>(null)
+  const [state, setState] = useState<Loaded | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [unsaved, setUnsaved] = useState<string | null>(null)
   const [module, setModule] = useState('all')
@@ -47,18 +49,18 @@ export default function ReviewPage() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([loadScript(), fetchReview()]).then(
-      ([script, review]) => {
+    chosen.load().then(
+      (loaded) => {
         if (cancelled) return
-        setPhrases(script)
-        setState(review)
+        setPhrases(loaded.phrases)
+        setState(loaded)
       },
       (e: Error) => !cancelled && setError(e.message),
     )
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [chosen])
 
   // Held steady while nothing has loaded, so the memos below don't re-run.
   const decisions = useMemo(() => state?.decisions ?? emptyDecisions(), [state])
@@ -80,32 +82,39 @@ export default function ReviewPage() {
    * either way: a failed save leaves a warning up rather than quietly undoing
    * what you just decided, and clicking it again sends it again.
    */
-  const decide = useCallback((patch: Patch) => {
-    setState((was) => (was ? { ...was, decisions: applyPatch(was.decisions, patch) } : was))
-    setExported(null)
-    savePatch(patch).then(
-      (decisions) => {
-        setUnsaved(null)
-        setState((was) => (was ? { ...was, decisions } : was))
-      },
-      (e: Error) => setUnsaved(e.message),
-    )
-  }, [])
+  const decide = useCallback(
+    (patch: Patch) => {
+      setState((was) => (was ? { ...was, decisions: applyPatch(was.decisions, patch) } : was))
+      setExported(null)
+      chosen.save(patch).then(
+        (decisions) => {
+          setUnsaved(null)
+          setState((was) => (was ? { ...was, decisions } : was))
+        },
+        (e: Error) => setUnsaved(e.message),
+      )
+    },
+    [chosen],
+  )
 
   const exportPicks = useCallback(() => {
     setExported(null)
-    postJson<{ file: string; picked: number }>('/recordings-api/export', buildExport(rows)).then(
-      ({ file, picked }) => setExported(`Wrote ${picked} picks to ${file}`),
+    chosen.exportPicks(rows, decisions).then(
+      (message) => setExported(message),
       (e: Error) => setUnsaved(e.message),
     )
-  }, [rows])
+  }, [chosen, rows, decisions])
 
   if (error) {
     return (
       <main style={styles.page}>
         <h1 style={styles.title}>Audio review</h1>
         <p style={styles.error}>Could not load the clips: {error}</p>
-        <p style={styles.desc}>This page only works under <code>npm run dev</code>.</p>
+        <p style={styles.desc}>
+          {chosen.kind === 'bundle'
+            ? 'Open review.html from the folder you unzipped, with the other files still beside it.'
+            : 'This page only works under npm run dev.'}
+        </p>
       </main>
     )
   }
@@ -124,23 +133,34 @@ export default function ReviewPage() {
         <h1 style={styles.title}>Audio review</h1>
         <p style={styles.desc}>
           {counts.picked} of {counts.recorded} recorded phrases picked · {counts.undecided} still to listen to ·{' '}
-          {counts.bad} marked bad · {clips.length} clips in <code>recordings/</code>
-          {' · '}
-          <code>npm run fetch:recordings</code> to update
-        </p>
-        <p style={styles.desc}>
-          {state.prepared ? (
+          {counts.bad} marked bad · {clips.length} clips
+          {chosen.kind === 'dev' && (
             <>
-              Prepared copies made {new Date(state.prepared.at).toLocaleString()} ·{' '}
-              <code>npm run prepare:recordings</code> after fetching more
-            </>
-          ) : (
-            <>
-              No prepared copies yet: run <code>npm run prepare:recordings</code> to trim and even out the levels,
-              then reload.
+              {' in '}
+              <code>recordings/</code> · <code>npm run fetch:recordings</code> to update
             </>
           )}
         </p>
+        {chosen.kind === 'bundle' ? (
+          <p style={styles.desc}>
+            Your decisions are kept in this browser as you go. They only leave it when you press
+            “{chosen.exportLabel}”, so do that before you finish and send the file back.
+          </p>
+        ) : (
+          <p style={styles.desc}>
+            {state.prepared ? (
+              <>
+                Prepared copies made {new Date(state.prepared.at).toLocaleString()} ·{' '}
+                <code>npm run prepare:recordings</code> after fetching more
+              </>
+            ) : (
+              <>
+                No prepared copies yet: run <code>npm run prepare:recordings</code> to trim and even out the levels,
+                then reload.
+              </>
+            )}
+          </p>
+        )}
         {unsaved && <p style={styles.error}>Not saved: {unsaved}. Your last change is only in this page.</p>}
         <Voices voices={voiceList} onHide={(contributor, hidden) => decide({ type: 'hide', contributor, hidden })} />
         <div style={styles.filters}>
@@ -161,19 +181,22 @@ export default function ReviewPage() {
               ))}
             </select>
           </label>
-          <label style={styles.field}>
-            <span style={styles.fieldLabel}>Listen to</span>
-            <select
-              value={which}
-              onChange={(e) => setWhich(e.target.value as PlayWhich)}
-              style={styles.select}
-              disabled={!state.prepared}
-            >
-              <option value="prepared">Prepared clips</option>
-              <option value="original">As recorded</option>
-            </select>
-          </label>
-          <button onClick={exportPicks} style={styles.smallButton}>Export picks</button>
+          {/* Only where the untrimmed takes are there to play: the bundle ships prepared only. */}
+          {state.originals && (
+            <label style={styles.field}>
+              <span style={styles.fieldLabel}>Listen to</span>
+              <select
+                value={which}
+                onChange={(e) => setWhich(e.target.value as PlayWhich)}
+                style={styles.select}
+                disabled={!state.prepared}
+              >
+                <option value="prepared">Prepared clips</option>
+                <option value="original">As recorded</option>
+              </select>
+            </label>
+          )}
+          <button onClick={exportPicks} style={styles.smallButton}>{chosen.exportLabel}</button>
           <span style={styles.count}>{shown.length} shown</span>
         </div>
         {exported && <p style={styles.desc}>{exported}</p>}
@@ -196,29 +219,6 @@ export default function ReviewPage() {
       )}
     </main>
   )
-}
-
-async function fetchReview(): Promise<ReviewState> {
-  const res = await fetch('/recordings-api/review.json')
-  if (!res.ok) throw new Error(`the dev server answered ${res.status}`)
-  const body = await res.json()
-  return { clips: (body.clips ?? []) as Clip[], prepared: body.prepared ?? null, decisions: parseDecisions(body.decisions) }
-}
-
-async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const answer = (await res.json().catch(() => ({}))) as { error?: string }
-  if (!res.ok) throw new Error(answer.error ?? `the dev server answered ${res.status}`)
-  return answer as T
-}
-
-async function savePatch(patch: Patch): Promise<Decisions> {
-  const { decisions } = await postJson<{ decisions: unknown }>('/recordings-api/decisions', patch)
-  return parseDecisions(decisions)
 }
 
 function Voices({ voices, onHide }: { voices: Voice[]; onHide: (contributor: string, hidden: boolean) => void }) {

@@ -1,6 +1,8 @@
 import { render, screen, within, fireEvent, cleanup, waitFor } from '@testing-library/react'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import ReviewPage from './ReviewPage'
+import { bundleBackend } from '../review/backend'
+import type { BundleData } from '../review/bundle'
 import type { Phrase } from '../recorder/script'
 import type { Clip } from '../review/clips'
 import { applyPatch, emptyDecisions, parsePatch, type Decisions } from '../review/decisions'
@@ -291,5 +293,79 @@ describe('ReviewPage', () => {
     render(<ReviewPage />)
     await waitFor(() => expect(screen.getByText(/Could not load the clips/)).toBeInTheDocument())
     expect(screen.getByText(/only works under/)).toBeInTheDocument()
+  })
+})
+
+/**
+ * The same page in the offline zip (scripts/bundleReview.ts): everything inlined,
+ * nothing to fetch, and the decisions downloaded rather than saved. The fake
+ * server above throws on any request, so these would fail if the page reached for
+ * one.
+ */
+describe('ReviewPage in the offline bundle', () => {
+  const bundle = (over: Partial<BundleData> = {}): BundleData => ({
+    made: '2026-11-03T00:00:00.000Z',
+    phrases,
+    clips: [clip('3f9a1c')],
+    prepared: { at: '2026-10-22T08:00:00.000Z' },
+    decisions: emptyDecisions(),
+    ...over,
+  })
+
+  /** A store that forgets, so each test starts from the bundle. */
+  const noStore = () => ({ get: () => null, set: () => {} })
+
+  it('shows the phrases from the page itself, asking nothing of a server', async () => {
+    render(<ReviewPage backend={bundleBackend(bundle(), noStore())} />)
+
+    expect(await screen.findByText('Milk')).toBeInTheDocument()
+    expect(within(row('Milk')).getByText('3f9a1c')).toBeInTheDocument()
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
+  it('does not offer the untrimmed takes, which the bundle does not carry', async () => {
+    render(<ReviewPage backend={bundleBackend(bundle(), noStore())} />)
+    await screen.findByText('Milk')
+
+    expect(screen.queryByLabelText('Listen to')).not.toBeInTheDocument()
+  })
+
+  it('asks for the decisions to be downloaded, since nothing else saves them', async () => {
+    render(<ReviewPage backend={bundleBackend(bundle(), noStore())} />)
+    await screen.findByText('Milk')
+
+    expect(screen.getByText(/only leave it when you press/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Download decisions' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Export picks' })).not.toBeInTheDocument()
+  })
+
+  it('picks a recording and keeps it, with no server to save to', async () => {
+    render(<ReviewPage backend={bundleBackend(bundle(), noStore())} />)
+    await screen.findByText('Milk')
+
+    fireEvent.click(screen.getByLabelText('Pick 3f9a1c'))
+
+    await waitFor(() => expect(screen.queryByText(/Not saved/)).not.toBeInTheDocument())
+    show('picked')
+    expect(within(row('Milk')).getByText('Picked ✓')).toBeInTheDocument()
+  })
+
+  it('starts from the decisions the bundle was sent with', async () => {
+    const decided = applyPatch(emptyDecisions(), { type: 'pick', phrase: 'allergens/milk_name.wav', source: '3f9a1c' })
+    render(<ReviewPage backend={bundleBackend(bundle({ decisions: decided }), noStore())} />)
+
+    // Already picked, so it isn't in the opening 'Still to pick' view.
+    expect(await screen.findByText(/1 of 1 recorded phrases picked/)).toBeInTheDocument()
+    show('picked')
+    expect(within(row('Milk')).getByText('Picked ✓')).toBeInTheDocument()
+  })
+
+  it('plays the clip from a path relative to the page, so file:// finds it', async () => {
+    render(<ReviewPage backend={bundleBackend(bundle(), noStore())} />)
+    await screen.findByText('Milk')
+
+    fireEvent.click(screen.getByLabelText('Play 3f9a1c'))
+
+    expect(played()).toEqual(['/prepared/3f9a1c/allergens/milk_name.wav'])
   })
 })

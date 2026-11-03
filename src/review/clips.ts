@@ -35,7 +35,12 @@ export interface Clip {
 export interface Option {
   /** 'generated' is the Polly clip in public/content; otherwise the contributor's id. */
   source: string
-  /** The prepared clip where there is one, so what you hear is what the app would get. */
+  /**
+   * The prepared clip where there is one, so what you hear is what the app would
+   * get. Relative on purpose: review.html sits at the top of both the dev server
+   * and the offline bundle, so `prepared/…` resolves the same either way, where a
+   * leading slash would point at the root of the reviewer's disk under file://.
+   */
   url: string
   /** The clip as it was recorded, for checking a trim that sounds wrong. */
   originalUrl: string
@@ -77,7 +82,7 @@ export function buildRows(phrases: Phrase[], clips: Clip[], decisions: Decisions
     const key = phraseKey(phrase)
     const pick = pickOf(decisions, key)
     const recordings = (byPhrase.get(key) ?? []).sort((a, b) => a.contributor.localeCompare(b.contributor))
-    const generatedUrl = `/content/${phrase.module}/audio/${phrase.file.replace(/\.wav$/, '.mp3')}`
+    const generatedUrl = `content/${phrase.module}/audio/${phrase.file.replace(/\.wav$/, '.mp3')}`
     const options: Option[] = [
       {
         source: GENERATED,
@@ -94,8 +99,8 @@ export function buildRows(phrases: Phrase[], clips: Clip[], decisions: Decisions
           source: clip.contributor,
           // Measured on the prepared clip where there is one: trimming is what
           // takes a clip that was only long because of its silence back under.
-          url: clip.prepared ? `/prepared/${path}` : `/recordings/${path}`,
-          originalUrl: `/recordings/${path}`,
+          url: clip.prepared ? `prepared/${path}` : `recordings/${path}`,
+          originalUrl: `recordings/${path}`,
           clip,
           warnings: clipWarnings(phrase, { durationMs: clip.prepared?.durationMs ?? clip.durationMs, peakDb: clip.peakDb }),
           picked: pick === clip.contributor,
