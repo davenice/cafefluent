@@ -13,6 +13,7 @@
     "fetch:recordings": "node scripts/fetch-recordings.mjs",
     "prepare:recordings": "node scripts/prepareRecordings.ts",
     "review:recordings": "vite --open /review.html",
+    "bundle:review": "node scripts/bundleReview.run.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

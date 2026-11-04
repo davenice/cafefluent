@@ -17,6 +17,7 @@ npm run check:content # check every image and audio file the quizzes use exists
 npm run fetch:recordings # download contributors' voice clips into recordings/
 npm run prepare:recordings # trim and even out the levels of the downloaded clips
 npm run review:recordings # listen to the options for each phrase and pick one (local only)
+npm run bundle:review # pack that page and the clips into a zip for someone else to review
 ```
 
 Deployment is automatic: push to `main` and GitHub Actions builds and deploys to GitHub Pages. Tests and build are verified on every pull request.
@@ -423,14 +424,69 @@ was only long because of its silence back under; quietness is judged on the reco
 arrived, since that is what the microphone did. The generated clips are not measured: they
 come out of Polly at a consistent level, so there is nothing to compare between them.
 
-It is local only, and only works under the dev server, which measures and serves the clips
-and keeps the decisions file (`scripts/reviewRecordings.ts`). `review.html` is not in the
-production build and `recordings/` is git-ignored, so neither is ever deployed. Run
-`npm run fetch:recordings` first, then `npm run prepare:recordings`, and both again to pick
-up new clips.
+It is never part of the production build, and `recordings/` is git-ignored, so neither is
+ever deployed. Under the dev server it is the dev server that measures and serves the clips
+and keeps the decisions file (`scripts/reviewRecordings.ts`). Run `npm run fetch:recordings`
+first, then `npm run prepare:recordings`, and both again to pick up new clips.
+
+The page itself doesn't know where it is running: `src/review/backend.ts` is the one place
+that differs between the dev server and the offline bundle below. **A change to how the page
+loads clips or saves decisions belongs there, not in the component**, or the bundle and the
+dev page drift apart.
 
 Contributors appear under the id that names their folder in `recordings/`, which is their
 name plus six characters (`dave-n-db6f0b`).
+
+### Sending the review to someone else
+
+```bash
+npm run fetch:recordings
+npm run prepare:recordings
+npm run bundle:review      # writes review-bundle/ and review-bundle.zip
+```
+
+Deciding between voices is a job for more than one pair of ears, and the reviewer shouldn't
+need the repo, Node, or a dev server. `npm run bundle:review` packs the same review page into
+a folder they unzip and open: they double-click `review.html`, listen, pick, and send one file
+back. About 25 MB for 450 clips. `READ ME FIRST.txt` in the folder says all of that in plain
+words, so the zip can be sent on its own.
+
+Three things make it work with no server behind the page
+(`scripts/bundleReview.ts`):
+
+- **One self-contained HTML file.** A `file://` page is refused when it tries to load a module
+  or fetch anything beside it, so the script, the styles, the phrase list, the clip
+  measurements and the decisions so far are all inlined into `review.html`. The script is
+  moved to the end of the body on the way: linked from the head it is a module, which browsers
+  defer, but inlined there as a plain script it would run before the element it renders into
+  exists.
+- **Audio as ordinary files.** An `<audio>` element will play a relative path from `file://`
+  where `fetch` would be blocked, so the clips sit in `prepared/` and `content/` beside the
+  page. The page's urls are relative for this reason, which costs the dev server nothing:
+  `review.html` is at the top in both places, so `prepared/…` means the same thing either way.
+- **Decisions downloaded, not posted.** They are kept in the reviewer's browser as they go —
+  in `localStorage`, under a key naming the bundle, so an earlier copy still finds its own
+  work — and **Download decisions** hands them back an `audio-review.json` in exactly the
+  format the repo keeps. Storage can be refused on `file://`, so nothing depends on it: the
+  download is the real output, which is why the page says so at the top.
+
+**Prepared clips only.** An unprepared clip is left out rather than sent raw, and the build
+lists what it left and why. Levelling is what makes two voices comparable, and the untrimmed
+takes would roughly double the download for something the reviewer can't act on anyway — so
+the **Listen to** switch isn't in the bundle. If they flag a trim that sounds wrong, check
+that one locally.
+
+**No contributor's name is in the bundle**, the same rule the decisions file follows, and for
+a stronger reason: this leaves the project. Voices are named by their six characters
+throughout — in the inlined data and in the folder names the clips are copied to. That also
+means the file that comes back needs no translating. Two voices sharing those six characters
+stops the build, as it stops a save.
+
+**The file that comes back replaces `audio-review.json`.** The bundle carries the decisions as
+they were when it was built, so what comes back is those plus theirs — but only as of then.
+Decisions you make locally while they are reviewing are not in it and would be lost, so
+either leave the file alone until it comes back, or merge the two by hand; every phrase
+carries an `updated` time to tell them apart.
 
 ---
 
@@ -451,6 +507,8 @@ scripts/
   recordings.ts         ← the recordings/ layout: walking it and measuring it
   prepareRecordings.ts  ← trimmed, levelled copies in recordings-prepared/
   reviewRecordings.ts   ← dev-server side of review.html: clips, prepared copies, decisions
+  bundleReview.ts       ← packs review.html and the clips into a zip for an outside reviewer
+  bundleReview.run.mjs  ← npm run bundle:review; loads the above through Vite
 
 audio-review.json       ← which recording wins each phrase (committed; see "Reviewing")
 
@@ -471,9 +529,11 @@ src/
       DiagramLabel.tsx      ← label hotspots on a diagram
       DiagramAudio.tsx      ← hear a part name → tap it on the diagram
       questionBuilders.ts   ← pure question-building logic (shared, tested)
-  review/               ← review.html: the audio options for each phrase (dev only)
+  review/               ← review.html: the audio options for each phrase (never deployed)
     clips.ts            ← the options for each phrase, the filters and the export set
     decisions.ts        ← picks, bad takes and hidden voices; also used by the dev server
+    backend.ts          ← the only difference between the dev server and the offline bundle
+    bundle.ts           ← what the offline bundle carries; shared with the build script
   hooks/useProgress.ts  ← localStorage read/write
   utils/shuffle.ts      ← Fisher-Yates shuffle
 

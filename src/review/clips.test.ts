@@ -37,9 +37,9 @@ describe('buildRows', () => {
   it('offers the generated clip first, then each contributor in name order', () => {
     const rows = buildRows([milk], [clip('sam-00ab12', 'allergens', 'milk_name.wav'), clip('amira-3f9a1c', 'allergens', 'milk_name.wav')], none)
     expect(rows[0].options.map((o) => [o.source, o.url])).toEqual([
-      ['generated', '/content/allergens/audio/milk_name.mp3'],
-      ['amira-3f9a1c', '/recordings/amira-3f9a1c/allergens/milk_name.wav'],
-      ['sam-00ab12', '/recordings/sam-00ab12/allergens/milk_name.wav'],
+      ['generated', 'content/allergens/audio/milk_name.mp3'],
+      ['amira-3f9a1c', 'recordings/amira-3f9a1c/allergens/milk_name.wav'],
+      ['sam-00ab12', 'recordings/sam-00ab12/allergens/milk_name.wav'],
     ])
     expect(rows[0].recorded).toBe(2)
     expect(rows[0].undecided).toBe(true)
@@ -48,8 +48,8 @@ describe('buildRows', () => {
   it('plays the prepared copy where there is one, and keeps the original to compare', () => {
     const prepared = { durationMs: 700, peakDb: -3, rmsDb: -18, leadMs: 120, tailMs: 120, gainDb: 6, cutLeadMs: 300, cutTailMs: 100 }
     const rows = buildRows([milk], [clip('amira-3f9a1c', 'allergens', 'milk_name.wav', { prepared })], none)
-    expect(rows[0].options[1].url).toBe('/prepared/amira-3f9a1c/allergens/milk_name.wav')
-    expect(rows[0].options[1].originalUrl).toBe('/recordings/amira-3f9a1c/allergens/milk_name.wav')
+    expect(rows[0].options[1].url).toBe('prepared/amira-3f9a1c/allergens/milk_name.wav')
+    expect(rows[0].options[1].originalUrl).toBe('recordings/amira-3f9a1c/allergens/milk_name.wav')
   })
 
   it('keeps a phrase no one has recorded, with the generated clip alone', () => {

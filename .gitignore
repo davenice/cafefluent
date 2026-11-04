@@ -33,3 +33,8 @@ playwright-report/
 # decisions in audio-review.json are committed: those can't be fetched again.
 recordings/
 recordings-prepared/
+
+# The offline review bundle and its zip, from npm run bundle:review. Built from
+# recordings-prepared/, so it is rebuildable and holds voice clips either way.
+review-bundle/
+review-bundle.zip

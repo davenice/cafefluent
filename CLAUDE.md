@@ -12,6 +12,20 @@ All text a learner sees or hears (item names, descriptions, module intros, sente
 
 When adding or changing a quiz type, keep the tests in step: the files it loads go in `expectedFiles` in `scripts/content.test.ts`, and how to find its right answer goes in `correctAnswer` in `e2e/helpers/quiz.ts`. The e2e tests pick up new modules and tasks from `src/data/modules.ts` by themselves.
 
+## Changing the recordings review page
+
+`review.html` runs in two places: under the dev server, and in the offline zip
+`npm run bundle:review` sends to an outside reviewer. `src/review/backend.ts` is
+the only thing that differs — how clips are loaded and decisions saved.
+**Changes to either of those go in the backend, not in `ReviewPage.tsx`**, and a
+new dev-server endpoint needs its bundle equivalent in the same change.
+
+The bundle has no server, so it can't fetch: everything it shows is inlined into
+the page, and the clips are played as relative paths from `file://`. Keep the
+page's clip urls relative, and keep contributor names out of the bundle — it
+leaves the project, so voices are named by their six characters, as
+`audio-review.json` names them.
+
 ## Changing a Lambda
 
 The e2e tests never call the real Lambda. `e2e/fakeConfigApi.ts` answers in its place and copies the contract of `lambda/index.mjs`: the methods, the sign-in check, the request and response bodies, and the status codes. **If you change the Lambda, update the fake and the e2e tests (`e2e/enablement.spec.ts`) to match in the same change**, as well as `lambda/index.test.mjs`. Otherwise the e2e tests keep passing against the old behaviour, and a mismatch between the app and the Lambda will not be caught.
