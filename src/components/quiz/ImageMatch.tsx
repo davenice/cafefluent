@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import type { AllergenItem } from '../../types'
-import { buildImageQuestions } from './questionBuilders'
+import { buildImageQuestions, type ImageQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps } from './useQuizRun'
 
 interface Props {
   items: AllergenItem[]
@@ -11,42 +12,34 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
-export default function ImageMatch({ items, imageBase, imageFit = 'cover', imageLegend, showDescription = true, onComplete }: Props) {
+/** The module's own quiz: every item, asked once. */
+export default function ImageMatch({ items, onComplete, ...look }: Props) {
   const [questions] = useState(() => buildImageQuestions(items))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete)
+  return <ImageMatchQuestion {...look} {...run} />
+}
 
-  const question = questions[index]
+export interface ImageMatchQuestionProps extends AnswerProps {
+  question: ImageQuestion
+  imageBase: string
+  imageFit?: 'cover' | 'contain'
+  imageLegend?: string
+  showDescription?: boolean
+}
 
-  const handleSelect = useCallback(
-    (itemId: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = itemId === question.answer.id
-      setSelected(itemId)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1200 : 2500
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+export function ImageMatchQuestion({
+  question,
+  imageBase,
+  imageFit = 'cover',
+  imageLegend,
+  showDescription = true,
+  selected,
+  answerState,
+  onAnswer,
+}: ImageMatchQuestionProps) {
+  function handleSelect(itemId: string) {
+    onAnswer(itemId, itemId === question.answer.id)
+  }
 
   function borderColor(option: AllergenItem): string {
     if (answerState === 'unanswered') return 'var(--color-border)'

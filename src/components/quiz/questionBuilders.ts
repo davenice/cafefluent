@@ -76,3 +76,14 @@ export function buildDiagramAudioQuestions(diagrams: DiagramData[]) {
     }))
   )
 }
+
+// One question of each kind, named so the components that render a single
+// question can take it as a prop.
+export type ImageQuestion = ReturnType<typeof buildImageQuestions>[number]
+export type AudioQuestion = ReturnType<typeof buildAudioQuestions>[number]
+export type SentenceQuestion<V extends string> = ReturnType<typeof buildSentenceQuestions<V>>[number]
+export type ProductQuestion = ReturnType<typeof buildProductQuestions>[number]
+export type DiagramQuestion = ReturnType<typeof buildDiagramQuestions>[number]
+export type IngredientQuestion = ReturnType<typeof buildIngredientQuestions>[number]
+/** Hear a part named, tap it on the diagram. Named apart from the component. */
+export type HotspotAudioQuestion = ReturnType<typeof buildDiagramAudioQuestions>[number]

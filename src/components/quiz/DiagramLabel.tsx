@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import type { DiagramData } from '../../types'
-import { buildDiagramQuestions } from './questionBuilders'
+import { buildDiagramQuestions, type DiagramQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps } from './useQuizRun'
 
 interface Props {
   diagrams: DiagramData[]
@@ -8,42 +9,32 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
+/** The module's own quiz: every hotspot of every diagram, asked once. */
 export default function DiagramLabel({ diagrams, imageBase, onComplete }: Props) {
   const [questions] = useState(() => buildDiagramQuestions(diagrams))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete)
+  return <DiagramLabelQuestion imageBase={imageBase} {...run} />
+}
 
-  const question = questions[index]
+export interface DiagramLabelQuestionProps extends AnswerProps {
+  question: DiagramQuestion
+  imageBase: string
+  index: number
+  total: number
+}
 
-  const handleSelect = useCallback(
-    (label: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = label === question.answer
-      setSelected(label)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1200 : 2500
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+export function DiagramLabelQuestion({
+  question,
+  imageBase,
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: DiagramLabelQuestionProps) {
+  function handleSelect(label: string) {
+    onAnswer(label, label === question.answer)
+  }
 
   function chipBg(label: string): string {
     if (answerState === 'unanswered') return 'var(--color-surface)'
@@ -58,7 +49,7 @@ export default function DiagramLabel({ diagrams, imageBase, onComplete }: Props)
     return 'var(--color-text)'
   }
 
-  const progress = `${index + 1} / ${questions.length}`
+  const progress = `${index + 1} / ${total}`
 
   return (
     <div style={styles.container}>

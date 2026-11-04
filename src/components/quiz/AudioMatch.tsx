@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AllergenItem } from '../../types'
-import { buildAudioQuestions } from './questionBuilders'
+import { buildAudioQuestions, type AudioQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps } from './useQuizRun'
 
 interface Props {
   items: AllergenItem[]
@@ -13,31 +14,43 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
 function audioFile(base: string, item: AllergenItem, variant: string): string {
   return `${base}${item.id}_${variant}.mp3`
 }
 
-export default function AudioMatch({
-  items,
+/** The module's own quiz: every item, asked once. */
+export default function AudioMatch({ items, variants = ['name'], onComplete, ...look }: Props) {
+  const [questions] = useState(() => buildAudioQuestions(items, variants))
+  const run = useQuizRun(questions, onComplete)
+  // A fresh renderer per question, so playback state starts clean each time.
+  return <AudioMatchQuestion key={run.index} {...look} {...run} />
+}
+
+export interface AudioMatchQuestionProps extends AnswerProps {
+  question: AudioQuestion
+  audioBase: string
+  answerWith?: 'words' | 'pictures'
+  imageBase?: string
+  imageFit?: 'cover' | 'contain'
+  index: number
+  total: number
+}
+
+export function AudioMatchQuestion({
+  question,
   audioBase,
-  variants = ['name'],
   answerWith = 'words',
   imageBase = '',
   imageFit = 'cover',
-  onComplete,
-}: Props) {
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: AudioMatchQuestionProps) {
   const usePictures = answerWith === 'pictures'
-  const [questions] = useState(() => buildAudioQuestions(items, variants))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const question = questions[index]
 
   const playAudio = useCallback(() => {
     if (audioRef.current) {
@@ -50,11 +63,10 @@ export default function AudioMatch({
     audio.onended = () => setIsPlaying(false)
     audio.onerror = () => setIsPlaying(false)
     audio.play().catch(() => setIsPlaying(false))
-  }, [audioBase, question.answer])
+  }, [audioBase, question.answer, question.variant])
 
-  // Auto-play when question changes
+  // Auto-play when the question changes
   useEffect(() => {
-    setIsPlaying(false)
     const timer = setTimeout(playAudio, 300)
     return () => {
       clearTimeout(timer)
@@ -65,31 +77,9 @@ export default function AudioMatch({
     }
   }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = useCallback(
-    (itemId: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = itemId === question.answer.id
-      setSelected(itemId)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1200 : 2500
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+  function handleSelect(itemId: string) {
+    onAnswer(itemId, itemId === question.answer.id)
+  }
 
   function optionStyle(option: AllergenItem): React.CSSProperties {
     let borderColor = 'var(--color-border)'
@@ -139,7 +129,7 @@ export default function AudioMatch({
   return (
     <div style={styles.container}>
       <div style={styles.prompt}>
-        <p style={styles.counter}>{index + 1} of {questions.length}</p>
+        <p style={styles.counter}>{index + 1} of {total}</p>
         <p style={styles.instruction}>What do you hear?</p>
 
         <button

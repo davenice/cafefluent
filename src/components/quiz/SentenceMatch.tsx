@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { AllergenItem } from '../../types'
-import { buildSentenceQuestions } from './questionBuilders'
+import { buildSentenceQuestions, type SentenceQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps } from './useQuizRun'
 import { SENTENCE_TEMPLATES, SENTENCE_VARIANTS, type SentenceVariant } from '../../data/sentenceVariants'
 
 type Variant = SentenceVariant
@@ -12,22 +13,38 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
 function audioFile(base: string, item: AllergenItem, variant: Variant): string {
   return `${base}${item.id}_${variant}.mp3`
 }
 
+/** The module's own quiz: every item, asked once. */
 export default function SentenceMatch({ items, audioBase, imageBase, onComplete }: Props) {
   const [questions] = useState(() => buildSentenceQuestions(items, SENTENCE_VARIANTS))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete)
+  // A fresh renderer per question, so playback state starts clean each time.
+  return <SentenceMatchQuestion key={run.index} audioBase={audioBase} imageBase={imageBase} {...run} />
+}
+
+export interface SentenceMatchQuestionProps extends AnswerProps {
+  question: SentenceQuestion<Variant>
+  audioBase: string
+  imageBase: string
+  index: number
+  total: number
+}
+
+export function SentenceMatchQuestion({
+  question,
+  audioBase,
+  imageBase,
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: SentenceMatchQuestionProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const question = questions[index]
 
   const playAudio = useCallback(() => {
     if (audioRef.current) {
@@ -43,7 +60,6 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
   }, [audioBase, question.answer, question.variant])
 
   useEffect(() => {
-    setIsPlaying(false)
     const timer = setTimeout(playAudio, 300)
     return () => {
       clearTimeout(timer)
@@ -54,31 +70,9 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
     }
   }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = useCallback(
-    (itemId: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = itemId === question.answer.id
-      setSelected(itemId)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1200 : 2500
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+  function handleSelect(itemId: string) {
+    onAnswer(itemId, itemId === question.answer.id)
+  }
 
   function borderColor(option: AllergenItem): string {
     if (answerState === 'unanswered') return 'var(--color-border)'
@@ -101,7 +95,7 @@ export default function SentenceMatch({ items, audioBase, imageBase, onComplete 
   return (
     <div style={styles.container}>
       <div style={styles.prompt}>
-        <p style={styles.counter}>{index + 1} of {questions.length}</p>
+        <p style={styles.counter}>{index + 1} of {total}</p>
         {/* Nothing to read before answering: the sentence is there to be
             heard, and the written frame gave away half of it. */}
         {answerState !== 'unanswered' && (
