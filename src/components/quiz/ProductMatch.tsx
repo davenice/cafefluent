@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import type { ProductItem } from '../../types'
-import { buildProductQuestions } from './questionBuilders'
+import { buildProductQuestions, type ProductQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps, type AnswerState, type RunDelays } from './useQuizRun'
 
 interface Props {
   products: ProductItem[]
@@ -8,42 +9,35 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
+// Shorter than the other quizzes': there is only a name to read in the feedback.
+const DELAYS: RunDelays = { correct: 1000, wrong: 2200 }
 
+/** The module's own quiz: every product, asked once. */
 export default function ProductMatch({ products, imageBase, onComplete }: Props) {
   const [questions] = useState(() => buildProductQuestions(products))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete, DELAYS)
+  return <ProductMatchQuestion imageBase={imageBase} {...run} />
+}
 
-  const question = questions[index]
+export interface ProductMatchQuestionProps extends AnswerProps {
+  question: ProductQuestion
+  imageBase: string
+  index: number
+  total: number
+}
 
-  const handleSelect = useCallback(
-    (option: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = option === question.correct
-      setSelected(option)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1000 : 2200
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+export function ProductMatchQuestion({
+  question,
+  imageBase,
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: ProductMatchQuestionProps) {
+  function handleSelect(option: string) {
+    onAnswer(option, option === question.correct)
+  }
 
   return (
     <div style={styles.container}>
@@ -54,7 +48,7 @@ export default function ProductMatch({ products, imageBase, onComplete }: Props)
           style={styles.image}
         />
         <div style={styles.badge}>
-          {index + 1} of {questions.length}
+          {index + 1} of {total}
         </div>
       </div>
 

@@ -29,7 +29,11 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
 ### Adding a new task type
 
 1. Add the type name to `TaskType` in `src/types/index.ts`
-2. Create a component in `src/components/quiz/` — quiz types receive `items`, `imageBase`, and `onComplete(score, total)`; study types (like `revision`) receive `items`, `imageBase`, and `onDone`
+2. Create a component in `src/components/quiz/`, in two parts:
+   - a named export rendering **one** question — it takes that question, whatever it needs from the module (`imageBase`, `audioBase`…), the `index` and `total` for its counter, and the `AnswerProps` it reports a tap through
+   - the default export, which builds the questions with a builder from `questionBuilders.ts`, runs them through `useQuizRun`, and renders the first part. It takes `items`, `imageBase` and `onComplete(score, total)`
+
+   Splitting it that way is what lets a question be asked outside its own module's quiz. Study types (like `revision`) are not quizzes and have neither part: they take `items`, `imageBase` and `onDone`.
 3. Register it in `QuizShell.tsx` (dispatches on `task.type`)
 4. Add the task entry to the module in `src/data/modules.ts`
 5. Teach the tests about it: list the files it needs in `expectedFiles` in `scripts/content.test.ts`, and add a way to find the right answer in `correctAnswer` in `e2e/helpers/quiz.ts`

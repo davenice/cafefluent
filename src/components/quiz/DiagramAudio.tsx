@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { DiagramData, Hotspot } from '../../types'
-import { buildDiagramAudioQuestions } from './questionBuilders'
+import { buildDiagramAudioQuestions, type HotspotAudioQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps } from './useQuizRun'
 
 interface Props {
   diagrams: DiagramData[]
@@ -9,26 +10,42 @@ interface Props {
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
-
 function audioFile(base: string, hotspot: Hotspot): string {
   return `${base}${hotspot.id}_name.mp3`
 }
 
 /**
  * Hear the name of a part, then tap that part on the diagram.
- * Every hotspot of the current diagram is shown as a tappable marker.
+ * The module's own quiz: every hotspot of every diagram, asked once.
  */
 export default function DiagramAudio({ diagrams, imageBase, audioBase, onComplete }: Props) {
   const [questions] = useState(() => buildDiagramAudioQuestions(diagrams))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete)
+  // A fresh renderer per question, so playback state starts clean each time.
+  return <DiagramAudioQuestion key={run.index} imageBase={imageBase} audioBase={audioBase} {...run} />
+}
+
+export interface DiagramAudioQuestionProps extends AnswerProps {
+  question: HotspotAudioQuestion
+  imageBase: string
+  audioBase: string
+  index: number
+  total: number
+}
+
+/** Every hotspot of the current diagram is shown as a tappable marker. */
+export function DiagramAudioQuestion({
+  question,
+  imageBase,
+  audioBase,
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: DiagramAudioQuestionProps) {
   const [isPlaying, setIsPlaying] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
-
-  const question = questions[index]
 
   const playAudio = useCallback(() => {
     if (audioRef.current) {
@@ -43,7 +60,7 @@ export default function DiagramAudio({ diagrams, imageBase, audioBase, onComplet
     audio.play().catch(() => setIsPlaying(false))
   }, [audioBase, question.answer])
 
-  // Auto-play when question changes
+  // Auto-play when the question changes
   useEffect(() => {
     const timer = setTimeout(playAudio, 300)
     return () => {
@@ -55,32 +72,9 @@ export default function DiagramAudio({ diagrams, imageBase, audioBase, onComplet
     }
   }, [index]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSelect = useCallback(
-    (hotspotId: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = hotspotId === question.answer.id
-      setSelected(hotspotId)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1200 : 2500
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-        setIsPlaying(false)
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+  function handleSelect(hotspotId: string) {
+    onAnswer(hotspotId, hotspotId === question.answer.id)
+  }
 
   function markerStyle(hotspot: Hotspot): React.CSSProperties {
     const isAnswer = hotspot.id === question.answer.id
@@ -128,7 +122,7 @@ export default function DiagramAudio({ diagrams, imageBase, audioBase, onComplet
   return (
     <div style={styles.container}>
       <div style={styles.prompt}>
-        <p style={styles.counter}>{question.diagram.title} — {index + 1} / {questions.length}</p>
+        <p style={styles.counter}>{question.diagram.title} — {index + 1} / {total}</p>
 
         <button
           style={{ ...styles.playBtn, ...(isPlaying ? styles.playBtnActive : {}) }}

@@ -1,48 +1,40 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import type { AllergenItem } from '../../types'
-import { buildIngredientQuestions } from './questionBuilders'
+import { buildIngredientQuestions, type IngredientQuestion } from './questionBuilders'
+import { useQuizRun, type AnswerProps, type AnswerState, type RunDelays } from './useQuizRun'
 
 interface Props {
   items: AllergenItem[]
   onComplete: (score: number, total: number) => void
 }
 
-type AnswerState = 'unanswered' | 'correct' | 'wrong'
+// Shorter than the other quizzes': there is only a word to read in the feedback.
+const DELAYS: RunDelays = { correct: 1000, wrong: 2200 }
 
+/** The module's own quiz: every item, asked once. */
 export default function IngredientMatch({ items, onComplete }: Props) {
   const [questions] = useState(() => buildIngredientQuestions(items))
-  const [index, setIndex] = useState(0)
-  const [score, setScore] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const [answerState, setAnswerState] = useState<AnswerState>('unanswered')
+  const run = useQuizRun(questions, onComplete, DELAYS)
+  return <IngredientMatchQuestion {...run} />
+}
 
-  const question = questions[index]
+export interface IngredientMatchQuestionProps extends AnswerProps {
+  question: IngredientQuestion
+  index: number
+  total: number
+}
 
-  const handleSelect = useCallback(
-    (itemId: string) => {
-      if (answerState !== 'unanswered') return
-      const correct = itemId === question.answer.id
-      setSelected(itemId)
-      setAnswerState(correct ? 'correct' : 'wrong')
-      if (correct) setScore((s) => s + 1)
-    },
-    [answerState, question]
-  )
-
-  useEffect(() => {
-    if (answerState === 'unanswered') return
-    const delay = answerState === 'correct' ? 1000 : 2200
-    const timer = setTimeout(() => {
-      if (index + 1 < questions.length) {
-        setIndex((i) => i + 1)
-        setSelected(null)
-        setAnswerState('unanswered')
-      } else {
-        onComplete(score, questions.length)
-      }
-    }, delay)
-    return () => clearTimeout(timer)
-  }, [answerState, index, questions.length, score, onComplete])
+export function IngredientMatchQuestion({
+  question,
+  index,
+  total,
+  selected,
+  answerState,
+  onAnswer,
+}: IngredientMatchQuestionProps) {
+  function handleSelect(itemId: string) {
+    onAnswer(itemId, itemId === question.answer.id)
+  }
 
   return (
     <div style={styles.container}>
@@ -50,7 +42,7 @@ export default function IngredientMatch({ items, onComplete }: Props) {
         <p style={styles.promptLabel}>What is in the cup?</p>
         <p style={styles.promptText}>{question.answer.description}</p>
         <div style={styles.badge}>
-          {index + 1} of {questions.length}
+          {index + 1} of {total}
         </div>
       </div>
 
