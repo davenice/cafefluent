@@ -16,7 +16,7 @@ const items: AllergenItem[] = [
   { id: 'almond', name: 'Almond milk', description: 'From almonds.', image: 'almond.svg', allergen: 'Tree nuts' },
   { id: 'soya', name: 'Soya milk', description: 'From soya beans.', image: 'soya.svg', allergen: 'Soya' },
   { id: 'coconut', name: 'Coconut milk', description: 'From coconut.', image: 'coconut.svg', allergen: 'No allergens' },
-  { id: 'whole', name: 'Whole milk', description: "Cow's milk.", image: 'whole.svg', allergen: 'Milk' },
+  { id: 'whole', name: 'Whole milk', description: "Cow's milk.", image: 'whole.svg', allergen: 'Milk (dairy)' },
 ]
 
 const renderQuiz = (onComplete = vi.fn()) =>
@@ -64,7 +64,7 @@ describe('AllergenMatch', () => {
   it('reports the score once every milk has been asked', () => {
     const onComplete = vi.fn()
     renderQuiz(onComplete)
-    for (const allergen of ['Cereals containing gluten', 'Tree nuts', 'Soya', 'No allergens', 'Milk']) {
+    for (const allergen of ['Cereals containing gluten', 'Tree nuts', 'Soya', 'No allergens', 'Milk (dairy)']) {
       fireEvent.click(screen.getByRole('button', { name: allergen }))
       act(() => { vi.advanceTimersByTime(1000) })
     }
@@ -77,7 +77,7 @@ describe('AllergenMatch', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Tree nuts' }))
     fireEvent.click(screen.getByRole('button', { name: 'Cereals containing gluten' }))
     act(() => { vi.advanceTimersByTime(2200) })
-    for (const allergen of ['Tree nuts', 'Soya', 'No allergens', 'Milk']) {
+    for (const allergen of ['Tree nuts', 'Soya', 'No allergens', 'Milk (dairy)']) {
       fireEvent.click(screen.getByRole('button', { name: allergen }))
       act(() => { vi.advanceTimersByTime(1000) })
     }
