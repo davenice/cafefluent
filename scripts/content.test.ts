@@ -51,6 +51,12 @@ function expectedFiles(mod: ModuleDef, data: ModuleData): Map<string, string> {
           add(`${mod.imageBase}${product.image}`, why(`image for product "${product.id}"`))
         }
         break
+      case 'order-match':
+        // One spoken order per clip, named like an item's: `<id>_name.mp3`.
+        for (const order of data.orders ?? []) {
+          add(`${audioBase}${order.id}_name.mp3`, why(`audio for order "${order.id}"`))
+        }
+        break
       case 'diagram-label':
       case 'diagram-audio':
         for (const diagram of data.diagrams ?? []) {
@@ -99,6 +105,24 @@ describe.each(MODULES.map(mod => [mod.id, mod] as const))('content for %s', (_, 
         case 'product-match':
           needs((data.products ?? []).length > 0, 'products')
           break
+        case 'allergen-match': {
+          // The right allergen plus three others, which come from the items themselves.
+          const allergens = new Set(data.items.map(item => item.allergen).filter(Boolean))
+          needs(data.items.every(item => !!item.allergen), 'an allergen on every item')
+          needs(allergens.size >= 4, 'at least 4 different allergens')
+          break
+        }
+        case 'order-match': {
+          const orders = data.orders ?? []
+          needs(orders.length > 0, 'orders')
+          needs(!!data.noneOption, 'a noneOption for an order naming no item')
+          // The answer, the noneOption and two other items.
+          needs(data.items.length >= 3, 'at least 3 items')
+          const ids = new Set([...data.items.map(i => i.id), data.noneOption?.id])
+          const unknown = orders.filter(o => !ids.has(o.item)).map(o => o.id)
+          needs(unknown.length === 0, `orders to name a known item (${unknown.join(', ')})`)
+          break
+        }
         case 'diagram-label':
         case 'diagram-audio':
           needs((data.diagrams ?? []).some(d => d.hotspots.length > 0), 'a diagram with hotspots')

@@ -126,6 +126,33 @@ export const MODULES: ModuleDef[] = [
     ],
   },
   {
+    id: 'milk',
+    title: 'Milk',
+    description: 'Learn the milks a cafe keeps, the allergens in them, and how customers ask for them',
+    revisionIntro: 'A cafe keeps several milks, and a customer can ask for any of them in any drink. Learn their names, what is in them, and which allergen each one carries.',
+    dataUrl: '/content/milk/data.json',
+    imageBase: '/content/milk/images/',
+    audioBase: '/content/milk/audio/',
+    imageFit: 'contain',
+    tasks: [
+      {
+        id: 'task0',
+        type: 'revision',
+        title: 'Meet the milks',
+      },
+      {
+        id: 'task1',
+        type: 'allergen-match',
+        title: 'Find the allergen in each milk',
+      },
+      {
+        id: 'task2',
+        type: 'order-match',
+        title: 'Listen and find the milk',
+      },
+    ],
+  },
+  {
     id: 'kitchen-equipment',
     title: 'Kitchen equipment',
     description: 'Learn the names of everyday kitchen and serving equipment',

@@ -23,6 +23,11 @@
  * The request is then sent as SSML. "audioName" is still used as the plain-text
  * form recorded in the manifest.
  *
+ * Spoken orders (data.json "orders") get a clip each too:
+ *   public/content/<module>/audio/<orderId>_name.mp3
+ * spoken from the order's "text" (or "audioName" if present), e.g. "a soya
+ * cappuccino". Only the "name" variant is generated for orders.
+ *
  * Diagram hotspots (data.json "diagrams[].hotspots") also get a clip each:
  *   public/content/<module>/audio/<hotspotId>_name.mp3
  * spoken from the hotspot's "label" (or "audioName" if present). Only the
@@ -68,7 +73,7 @@ async function generateModule(moduleId, force) {
   }
 
   const moduleData = JSON.parse(readFileSync(dataPath, 'utf-8'));
-  const { items = [], diagrams = [] } = moduleData;
+  const { items = [], diagrams = [], orders = [] } = moduleData;
   const pickVariants = (names) => Object.fromEntries(Object.entries(VARIANTS).filter(([k]) => names.includes(k)));
   const activeVariants = moduleData.variants ? pickVariants(moduleData.variants) : VARIANTS;
   const nameOnly = { name: VARIANTS.name };
@@ -92,6 +97,7 @@ async function generateModule(moduleId, force) {
   const jobs = [
     ...items.map(item => ({ id: item.id, spokenName: item.audioName ?? item.name, ssmlName: item.audioSsml, variants: item.variants ? pickVariants(item.variants) : activeVariants })),
     ...diagrams.flatMap(d => d.hotspots.map(h => ({ id: h.id, spokenName: h.audioName ?? h.label, ssmlName: h.audioSsml, variants: nameOnly }))),
+    ...orders.map(o => ({ id: o.id, spokenName: o.audioName ?? o.text, ssmlName: o.audioSsml, variants: nameOnly })),
   ];
 
   for (const item of jobs) {

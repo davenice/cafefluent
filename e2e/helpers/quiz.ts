@@ -41,6 +41,7 @@ export function questionCount(quiz: QuizTask): number {
   const { task, data } = quiz
   switch (task.type) {
     case 'product-match': return data.products!.length
+    case 'order-match': return data.orders!.length
     case 'diagram-label':
     case 'diagram-audio': return data.diagrams!.reduce((n, d) => n + d.hotspots.length, 0)
     case 'sequence-order': return sequenceFor(quiz).steps.length
@@ -121,6 +122,17 @@ export async function correctAnswer(page: Page, quiz: QuizTask, audioSeen = 0): 
     case 'ingredient-match': {
       const texts = await paragraphs()
       return byName(data.items.find(i => texts.includes(i.description))!.name)
+    }
+    case 'allergen-match': {
+      const texts = await paragraphs()
+      return byName(data.items.find(i => texts.includes(i.name))!.allergen!)
+    }
+    case 'order-match': {
+      const id = audioId(await newAudio(page, audioSeen), data.orders!.map(o => o.id))
+      const order = data.orders!.find(o => o.id === id)!
+      // The order names one of the milks, or none of them.
+      const item = data.items.find(i => i.id === order.item)
+      return byName(item ? item.name : data.noneOption!.name)
     }
     case 'audio-match':
     case 'sentence-match': {
