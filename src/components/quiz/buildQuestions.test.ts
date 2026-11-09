@@ -277,8 +277,8 @@ describe('AllergenMatch buildQuestions', () => {
     { id: 'almond', name: 'Almond milk', description: '', image: 'almond.svg', allergen: 'Tree nuts' },
     { id: 'soya', name: 'Soya milk', description: '', image: 'soya.svg', allergen: 'Soya' },
     { id: 'coconut', name: 'Coconut milk', description: '', image: 'coconut.svg', allergen: 'No allergens' },
-    { id: 'skimmed', name: 'Skimmed milk', description: '', image: 'skimmed.svg', allergen: 'Milk' },
-    { id: 'whole', name: 'Whole milk', description: '', image: 'whole.svg', allergen: 'Milk' },
+    { id: 'skimmed', name: 'Skimmed milk', description: '', image: 'skimmed.svg', allergen: 'Milk (dairy)' },
+    { id: 'whole', name: 'Whole milk', description: '', image: 'whole.svg', allergen: 'Milk (dairy)' },
   ]
   const qs = buildAllergenQuestions(milks)
 
@@ -302,7 +302,7 @@ describe('AllergenMatch buildQuestions', () => {
   })
 
   it('falls back to what there is when fewer than 4 allergens are named', () => {
-    const two = milks.filter((m) => m.allergen === 'Milk' || m.allergen === 'Soya')
+    const two = milks.filter((m) => m.allergen === 'Milk (dairy)' || m.allergen === 'Soya')
     for (const q of buildAllergenQuestions(two)) {
       expect(q.options).toEqual(expect.arrayContaining([q.answer.allergen!]))
       expect(q.options.length).toBeLessThanOrEqual(4)
