@@ -94,6 +94,8 @@ When a test fails in CI, the HTML report with a trace of the failure is uploaded
 - Add a new module: create `public/content/<module>/data.json` and `public/content/<module>/images/`, then register it in `src/data/modules.ts`.
 - Edit allergen descriptions: edit `public/content/allergens/data.json` directly.
 - Swap an image: replace the file in `public/content/allergens/images/` — filename must match the `image` field in `data.json`.
+- Add an allergen to an item (for `allergen-match`): give it an `allergen` field, named exactly as the allergens module names that allergen, so the two modules agree. The wrong answers are the other allergens the module names, so a module needs at least four different ones.
+- Add a spoken order (for `order-match`): add it to `orders` in `data.json` as `{ "id", "text", "item" }`, where `item` is the id of the item the order names, or of the module's `noneOption` for an order that names none (`a black americano`). `noneOption` is offered as an answer to every question, right or wrong. Each order gets its own clip — run `npm run generate:audio` after adding one.
 
 **Language level.** The app is aimed at ESOL learners, so all learner-facing text (item names, descriptions, module intros, sentence audio) should be written at **CEFR B1 level**: short sentences with one idea each, everyday vocabulary, and no rare descriptive words (e.g. *crimped*, *domed*, *tangy*, *dusted*). Useful cafe vocabulary such as *flaky*, *savoury*, *sponge* or *puff pastry* is fine, since learning those words is the point. If a word is unusual and the picture does the work, leave it out.
 
@@ -117,6 +119,26 @@ The 14 major food allergens (EU/UK regulation).
 Task 3 varies the phrasing: *I'm allergic to / I'm intolerant to / I mustn't eat / I can't eat / I have an allergy to.*
 
 Audio files are pre-generated offline and committed to `public/content/<module>/audio/`. See [Generating audio](#generating-audio) below.
+
+### Module: Milk
+
+The milks a cafe keeps, the allergen in each, and how customers ask for them.
+
+| Task | Type | Status |
+|---|---|---|
+| 0 | Study guide — browse the milks with pictures and descriptions | **Done** |
+| 1 | Name the allergen in a milk (multiple choice) | **Done** |
+| 2 | Hear an order ("a skinny cappuccino") → choose the milk in it | **Done** |
+
+Task 2 offers *No milk* as an answer every time, since hearing that an order has no milk in
+it (*a black americano*, *an americano without milk*) is part of what it teaches. The orders
+also use what customers really say rather than the label on the carton: *skinny* for skimmed,
+*soy* for soya.
+
+The pictures are drawn by [scripts/generate-milk-svgs.mjs](scripts/generate-milk-svgs.mjs)
+(`npm run generate:milk-svgs`): plant milks in a carton with what they are made from on the
+label, cow's milks in a bottle with the UK cap colours — red skimmed, green semi-skimmed,
+blue whole — which is the only thing telling those three apart.
 
 ### Future modules
 
@@ -178,6 +200,8 @@ public/content/<module>/audio/manifest.json
 `manifest.json` records every generated clip — its item id, variant name, the exact text that was synthesised, and the filename. The app reads this to know what audio is available.
 
 Modules with diagrams (e.g. Barista equipment) also get one `<hotspotId>_name.mp3` per hotspot, spoken from the hotspot's `label`. Add an `audioName` to a hotspot to override the spoken text.
+
+Modules with spoken orders (e.g. Milk) get one `<orderId>_name.mp3` per entry in `orders`, spoken from the order's `text`. Only the `name` variant is generated for these, as for hotspots.
 
 ### Voice settings
 

@@ -7,6 +7,8 @@ export interface AllergenItem {
   audio?: string
   /** Audio variants recorded for this item, overriding the module's `variants`. */
   variants?: string[]
+  /** The allergen this item contains, named as the allergens module names it. */
+  allergen?: string
 }
 
 export interface ProductItem {
@@ -17,6 +19,21 @@ export interface ProductItem {
   breadIds: string[]
 }
 
+/** A spoken order that names one of the module's items, or none of them. */
+export interface OrderItem {
+  id: string
+  /** What is said: "a soya cappuccino". Also the phrase a contributor records. */
+  text: string
+  /** The id of the item the order names, or of the module's `noneOption`. */
+  item: string
+}
+
+/** The answer for an order that names no item at all: "No milk". */
+export interface NoneOption {
+  id: string
+  name: string
+}
+
 export interface ModuleData {
   id: string
   title: string
@@ -24,6 +41,9 @@ export interface ModuleData {
   products?: ProductItem[]
   diagrams?: DiagramData[]
   sequences?: SequenceData[]
+  orders?: OrderItem[]
+  /** Offered with every 'order-match' question, alongside the items. */
+  noneOption?: NoneOption
 }
 
 export interface Hotspot {
@@ -52,7 +72,7 @@ export interface SequenceData {
   steps: SequenceStep[]
 }
 
-export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'diagram-audio' | 'ingredient-match' | 'sequence-order'
+export type TaskType = 'revision' | 'image-match' | 'audio-match' | 'sentence-match' | 'product-match' | 'diagram-label' | 'diagram-audio' | 'ingredient-match' | 'sequence-order' | 'allergen-match' | 'order-match'
 
 export interface TaskDef {
   id: string

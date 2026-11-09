@@ -1,0 +1,71 @@
+{
+  "id": "milk",
+  "title": "Milk",
+  "variants": ["name"],
+  "items": [
+    {
+      "id": "oat",
+      "name": "Oat milk",
+      "description": "Made from oats and water. It is creamy and a little sweet. Oats are a cereal, so this milk has gluten in it.",
+      "allergen": "Cereals containing gluten",
+      "image": "oat.svg"
+    },
+    {
+      "id": "almond",
+      "name": "Almond milk",
+      "description": "Made from almonds and water. It is thin and tastes a little nutty. Almonds are tree nuts.",
+      "allergen": "Tree nuts",
+      "image": "almond.svg"
+    },
+    {
+      "id": "soya",
+      "name": "Soya milk",
+      "description": "Made from soya beans. It makes good foam. Some customers ask for soy, which is the same thing.",
+      "allergen": "Soya",
+      "image": "soya.svg"
+    },
+    {
+      "id": "coconut",
+      "name": "Coconut milk",
+      "description": "Made from coconut and water. A coconut is not a tree nut, so this milk has none of the 14 allergens.",
+      "allergen": "No allergens",
+      "image": "coconut.svg"
+    },
+    {
+      "id": "skimmed",
+      "name": "Skimmed milk",
+      "description": "Cow's milk with nearly all the fat taken out. The cap is red. Some customers call it skinny milk.",
+      "allergen": "Milk",
+      "image": "skimmed.svg"
+    },
+    {
+      "id": "semi-skimmed",
+      "name": "Semi-skimmed milk",
+      "description": "Cow's milk with some of the fat taken out. The cap is green. Most cafes use this milk.",
+      "allergen": "Milk",
+      "image": "semi-skimmed.svg"
+    },
+    {
+      "id": "whole",
+      "name": "Whole milk",
+      "description": "Cow's milk with all the fat still in it. The cap is blue. It makes thick, creamy foam.",
+      "allergen": "Milk",
+      "image": "whole.svg"
+    }
+  ],
+  "noneOption": { "id": "none", "name": "No milk" },
+  "orders": [
+    { "id": "soya-cappuccino", "text": "a soya cappuccino", "item": "soya" },
+    { "id": "black-americano", "text": "a black americano", "item": "none" },
+    { "id": "oat-macchiato", "text": "a macchiato with oat milk", "item": "oat" },
+    { "id": "almond-latte", "text": "an almond latte", "item": "almond" },
+    { "id": "soy-americano", "text": "an americano with soy", "item": "soya" },
+    { "id": "oat-cortado", "text": "an oat cortado", "item": "oat" },
+    { "id": "semi-skimmed-latte", "text": "a latte with semi-skimmed milk", "item": "semi-skimmed" },
+    { "id": "whole-hot-chocolate", "text": "a hot chocolate with whole milk", "item": "whole" },
+    { "id": "skinny-cappuccino", "text": "a skinny cappuccino", "item": "skimmed" },
+    { "id": "skimmed-flat-white", "text": "a flat white with skimmed milk", "item": "skimmed" },
+    { "id": "coconut-mocha", "text": "a coconut mocha", "item": "coconut" },
+    { "id": "americano-no-milk", "text": "an americano without milk", "item": "none" }
+  ]
+}

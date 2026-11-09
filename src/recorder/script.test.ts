@@ -26,6 +26,23 @@ describe('buildScript', () => {
     expect(phrases.map((p) => p.text)).toEqual(['Milk', "I'm allergic to milk", "I can't have milk"])
   })
 
+  it('records each spoken order as it is written, once', () => {
+    const phrases = buildScript([
+      {
+        id: 'milk', title: 'Milk',
+        data: {
+          variants: ['name'],
+          items: [{ id: 'soya', name: 'Soya milk' }],
+          orders: [{ id: 'soya-cappuccino', text: 'a soya cappuccino' }],
+        },
+      },
+    ])
+    expect(phrases.map((p) => [p.file, p.text])).toEqual([
+      ['soya_name.wav', 'Soya milk'],
+      ['soya-cappuccino_name.wav', 'A soya cappuccino'],
+    ])
+  })
+
   it('records diagram hotspot labels by name only', () => {
     const phrases = buildScript([
       { id: 'coffee', title: 'Barista', data: { items: [], diagrams: [{ hotspots: [{ id: 'tare', label: 'tare button' }] }] } },

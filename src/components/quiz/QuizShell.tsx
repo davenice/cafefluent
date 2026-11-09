@@ -11,6 +11,8 @@ import ProductMatch from './ProductMatch'
 import DiagramLabel from './DiagramLabel'
 import DiagramAudio from './DiagramAudio'
 import IngredientMatch from './IngredientMatch'
+import AllergenMatch from './AllergenMatch'
+import OrderMatch from './OrderMatch'
 import SequenceOrder from './SequenceOrder'
 
 type Phase = 'loading' | 'error' | 'quiz' | 'score'
@@ -87,6 +89,25 @@ export default function QuizShell() {
             items={data.items}
             onComplete={handleComplete}
           />
+        )}
+        {phase === 'quiz' && data && task.type === 'allergen-match' && (
+          <AllergenMatch
+            items={data.items}
+            imageBase={mod.imageBase}
+            imageFit={mod.imageFit}
+            onComplete={handleComplete}
+          />
+        )}
+        {phase === 'quiz' && data && task.type === 'order-match' && (
+          data.noneOption
+            ? <OrderMatch
+                orders={data.orders ?? []}
+                items={data.items}
+                noneOption={data.noneOption}
+                audioBase={mod.audioBase ?? ''}
+                onComplete={handleComplete}
+              />
+            : <ErrorScreen onBack={() => navigate(`/${moduleId}`)} message="This quiz has no orders yet." />
         )}
         {phase === 'quiz' && data && task.type === 'audio-match' && (
           <AudioMatch

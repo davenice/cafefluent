@@ -2,7 +2,7 @@ import { test, expect, audioSrcs, pauseClock } from './fixtures'
 import { correctAnswer, tasksOfType, waitForQuiz } from './helpers/quiz'
 
 // Every task with audio, since each module keeps its audio in its own folder.
-for (const quiz of tasksOfType('audio-match', 'sentence-match', 'diagram-audio')) {
+for (const quiz of tasksOfType('audio-match', 'sentence-match', 'diagram-audio', 'order-match')) {
   const { mod, task } = quiz
 
   test(`${mod.id}/${task.id} (${task.type}) plays a sound that matches an answer`, async ({ page }) => {

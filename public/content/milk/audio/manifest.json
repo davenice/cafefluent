@@ -1,0 +1,121 @@
+{
+  "voice": "Amy",
+  "engine": "neural",
+  "sampleRate": "22050",
+  "items": [
+    {
+      "id": "oat",
+      "variant": "name",
+      "text": "Oat milk",
+      "file": "oat_name.mp3"
+    },
+    {
+      "id": "almond",
+      "variant": "name",
+      "text": "Almond milk",
+      "file": "almond_name.mp3"
+    },
+    {
+      "id": "soya",
+      "variant": "name",
+      "text": "Soya milk",
+      "file": "soya_name.mp3"
+    },
+    {
+      "id": "coconut",
+      "variant": "name",
+      "text": "Coconut milk",
+      "file": "coconut_name.mp3"
+    },
+    {
+      "id": "skimmed",
+      "variant": "name",
+      "text": "Skimmed milk",
+      "file": "skimmed_name.mp3"
+    },
+    {
+      "id": "semi-skimmed",
+      "variant": "name",
+      "text": "Semi-skimmed milk",
+      "file": "semi-skimmed_name.mp3"
+    },
+    {
+      "id": "whole",
+      "variant": "name",
+      "text": "Whole milk",
+      "file": "whole_name.mp3"
+    },
+    {
+      "id": "soya-cappuccino",
+      "variant": "name",
+      "text": "a soya cappuccino",
+      "file": "soya-cappuccino_name.mp3"
+    },
+    {
+      "id": "black-americano",
+      "variant": "name",
+      "text": "a black americano",
+      "file": "black-americano_name.mp3"
+    },
+    {
+      "id": "oat-macchiato",
+      "variant": "name",
+      "text": "a macchiato with oat milk",
+      "file": "oat-macchiato_name.mp3"
+    },
+    {
+      "id": "almond-latte",
+      "variant": "name",
+      "text": "an almond latte",
+      "file": "almond-latte_name.mp3"
+    },
+    {
+      "id": "soy-americano",
+      "variant": "name",
+      "text": "an americano with soy",
+      "file": "soy-americano_name.mp3"
+    },
+    {
+      "id": "oat-cortado",
+      "variant": "name",
+      "text": "an oat cortado",
+      "file": "oat-cortado_name.mp3"
+    },
+    {
+      "id": "semi-skimmed-latte",
+      "variant": "name",
+      "text": "a latte with semi-skimmed milk",
+      "file": "semi-skimmed-latte_name.mp3"
+    },
+    {
+      "id": "whole-hot-chocolate",
+      "variant": "name",
+      "text": "a hot chocolate with whole milk",
+      "file": "whole-hot-chocolate_name.mp3"
+    },
+    {
+      "id": "skinny-cappuccino",
+      "variant": "name",
+      "text": "a skinny cappuccino",
+      "file": "skinny-cappuccino_name.mp3"
+    },
+    {
+      "id": "skimmed-flat-white",
+      "variant": "name",
+      "text": "a flat white with skimmed milk",
+      "file": "skimmed-flat-white_name.mp3"
+    },
+    {
+      "id": "coconut-mocha",
+      "variant": "name",
+      "text": "a coconut mocha",
+      "file": "coconut-mocha_name.mp3"
+    },
+    {
+      "id": "americano-no-milk",
+      "variant": "name",
+      "text": "an americano without milk",
+      "file": "americano-no-milk_name.mp3"
+    }
+  ]
+}

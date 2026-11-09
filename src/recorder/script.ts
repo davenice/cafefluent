@@ -26,6 +26,7 @@ export interface ScriptModuleData {
   variants?: string[]
   items?: Spoken[]
   diagrams?: { hotspots: Spoken[] }[]
+  orders?: { id: string; text: string; audioName?: string }[]
 }
 
 function phraseText(variant: string, spokenName: string): string {
@@ -42,6 +43,7 @@ export function buildScript(modules: { id: string; title: string; data: ScriptMo
       ...(data.diagrams ?? []).flatMap((d) =>
         d.hotspots.map((h) => ({ id: h.id, spoken: h.audioName ?? h.label ?? '', variants: ['name'] })),
       ),
+      ...(data.orders ?? []).map((o) => ({ id: o.id, spoken: o.audioName ?? o.text, variants: ['name'] })),
     ]
     for (const job of jobs) {
       for (const variant of job.variants) {
