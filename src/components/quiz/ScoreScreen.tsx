@@ -3,9 +3,15 @@
  * module's own quiz and the mixed quiz, which differ only in where "back" goes.
  */
 export default function ScoreScreen({
-  score, total, onRetry, onBack, backLabel = 'Back to module',
+  score, total, onRetry, onBack, backLabel = 'Back to module', details,
 }: {
-  score: number; total: number; onRetry: () => void; onBack: () => void; backLabel?: string
+  score: number
+  total: number
+  onRetry: () => void
+  onBack: () => void
+  backLabel?: string
+  /** Shown between the score and the buttons: the mixed quiz's module summary. */
+  details?: React.ReactNode
 }) {
   const pct = Math.round((score / total) * 100)
   return (
@@ -15,6 +21,7 @@ export default function ScoreScreen({
         <span style={scoreStyles.fraction}>{score}/{total}</span>
       </div>
       <p style={scoreStyles.label}>{pct === 100 ? 'Perfect!' : pct >= 70 ? 'Well done!' : 'Keep practising!'}</p>
+      {details}
       <button style={scoreStyles.primary} onClick={onRetry}>Try again</button>
       <button style={scoreStyles.secondary} onClick={onBack}>{backLabel}</button>
     </div>

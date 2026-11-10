@@ -5,6 +5,7 @@ import { useEnabledModules } from '../../hooks/useEnabledModules'
 import { saveMixedProgress } from '../../hooks/useProgress'
 import type { ModuleData } from '../../types'
 import { buildMixedQuiz, type LoadedModule, type MixedQuestion } from './mixedQuestions'
+import MixedSummary, { type ModuleResult } from './MixedSummary'
 import { useQuizRun, type AnswerProps } from './useQuizRun'
 import ScoreScreen, { ErrorScreen } from './ScoreScreen'
 import { ImageMatchQuestion } from './ImageMatch'
@@ -37,6 +38,7 @@ export default function MixedQuizPage() {
   // Bumped to start again, so a retry asks a fresh set of questions.
   const [attempt, setAttempt] = useState(0)
   const [finalScore, setFinalScore] = useState<{ score: number; total: number } | null>(null)
+  const [results, setResults] = useState<ModuleResult[]>([])
 
   useEffect(() => {
     if (enabledModules === null) return
@@ -63,6 +65,16 @@ export default function MixedQuizPage() {
     return () => { cancelled = true }
   }, [enabledModules])
 
+  /** Which module each answer belonged to, and whether it was right. */
+  function handleAnswer(question: MixedQuestion, correct: boolean) {
+    setResults((seen) => {
+      const at = seen.findIndex((r) => r.mod.id === question.mod.id)
+      const result = seen[at] ?? { mod: question.mod, asked: 0, right: 0 }
+      const updated = { ...result, asked: result.asked + 1, right: result.right + (correct ? 1 : 0) }
+      return at === -1 ? [...seen, updated] : seen.map((r, i) => (i === at ? updated : r))
+    })
+  }
+
   function handleComplete(score: number, total: number) {
     saveMixedProgress({ score, total, completedAt: new Date().toISOString() })
     setFinalScore({ score, total })
@@ -72,6 +84,7 @@ export default function MixedQuizPage() {
   function retry() {
     setQuestions(buildMixedQuiz(loaded))
     setAttempt((n) => n + 1)
+    setResults([])
     setFinalScore(null)
     setPhase('quiz')
   }
@@ -88,7 +101,14 @@ export default function MixedQuizPage() {
         {phase === 'error' && (
           <ErrorScreen onBack={() => navigate('/')} message="There are no quizzes to mix yet." />
         )}
-        {phase === 'quiz' && <MixedRun key={attempt} questions={questions} onComplete={handleComplete} />}
+        {phase === 'quiz' && (
+          <MixedRun
+            key={attempt}
+            questions={questions}
+            onAnswered={handleAnswer}
+            onComplete={handleComplete}
+          />
+        )}
         {phase === 'score' && finalScore && (
           <ScoreScreen
             score={finalScore.score}
@@ -96,6 +116,7 @@ export default function MixedQuizPage() {
             onRetry={retry}
             onBack={() => navigate('/')}
             backLabel="Back to home"
+            details={<MixedSummary results={results} />}
           />
         )}
       </main>
@@ -104,14 +125,23 @@ export default function MixedQuizPage() {
 }
 
 function MixedRun({
-  questions, onComplete,
+  questions, onAnswered, onComplete,
 }: {
   questions: MixedQuestion[]
+  onAnswered: (question: MixedQuestion, correct: boolean) => void
   onComplete: (score: number, total: number) => void
 }) {
   // `question` is pulled out, so what's left is exactly what a renderer needs
   // and the wrapper can't be spread over a renderer's own question prop.
   const { question: current, ...run } = useQuizRun(questions, onComplete)
+
+  // The run counts the score; the page needs to know which module each answer
+  // belonged to, for the summary at the end.
+  const answer: typeof run.onAnswer = (key, correct) => {
+    if (run.answerState !== 'unanswered') return
+    onAnswered(current, correct)
+    run.onAnswer(key, correct)
+  }
 
   return (
     // Keyed by question, so each one is a fresh mount: the audio quizzes need
@@ -122,7 +152,7 @@ function MixedRun({
       data-module={current.mod.id}
       data-task={current.task.id}
     >
-      {renderQuestion(current, run)}
+      {renderQuestion(current, { ...run, onAnswer: answer })}
     </div>
   )
 }

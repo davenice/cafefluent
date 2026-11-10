@@ -1,36 +1,50 @@
 import type { Page } from '@playwright/test'
 import { test, expect, audioSrcs, pauseClock } from './fixtures'
 import { FakeConfigApi } from './fakeConfigApi'
-import { MODULES, MIXED_QUIZ } from '../src/data/modules'
-import { PER_MODULE, isMixable } from '../src/components/quiz/mixedQuestions'
+import { MIXED_QUIZ } from '../src/data/modules'
+import { QUIZ_LENGTH } from '../src/components/quiz/mixedQuestions'
 import { completeMixedQuiz, correctAnswer, currentMixedQuiz, waitForMixedQuiz } from './helpers/quiz'
-
-const mixableModules = MODULES.filter(isMixable)
-const fullLength = mixableModules.length * PER_MODULE
 
 test.beforeEach(async ({ page }) => {
   // Each answer is followed by a pause of a second or two; tests move the clock on instead.
   await pauseClock(page)
 })
 
-test('asks five questions from every module and saves the result', async ({ page }) => {
+test('asks twenty-five questions and saves the result', async ({ page }) => {
   await page.goto(`/#/${MIXED_QUIZ.id}`)
   await completeMixedQuiz(page, { correct: true })
 
   await expect(page.getByText('Perfect!')).toBeVisible()
-  await expect(page.getByText(`${fullLength}/${fullLength}`)).toBeVisible()
+  await expect(page.getByText(`${QUIZ_LENGTH}/${QUIZ_LENGTH}`)).toBeVisible()
+  await expect(page.getByText('You did well in every module.')).toBeVisible()
 
   await page.getByRole('button', { name: 'Back to home' }).click()
   const card = page.getByRole('link', { name: new RegExp(`^${MIXED_QUIZ.title}`) })
-  await expect(card).toContainText(`${fullLength}/${fullLength}`)
+  await expect(card).toContainText(`${QUIZ_LENGTH}/${QUIZ_LENGTH}`)
   await page.reload()
-  await expect(card).toContainText(`${fullLength}/${fullLength}`)
+  await expect(card).toContainText(`${QUIZ_LENGTH}/${QUIZ_LENGTH}`)
+})
+
+test('ends with how each module went, and where to practise', async ({ page, context }) => {
+  await new FakeConfigApi({ enabledModules: ['bread', 'milk', MIXED_QUIZ.id] }).install(context)
+  await page.goto(`/#/${MIXED_QUIZ.id}`)
+
+  // Every question wrong, so both modules are worth practising again.
+  await completeMixedQuiz(page, { correct: false })
+
+  await expect(page.getByRole('heading', { name: 'How you did' })).toBeVisible()
+  const summary = page.getByRole('listitem')
+  await expect(summary.filter({ hasText: 'Bread' })).toContainText('0 /')
+  await expect(summary.filter({ hasText: 'Milk' })).toContainText('0 /')
+
+  await expect(page.getByRole('heading', { name: 'Practise these again' })).toBeVisible()
+  await page.getByRole('link', { name: /Bread/ }).click()
+  await expect(page.getByRole('heading', { name: 'Bread', exact: true, level: 1 })).toBeVisible()
 })
 
 test('keeps the best result, not the latest', async ({ page, context }) => {
-  // Two modules, so a run is short enough to take twice.
   await new FakeConfigApi({ enabledModules: ['bread', 'kitchen-equipment', MIXED_QUIZ.id] }).install(context)
-  const total = 2 * PER_MODULE
+  const total = QUIZ_LENGTH
 
   await page.goto(`/#/${MIXED_QUIZ.id}`)
   await completeMixedQuiz(page, { correct: true })
@@ -51,13 +65,13 @@ test('draws only on the modules that are enabled', async ({ page, context }) => 
   await waitForMixedQuiz(page)
 
   const seen = new Set<string>()
-  for (let asked = 0; asked < 2 * PER_MODULE; asked++) {
+  for (let asked = 0; asked < QUIZ_LENGTH; asked++) {
     const { mod } = await currentMixedQuiz(page)
     seen.add(mod.id)
     await completeOneQuestion(page)
   }
 
-  await expect(page.getByText(`${2 * PER_MODULE}/${2 * PER_MODULE}`)).toBeVisible()
+  await expect(page.getByText(`${QUIZ_LENGTH}/${QUIZ_LENGTH}`)).toBeVisible()
   expect([...seen].sort()).toEqual(['bread', 'milk'])
 })
 

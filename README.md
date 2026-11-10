@@ -40,12 +40,18 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
 
 ### The mixed quiz
 
-A quiz drawing `PER_MODULE` (5) questions from every enabled module at once, at
-`/#/mixed-quiz`. It has no content of its own: `mixedQuestions.ts` asks each
-module's own builders for their questions, takes a module's five from across its
-quiz types rather than from one, and shuffles the modules together.
-`MixedQuizPage.tsx` then renders each question with the same component that
-renders it inside its own module, passing that module's images, audio and look.
+A quiz of `QUIZ_LENGTH` (25) questions drawn from every enabled module at once,
+at `/#/mixed-quiz`. It has no content of its own: `mixedQuestions.ts` asks each
+module's own builders for their questions, orders each module's across its quiz
+types, then deals a round at a time from each until the quiz is full. The share
+is therefore as even as the content allows, and a module with little to ask
+leaves its place to the others rather than making the quiz short.
+`MixedQuizPage.tsx` renders each question with the same component that renders
+it inside its own module, passing that module's images, audio and look.
+
+It ends on a summary (`MixedSummary.tsx`): the score module by module, and
+links back to the modules that went worst, which is any module the learner got
+less than `REVISE_BELOW` (70%) of right.
 
 Study guides and `sequence-order` are left out (`NOT_MIXED`): one run of a
 step-ordering task scores out of its number of steps, so it cannot be one

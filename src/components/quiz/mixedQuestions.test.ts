@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { AllergenItem, ModuleData, ModuleDef, TaskDef, TaskType } from '../../types'
-import { buildMixedQuiz, questionsForModule, type LoadedModule } from './mixedQuestions'
+import { QUIZ_LENGTH, buildMixedQuiz, questionsForModule, type LoadedModule } from './mixedQuestions'
 
 const items = (n: number): AllergenItem[] =>
   Array.from({ length: n }, (_, i) => ({
@@ -29,34 +29,21 @@ const subjects = (qs: ReturnType<typeof questionsForModule>) =>
   qs.map((q) => ('answer' in q.question ? JSON.stringify(q.question.answer) : ''))
 
 describe('questionsForModule', () => {
-  it('takes five questions by default', () => {
-    expect(questionsForModule(loaded(['image-match', 'audio-match']))).toHaveLength(5)
+  it('spreads the questions across the module\'s quiz types', () => {
+    const first = questionsForModule(loaded(['image-match', 'audio-match'])).slice(0, 4)
+    expect(new Set(first.map((q) => q.type))).toEqual(new Set(['image-match', 'audio-match']))
   })
 
-  it('spreads them across the module\'s quiz types', () => {
-    const types = new Set(questionsForModule(loaded(['image-match', 'audio-match'])).map((q) => q.type))
-    expect(types).toEqual(new Set(['image-match', 'audio-match']))
-  })
-
-  it('asks about a different thing each time when the module has enough', () => {
-    const asked = subjects(questionsForModule(loaded(['image-match', 'audio-match'])))
-    expect(new Set(asked).size).toBe(5)
-  })
-
-  it('repeats a subject only when the module is too short not to', () => {
-    const qs = questionsForModule(loaded(['image-match', 'audio-match'], {}, 3))
-    expect(qs).toHaveLength(5)
-    expect(new Set(subjects(qs)).size).toBe(3)
-  })
-
-  it('asks no more than a short module can offer at all', () => {
-    const qs = questionsForModule(loaded(['image-match'], {}, 2))
-    expect(qs).toHaveLength(2)
+  it('asks about everything it can before asking about anything twice', () => {
+    const qs = questionsForModule(loaded(['image-match', 'audio-match']))
+    // Eight items, each askable by two quiz types: eight fresh, then repeats.
+    expect(new Set(subjects(qs.slice(0, 8))).size).toBe(8)
+    expect(qs).toHaveLength(16)
   })
 
   it('leaves out study guides and step-ordering tasks', () => {
     const qs = questionsForModule(loaded(['revision', 'image-match', 'sequence-order']))
-    expect(qs.map((q) => q.type)).toEqual(Array(5).fill('image-match'))
+    expect(new Set(qs.map((q) => q.type))).toEqual(new Set(['image-match']))
   })
 
   it('has nothing to ask for a module of study guides alone', () => {
@@ -72,29 +59,46 @@ describe('questionsForModule', () => {
     const qs = questionsForModule(loaded(['image-match']))
     expect(qs.every((q) => q.mod.imageBase === '/content/test/images/')).toBe(true)
   })
-
-  it('takes the asked-for number when it is not five', () => {
-    expect(questionsForModule(loaded(['image-match']), 3)).toHaveLength(3)
-  })
 })
 
+/** Modules of their own, each with plenty to ask about. */
+const modules = (...ids: string[]) =>
+  ids.map((id) => {
+    const l = loaded(['image-match', 'audio-match'], {}, 20)
+    return { ...l, mod: { ...l.mod, id, title: id } }
+  })
+
 describe('buildMixedQuiz', () => {
-  it('takes an equal share from every module', () => {
-    const a = loaded(['image-match'])
-    const b = { ...loaded(['audio-match']), mod: { ...loaded(['audio-match']).mod, id: 'other' } }
-    const qs = buildMixedQuiz([a, b])
-    expect(qs).toHaveLength(10)
-    expect(qs.filter((q) => q.mod.id === 'test-module')).toHaveLength(5)
-    expect(qs.filter((q) => q.mod.id === 'other')).toHaveLength(5)
+  it('asks twenty-five questions', () => {
+    expect(buildMixedQuiz(modules('a', 'b', 'c'))).toHaveLength(QUIZ_LENGTH)
+  })
+
+  it('shares them out as evenly as it can', () => {
+    const qs = buildMixedQuiz(modules('a', 'b', 'c'))
+    const counts = ['a', 'b', 'c'].map((id) => qs.filter((q) => q.mod.id === id).length)
+    // Twenty-five across three: nine, eight and eight.
+    expect(counts.sort()).toEqual([8, 8, 9])
+  })
+
+  it('takes the asked-for number when it is not twenty-five', () => {
+    expect(buildMixedQuiz(modules('a', 'b'), 10)).toHaveLength(10)
+  })
+
+  it('takes more from the other modules when one runs short', () => {
+    const short = { ...loaded(['image-match'], {}, 2), mod: { ...loaded(['image-match']).mod, id: 'short' } }
+    const qs = buildMixedQuiz([short, ...modules('plenty')])
+    expect(qs).toHaveLength(QUIZ_LENGTH)
+    expect(qs.filter((q) => q.mod.id === 'short')).toHaveLength(2)
+  })
+
+  it('asks all there is when the modules cannot fill a quiz', () => {
+    const small = { ...loaded(['image-match'], {}, 3), mod: { ...loaded(['image-match']).mod, id: 'small' } }
+    expect(buildMixedQuiz([small])).toHaveLength(3)
   })
 
   it('interleaves the modules rather than asking them in turn', () => {
-    const mods = ['a', 'b', 'c', 'd'].map((id) => {
-      const l = loaded(['image-match'])
-      return { ...l, mod: { ...l.mod, id } }
-    })
-    // Four modules of five, in order, would change module only three times.
-    const order = buildMixedQuiz(mods).map((q) => q.mod.id)
+    const order = buildMixedQuiz(modules('a', 'b', 'c', 'd')).map((q) => q.mod.id)
+    // Four modules asked one after another would change module three times.
     const changes = order.filter((id, i) => i > 0 && id !== order[i - 1]).length
     expect(changes).toBeGreaterThan(3)
   })

@@ -22,8 +22,11 @@ import {
 } from './questionBuilders'
 import { SENTENCE_VARIANTS, type SentenceVariant } from '../../data/sentenceVariants'
 
-/** How many questions each enabled module contributes. */
-export const PER_MODULE = 5
+/**
+ * How many questions a mixed quiz aims for, however many modules are enabled.
+ * The share comes out as evenly as the modules' content allows.
+ */
+export const QUIZ_LENGTH = 25
 
 /**
  * The task types the mixed quiz leaves out: a study guide asks nothing, and one
@@ -105,41 +108,52 @@ function subject(q: MixedQuestion): string {
 }
 
 /**
- * `count` questions from one module, spread across its quiz types rather than
- * taken from one: a module's share is a round of its tasks, then another, until
- * there are enough. A subject already asked about is skipped while any task
- * still offers a fresh one, so a short module repeats itself only if it must.
+ * All of one module's questions, in the order the mixed quiz should take them:
+ * a round of its quiz types, then another, so a module's share is spread across
+ * them rather than taken from one. Every subject it can ask about comes before
+ * any repeat, so a quiz only asks about the same bread twice if it must.
  */
-export function questionsForModule(loaded: LoadedModule, count = PER_MODULE): MixedQuestion[] {
+export function questionsForModule(loaded: LoadedModule): MixedQuestion[] {
   const pools = shuffle(loaded.mod.tasks)
     .map((task) => questionsForTask(loaded, task))
     .filter((pool) => pool.length > 0)
 
-  const taken: MixedQuestion[] = []
+  const ordered: MixedQuestion[] = []
   const asked = new Set<string>()
-  // Two passes: the first takes only fresh subjects, the second fills any
-  // shortfall with repeats.
   for (const freshOnly of [true, false]) {
-    while (taken.length < count) {
-      const before = taken.length
+    for (;;) {
+      const before = ordered.length
       for (const pool of pools) {
-        if (taken.length >= count) break
         const at = pool.findIndex((q) => !freshOnly || !asked.has(subject(q)))
         if (at === -1) continue
         const [question] = pool.splice(at, 1)
         asked.add(subject(question))
-        taken.push(question)
+        ordered.push(question)
       }
-      if (taken.length === before) break
+      if (ordered.length === before) break
     }
   }
-  return taken
+  return ordered
 }
 
 /**
- * A mixed quiz: an equal share from each module, shuffled together so the
- * modules are interleaved rather than asked one after another.
+ * A quiz of `length` questions, dealt a round at a time from each module so the
+ * share is as even as the content allows: a module with little to ask leaves
+ * its place to the others rather than making the quiz short. The result is
+ * shuffled, so the modules are interleaved rather than asked one after another.
  */
-export function buildMixedQuiz(modules: LoadedModule[], count = PER_MODULE): MixedQuestion[] {
-  return shuffle(modules.flatMap((loaded) => questionsForModule(loaded, count)))
+export function buildMixedQuiz(modules: LoadedModule[], length = QUIZ_LENGTH): MixedQuestion[] {
+  const pools = shuffle(modules).map(questionsForModule)
+  const taken: MixedQuestion[] = []
+
+  for (let round = 0; taken.length < length; round++) {
+    const before = taken.length
+    for (const pool of pools) {
+      if (taken.length >= length) break
+      if (round < pool.length) taken.push(pool[round])
+    }
+    // Every pool is used up.
+    if (taken.length === before) break
+  }
+  return shuffle(taken)
 }
