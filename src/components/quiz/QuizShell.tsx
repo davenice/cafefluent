@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { MODULES } from '../../data/modules'
 import { saveProgress } from '../../hooks/useProgress'
+import ScoreScreen, { ErrorScreen } from './ScoreScreen'
 import type { ModuleData } from '../../types'
 import ImageMatch from './ImageMatch'
 import AudioMatch from './AudioMatch'
@@ -169,34 +170,6 @@ export default function QuizShell() {
   )
 }
 
-function ScoreScreen({
-  score, total, onRetry, onBack,
-}: {
-  score: number; total: number; onRetry: () => void; onBack: () => void
-}) {
-  const pct = Math.round((score / total) * 100)
-  return (
-    <div style={scoreStyles.container}>
-      <div style={scoreStyles.circle}>
-        <span style={scoreStyles.pct}>{pct}%</span>
-        <span style={scoreStyles.fraction}>{score}/{total}</span>
-      </div>
-      <p style={scoreStyles.label}>{pct === 100 ? 'Perfect!' : pct >= 70 ? 'Well done!' : 'Keep practising!'}</p>
-      <button style={scoreStyles.primary} onClick={onRetry}>Try again</button>
-      <button style={scoreStyles.secondary} onClick={onBack}>Back to module</button>
-    </div>
-  )
-}
-
-function ErrorScreen({ message, onBack }: { message: string; onBack: () => void }) {
-  return (
-    <div style={{ padding: '32px 16px', textAlign: 'center' }}>
-      <p style={{ color: 'var(--color-muted)', marginBottom: 16 }}>{message}</p>
-      <button style={scoreStyles.secondary} onClick={onBack}>Go back</button>
-    </div>
-  )
-}
-
 const styles: Record<string, React.CSSProperties> = {
   page: {
     display: 'flex',
@@ -224,57 +197,5 @@ const styles: Record<string, React.CSSProperties> = {
     textAlign: 'center',
     padding: 32,
     color: 'var(--color-muted)',
-  },
-}
-
-const scoreStyles: Record<string, React.CSSProperties> = {
-  container: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 16,
-    padding: '40px 16px',
-  },
-  circle: {
-    width: 140,
-    height: 140,
-    borderRadius: '50%',
-    background: 'var(--color-primary)',
-    color: '#fff',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pct: {
-    fontSize: 36,
-    fontWeight: 700,
-    lineHeight: 1,
-  },
-  fraction: {
-    fontSize: 14,
-    opacity: 0.7,
-    marginTop: 4,
-  },
-  label: {
-    fontSize: 20,
-    fontWeight: 600,
-  },
-  primary: {
-    background: 'var(--color-primary)',
-    color: '#fff',
-    borderRadius: 'var(--radius)',
-    padding: '14px 32px',
-    fontSize: 16,
-    fontWeight: 600,
-    width: '100%',
-    maxWidth: 280,
-  },
-  secondary: {
-    background: 'transparent',
-    color: 'var(--color-muted)',
-    borderRadius: 'var(--radius)',
-    padding: '12px 32px',
-    fontSize: 15,
   },
 }

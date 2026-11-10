@@ -34,9 +34,28 @@ React + TypeScript + Vite. Hash-based routing (`/#/module/task`) for GitHub Page
    - the default export, which builds the questions with a builder from `questionBuilders.ts`, runs them through `useQuizRun`, and renders the first part. It takes `items`, `imageBase` and `onComplete(score, total)`
 
    Splitting it that way is what lets a question be asked outside its own module's quiz. Study types (like `revision`) are not quizzes and have neither part: they take `items`, `imageBase` and `onDone`.
-3. Register it in `QuizShell.tsx` (dispatches on `task.type`)
+3. Register it in `QuizShell.tsx` (dispatches on `task.type`) and, so the type can also be asked in the mixed quiz, in `mixedQuestions.ts` and `MixedQuizPage.tsx`. Both switch on the type exhaustively, so TypeScript will tell you if you forget. A type the mixed quiz should not ask goes in `NOT_MIXED` instead
 4. Add the task entry to the module in `src/data/modules.ts`
 5. Teach the tests about it: list the files it needs in `expectedFiles` in `scripts/content.test.ts`, and add a way to find the right answer in `correctAnswer` in `e2e/helpers/quiz.ts`
+
+### The mixed quiz
+
+A quiz drawing `PER_MODULE` (5) questions from every enabled module at once, at
+`/#/mixed-quiz`. It has no content of its own: `mixedQuestions.ts` asks each
+module's own builders for their questions, takes a module's five from across its
+quiz types rather than from one, and shuffles the modules together.
+`MixedQuizPage.tsx` then renders each question with the same component that
+renders it inside its own module, passing that module's images, audio and look.
+
+Study guides and `sequence-order` are left out (`NOT_MIXED`): one run of a
+step-ordering task scores out of its number of steps, so it cannot be one
+question among many.
+
+It is switched on and off like a module, on the admin page, and stays hidden
+until two modules are enabled — with one, it is just that module's quiz with
+fewer questions. Its result is kept apart from the modules' progress, as a last
+and a best score, since it is meant to be taken again and again and its length
+changes as modules are enabled.
 
 ### Deploying changes
 
@@ -74,6 +93,7 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | `audio.spec.ts` | Every task with audio asks for a sound file that exists and matches an answer on screen; the replay button |
 | `navigation.spec.ts` | Back buttons, the browser's back button, deep links, unknown modules and tasks |
 | `learner.spec.ts` | A study guide marked complete is remembered |
+| `mixed.spec.ts` | The mixed quiz: five questions per enabled module, the best result kept, and when it is offered |
 | `enablement.spec.ts` | Module enablement on the home and admin pages |
 | `offline.spec.ts` | The last known module config is used offline |
 | `contributors.spec.ts` | The admin page's Voice contributors section: listing, adding and the one-time link, copying it, stopping a link, and the recordings server failing or rejecting the password |

@@ -1,12 +1,18 @@
 import { Link } from 'react-router-dom'
-import { MODULES, DESCRIBE_GAME } from '../data/modules'
-import { getProgress } from '../hooks/useProgress'
+import { MODULES, DESCRIBE_GAME, MIXED_QUIZ } from '../data/modules'
+import { getMixedProgress, getProgress } from '../hooks/useProgress'
 import { useEnabledModules } from '../hooks/useEnabledModules'
+import { isMixable } from './quiz/mixedQuestions'
 
 export default function HomePage() {
   const enabledModules = useEnabledModules()
   const visibleModules = MODULES.filter(m => (enabledModules ?? []).includes(m.id))
   const showGame = (enabledModules ?? []).includes(DESCRIBE_GAME.id)
+  // With one module on, a mixed quiz is just that module's quiz with fewer
+  // questions, so it stays hidden until there are two to mix.
+  const showMixed =
+    (enabledModules ?? []).includes(MIXED_QUIZ.id) && visibleModules.filter(isMixable).length >= 2
+  const mixedBest = getMixedProgress()?.best
 
   return (
     <div style={styles.page}>
@@ -40,6 +46,21 @@ export default function HomePage() {
           )
         })}
       </main>
+
+      {showMixed && (
+        <section style={styles.games}>
+          <h2 style={styles.sectionTitle}>Revision</h2>
+          <Link to={`/${MIXED_QUIZ.id}`} style={styles.card}>
+            <div style={styles.cardBody}>
+              <h2 style={styles.cardTitle}>{MIXED_QUIZ.title}</h2>
+              <p style={styles.cardDesc}>{MIXED_QUIZ.description}</p>
+            </div>
+            {mixedBest
+              ? <div style={styles.badge}>{mixedBest.score}/{mixedBest.total}</div>
+              : <span style={styles.arrow}>›</span>}
+          </Link>
+        </section>
+      )}
 
       {showGame && (
         <section style={styles.games}>

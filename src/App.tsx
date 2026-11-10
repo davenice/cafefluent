@@ -2,6 +2,7 @@ import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom'
 import HomePage from './components/HomePage'
 import ModulePage from './components/ModulePage'
 import QuizShell from './components/quiz/QuizShell'
+import MixedQuizPage from './components/quiz/MixedQuizPage'
 import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
 import DescribeGamePage from './components/DescribeGamePage'
@@ -27,6 +28,8 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<HomePage />} />
+        {/* Before the module route, which otherwise matches anything. */}
+        <Route path="/mixed-quiz" element={<MixedQuizPage />} />
         <Route path="/:moduleId" element={<ModulePage />} />
         <Route path="/:moduleId/:taskId" element={<QuizShell />} />
         <Route path="/calibrate" element={<CalibratePage />} />

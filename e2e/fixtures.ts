@@ -1,10 +1,10 @@
 import { test as base, type Page } from '@playwright/test'
-import { MODULES, DESCRIBE_GAME } from '../src/data/modules'
+import { MODULES, DESCRIBE_GAME, MIXED_QUIZ } from '../src/data/modules'
 import { FakeConfigApi } from './fakeConfigApi'
 
 export { expect } from '@playwright/test'
 
-export const ALL_ENABLED = [...MODULES.map(m => m.id), DESCRIBE_GAME.id]
+export const ALL_ENABLED = [...MODULES.map(m => m.id), DESCRIBE_GAME.id, MIXED_QUIZ.id]
 
 declare global {
   interface Window { __audioSrcs: string[] }

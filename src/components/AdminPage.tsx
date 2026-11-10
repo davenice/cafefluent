@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { MODULES, DESCRIBE_GAME } from '../data/modules'
+import { MODULES, DESCRIBE_GAME, MIXED_QUIZ } from '../data/modules'
 import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/settings'
 import ContributorsSection from './ContributorsSection'
 
@@ -169,6 +169,24 @@ export default function AdminPage() {
             <Link to={`/${mod.id}`} style={styles.previewLink}>Preview module →</Link>
           </div>
         ))}
+
+        <h2 style={styles.sectionTitle}>Revision</h2>
+        <div style={styles.row}>
+          <label style={styles.rowToggle}>
+            <div style={styles.rowBody}>
+              <div style={styles.modTitle}>{MIXED_QUIZ.title}</div>
+              <div style={styles.modDesc}>{MIXED_QUIZ.description}</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={enabled.includes(MIXED_QUIZ.id)}
+              onChange={() => toggleModule(MIXED_QUIZ.id)}
+              style={styles.checkbox}
+            />
+          </label>
+          {/* It draws on the modules that are on, so the preview shows what learners would get */}
+          <Link to={`/${MIXED_QUIZ.id}`} style={styles.previewLink}>Preview quiz →</Link>
+        </div>
 
         <h2 style={styles.sectionTitle}>Table games</h2>
         <div style={styles.row}>
