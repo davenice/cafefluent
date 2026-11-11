@@ -26,10 +26,22 @@ export function tasksOfType(...types: TaskType[]): QuizTask[] {
   return ALL_TASKS.filter(t => types.includes(t.task.type))
 }
 
-/** The first task of each quiz type, so each quiz component is driven once. */
+/**
+ * How a task is answered: its quiz type, and any task option that changes the
+ * answers on screen. Used as a test name, so it reads as the quiz it describes.
+ */
+export function variantOf({ task }: QuizTask): string {
+  return task.answerWith ? `${task.type} (${task.answerWith})` : task.type
+}
+
+/**
+ * The first task of each quiz type, so each quiz component is driven once —
+ * once per variant, since a type that can be answered two ways is two screens.
+ */
 export function oneTaskPerType(): QuizTask[] {
-  const seen = new Set<TaskType>()
-  return ALL_TASKS.filter(t => t.task.type !== 'revision' && !seen.has(t.task.type) && seen.add(t.task.type))
+  const seen = new Set<string>()
+  return ALL_TASKS.filter(t =>
+    t.task.type !== 'revision' && !seen.has(variantOf(t)) && seen.add(variantOf(t)))
 }
 
 export function sequenceFor({ task, data }: QuizTask) {
@@ -247,17 +259,28 @@ async function answerUntilScore(
   }
 }
 
-async function completeSequence(page: Page, quiz: QuizTask, { correct }: { correct: boolean }) {
-  const steps = sequenceFor(quiz).steps
-  // The steps start shuffled so that none is in the right place, so leaving
-  // them alone scores 0.
-  if (correct) {
-    for (const [i, step] of steps.entries()) {
-      const handle = main(page).getByRole('button', { name: `Drag to reorder: ${step.text}`, exact: true })
-      const position = Number(await handle.locator('..').getAttribute('data-position'))
-      for (let p = position - 1; p > i; p--) await handle.press('ArrowUp')
-    }
+/** A step's drag handle, which is also how the step is moved with the keyboard. */
+export const stepHandle = (page: Page, text: string) =>
+  main(page).getByRole('button', { name: `Drag to reorder: ${text}`, exact: true })
+
+/** Where the step sits in the list now, counting from 1. */
+async function stepPosition(page: Page, text: string): Promise<number> {
+  return Number(await stepHandle(page, text).locator('..').getAttribute('data-position'))
+}
+
+/** Puts every step of a `sequence-order` quiz in its right place, with the keyboard. */
+export async function orderSequence(page: Page, quiz: QuizTask) {
+  for (const [i, step] of sequenceFor(quiz).steps.entries()) {
+    const handle = stepHandle(page, step.text)
+    const position = await stepPosition(page, step.text)
+    for (let p = position - 1; p > i; p--) await handle.press('ArrowUp')
   }
+}
+
+async function completeSequence(page: Page, quiz: QuizTask, { correct }: { correct: boolean }) {
+  // The steps start shuffled so that none follows the step it should, so
+  // leaving them alone scores 0.
+  if (correct) await orderSequence(page, quiz)
   await page.getByRole('button', { name: 'Check my order' }).click()
   await page.getByRole('button', { name: 'Continue' }).click()
 }
