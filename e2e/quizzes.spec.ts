@@ -29,6 +29,20 @@ for (const quiz of oneTaskPerType()) {
     await page.reload()
     await expect(card).toContainText(`${total}/${total}`)
   })
+
+  // Every quiz tells the learner how far through they are, in the same words.
+  // `sequence-order` is one screen, so it has nothing to count.
+  if (task.type !== 'sequence-order') {
+    test(`${task.type}: says which question this is`, async ({ page }) => {
+      await page.goto(`/#/${mod.id}/${task.id}`)
+      await waitForQuiz(page, quiz)
+
+      await expect(page.getByText(`1 of ${total}`)).toBeVisible()
+      await (await correctAnswer(page, quiz)).button.click()
+      await page.clock.runFor(2500)
+      await expect(page.getByText(`2 of ${total}`)).toBeVisible()
+    })
+  }
 }
 
 test('a worse result replaces the saved one', async ({ page }) => {
@@ -78,7 +92,7 @@ test('after answering, the diagram names the part', async ({ page }) => {
   await expect(page.getByText(`✓ ${answer.name}`)).toBeVisible()
 
   await page.clock.runFor(1200)
-  await expect(page.getByText(/— 2 \//)).toBeVisible()
+  await expect(page.getByText(/— 2 of /)).toBeVisible()
   answer = await correctAnswer(page, quiz, 1)
   await (await wrongAnswer(page, quiz, 1)).click()
   await expect(page.getByText(`✗ It was the ${answer.name}`)).toBeVisible()

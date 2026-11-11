@@ -122,7 +122,7 @@ export function DiagramAudioQuestion({
   return (
     <div style={styles.container}>
       <div style={styles.prompt}>
-        <p style={styles.counter}>{question.diagram.title} — {index + 1} / {total}</p>
+        <p style={styles.counter}>{question.diagram.title} — {index + 1} of {total}</p>
 
         <button
           style={{ ...styles.playBtn, ...(isPlaying ? styles.playBtnActive : {}) }}

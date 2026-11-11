@@ -217,6 +217,17 @@ export const MODULES: ModuleDef[] = [
 ]
 
 /**
+ * A quiz drawing a few questions from every enabled module. Switched on and
+ * off with the modules, but listed apart from them: it has no content of its
+ * own, and nothing to show until a couple of modules are on.
+ */
+export const MIXED_QUIZ = {
+  id: 'mixed-quiz',
+  title: 'Mixed quiz',
+  description: 'A few questions from every module you have, all mixed together',
+}
+
+/**
  * The table game, a describe-the-word game played on one shared phone. It is switched
  * on and off with the modules, but listed apart from them. The words, turn length
  * and number of turns are set on the admin page.

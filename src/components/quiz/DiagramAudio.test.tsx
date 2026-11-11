@@ -53,7 +53,7 @@ describe('DiagramAudio', () => {
     expect(hotspot('group-head')).toBeInTheDocument()
     expect(hotspot('steam-wand')).toBeInTheDocument()
     expect(screen.queryByTestId('hotspot-hopper')).not.toBeInTheDocument()
-    expect(screen.getByText('Espresso machine — 1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('Espresso machine — 1 of 3')).toBeInTheDocument()
   })
 
   it('auto-plays the clip for the current hotspot', () => {
@@ -76,9 +76,9 @@ describe('DiagramAudio', () => {
     expect(screen.getByText('✓ group head')).toBeInTheDocument()
     expect(hotspot('steam-wand')).toBeDisabled()
     act(() => { vi.advanceTimersByTime(1199) })
-    expect(screen.getByText('Espresso machine — 1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('Espresso machine — 1 of 3')).toBeInTheDocument()
     act(() => { vi.advanceTimersByTime(1) })
-    expect(screen.getByText('Espresso machine — 2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('Espresso machine — 2 of 3')).toBeInTheDocument()
   })
 
   it('wrong tap names the right part and waits 2500ms', () => {
@@ -86,9 +86,9 @@ describe('DiagramAudio', () => {
     fireEvent.click(hotspot('steam-wand'))
     expect(screen.getByText('✗ It was the group head')).toBeInTheDocument()
     act(() => { vi.advanceTimersByTime(1200) })
-    expect(screen.getByText('Espresso machine — 1 / 3')).toBeInTheDocument()
+    expect(screen.getByText('Espresso machine — 1 of 3')).toBeInTheDocument()
     act(() => { vi.advanceTimersByTime(1300) })
-    expect(screen.getByText('Espresso machine — 2 / 3')).toBeInTheDocument()
+    expect(screen.getByText('Espresso machine — 2 of 3')).toBeInTheDocument()
   })
 
   it('moves on to the next diagram and reports the score', () => {

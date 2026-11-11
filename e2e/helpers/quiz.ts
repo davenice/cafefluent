@@ -179,13 +179,54 @@ export async function wrongAnswer(page: Page, quiz: QuizTask, audioSeen = 0): Pr
 }
 
 /**
+ * The mixed quiz is showing a question. Wait for this after goto, and before
+ * answering: the answering loop moves the clock on while it waits, which would
+ * otherwise swallow the first question's audio before the test looks for it.
+ */
+export async function waitForMixedQuiz(page: Page) {
+  await expect(main(page).getByTestId('mixed-question')).toBeVisible()
+}
+
+/**
+ * The module and task the mixed quiz's current question came from, which the
+ * page names on the question itself. Every question may be from a different one.
+ */
+export async function currentMixedQuiz(page: Page): Promise<QuizTask> {
+  const question = main(page).getByTestId('mixed-question')
+  await expect(question).toBeVisible()
+  const modId = await question.getAttribute('data-module')
+  const taskId = await question.getAttribute('data-task')
+  const mod = MODULES.find(m => m.id === modId)
+  if (!mod) throw new Error(`The mixed quiz asked about unknown module ${modId}`)
+  const task = mod.tasks.find(t => t.id === taskId)
+  if (!task) throw new Error(`The mixed quiz asked ${mod.id}'s unknown task ${taskId}`)
+  return { mod, task, data: loadData(mod) }
+}
+
+/**
  * Answers every question, right or wrong, until the score screen shows.
  * Needs `pauseClock(page)` before the page loads: the clock is moved on past
  * the pause after each answer instead of waiting for it.
  */
 export async function completeQuiz(page: Page, quiz: QuizTask, { correct }: { correct: boolean }) {
   if (quiz.task.type === 'sequence-order') return completeSequence(page, quiz, { correct })
+  return answerUntilScore(page, async () => quiz, { correct })
+}
 
+/**
+ * The same, for the mixed quiz: the quiz each question belongs to is read off
+ * the page, since it changes from question to question.
+ */
+export async function completeMixedQuiz(page: Page, { correct }: { correct: boolean }) {
+  await waitForMixedQuiz(page)
+  return answerUntilScore(page, () => currentMixedQuiz(page), { correct })
+}
+
+async function answerUntilScore(
+  page: Page,
+  quizOf: () => Promise<QuizTask>,
+  { correct }: { correct: boolean }
+) {
   const tryAgain = page.getByRole('button', { name: 'Try again' })
   for (;;) {
     await expect.poll(async () => {
@@ -195,6 +236,7 @@ export async function completeQuiz(page: Page, quiz: QuizTask, { correct }: { co
     }, { intervals: [20] }).toBe(true)
     if (await tryAgain.count()) return
 
+    const quiz = await quizOf()
     const seen = (await audioSrcs(page)).length
     const button = correct
       ? (await correctAnswer(page, quiz, seen)).button
