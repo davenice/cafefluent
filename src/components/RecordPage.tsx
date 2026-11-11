@@ -472,7 +472,9 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           <ul style={styles.tips}>
             <li>Use a quiet room with soft furnishings.</li>
             <li>Keep the microphone about 20 cm from your mouth.</li>
-            <li>Space pauses. Backspace records the last phrase again.</li>
+            <li>Speak as normally and naturally as you can. Don’t try to speak slower or more
+              clearly than usual.</li>
+            <li>If you're on a laptop, the space button pauses recording. Backspace records the last phrase again.</li>
           </ul>
           <div style={styles.notice}>
             <p>

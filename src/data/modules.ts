@@ -128,7 +128,7 @@ export const MODULES: ModuleDef[] = [
   {
     id: 'milk',
     title: 'Milk',
-    description: 'Learn the milks a cafe keeps, the allergens in them, and how customers ask for them',
+    description: 'Learn about different types of milks, the allergens in them, and how customers ask for them.',
     revisionIntro: 'A cafe keeps several milks, and a customer can ask for any of them in any drink. Learn their names, what is in them, and which allergen each one carries.',
     dataUrl: '/content/milk/data.json',
     imageBase: '/content/milk/images/',
