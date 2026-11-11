@@ -41,14 +41,14 @@
     {
       "id": "semi-skimmed",
       "name": "Semi-skimmed milk",
-      "description": "Cow's milk with some of the fat taken out. The cap is green. Most cafes use this milk.",
+      "description": "Cow's milk with some of the fat taken out. The cap is green.",
       "allergen": "Milk (dairy)",
       "image": "semi-skimmed.svg"
     },
     {
       "id": "whole",
       "name": "Whole milk",
-      "description": "Cow's milk with all the fat still in it. The cap is blue. It makes thick, creamy foam.",
+      "description": "Cow's milk with all the fat still in it. The cap is blue. It makes thick, creamy foam. Most cafes use this milk.",
       "allergen": "Milk (dairy)",
       "image": "whole.svg"
     }
