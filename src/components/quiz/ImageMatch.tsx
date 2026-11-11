@@ -21,6 +21,8 @@ export default function ImageMatch({ items, onComplete, ...look }: Props) {
 
 export interface ImageMatchQuestionProps extends AnswerProps {
   question: ImageQuestion
+  index: number
+  total: number
   imageBase: string
   imageFit?: 'cover' | 'contain'
   imageLegend?: string
@@ -29,6 +31,8 @@ export interface ImageMatchQuestionProps extends AnswerProps {
 
 export function ImageMatchQuestion({
   question,
+  index,
+  total,
   imageBase,
   imageFit = 'cover',
   imageLegend,
@@ -71,6 +75,8 @@ export function ImageMatchQuestion({
 
   return (
     <div style={styles.container}>
+      <p style={styles.counter}>{index + 1} of {total}</p>
+
       {question.mode === 'word' ? (
         <div style={styles.prompt}>
           <p style={styles.promptName}>{question.answer.name}</p>
@@ -142,6 +148,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     gap: 24,
     padding: '0 16px',
+  },
+  counter: {
+    fontSize: 13,
+    color: 'var(--color-muted)',
+    textAlign: 'center',
   },
   prompt: {
     background: 'var(--color-surface)',

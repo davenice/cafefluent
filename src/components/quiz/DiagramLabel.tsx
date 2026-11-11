@@ -49,7 +49,7 @@ export function DiagramLabelQuestion({
     return 'var(--color-text)'
   }
 
-  const progress = `${index + 1} / ${total}`
+  const progress = `${index + 1} of ${total}`
 
   return (
     <div style={styles.container}>
