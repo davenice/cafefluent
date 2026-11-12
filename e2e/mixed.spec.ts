@@ -97,6 +97,17 @@ test('is not offered when it is switched off', async ({ page, context }) => {
   await expect(page.getByText('Revision')).toHaveCount(0)
 })
 
+// A learner who kept the link, or came back to it, after the modules it mixed
+// were switched off.
+test('says when there is nothing left to mix', async ({ page, context }) => {
+  await new FakeConfigApi({ enabledModules: [MIXED_QUIZ.id] }).install(context)
+  await page.goto(`/#/${MIXED_QUIZ.id}`)
+
+  await expect(page.getByText('There are no quizzes to mix yet.')).toBeVisible()
+  await page.getByRole('button', { name: 'Go back' }).click()
+  await expect(page.getByRole('heading', { name: 'CafeFluent' })).toBeVisible()
+})
+
 /** Answers the question on screen correctly, by whatever means its quiz needs. */
 async function completeOneQuestion(page: Page) {
   const quiz = await currentMixedQuiz(page)

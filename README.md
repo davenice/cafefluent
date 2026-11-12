@@ -95,13 +95,14 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | File | Covers |
 |---|---|
 | `tasks.spec.ts` | Every task in every module opens, and all its images load |
-| `quizzes.spec.ts` | One task of each quiz type answered to a perfect score, saved and kept after a reload; a worse result replacing the saved one; right and wrong answer feedback |
+| `quizzes.spec.ts` | One task of each quiz type — and of each way of answering one — taken to a perfect score, saved and kept after a reload; a worse result replacing the saved one; right and wrong answer feedback; `sequence-order` scored and dragged with a pointer; quiz data that won't load |
 | `audio.spec.ts` | Every task with audio asks for a sound file that exists and matches an answer on screen; the replay button |
-| `navigation.spec.ts` | Back buttons, the browser's back button, deep links, unknown modules and tasks |
+| `navigation.spec.ts` | Back buttons, the browser's back button, deep links, unknown modules and tasks, and the build stamp that opens the admin page |
 | `learner.spec.ts` | A study guide marked complete is remembered |
-| `mixed.spec.ts` | The mixed quiz: five questions per enabled module, the best result kept, and when it is offered |
+| `mixed.spec.ts` | The mixed quiz: its length and even share between the enabled modules, the summary it ends with, the best result kept, when it is offered, and when there is nothing to mix |
 | `enablement.spec.ts` | Module enablement on the home and admin pages |
-| `offline.spec.ts` | The last known module config is used offline |
+| `describe.spec.ts` | The table game: a game played through to the scores, the turn timer, carrying on after a reload mid-turn, calling time early, and no words set |
+| `offline.spec.ts` | The last known module config is used offline, and a whole quiz — pictures, sound and all — can be done with no connection |
 | `contributors.spec.ts` | The admin page's Voice contributors section: listing, adding and the one-time link, copying it, stopping a link, and the recordings server failing or rejecting the password |
 | `record.spec.ts` | The contributor page: bad and missing links, consent, and (Chromium only, with a fake microphone) clips sent as recorded, kept while offline, sent on the next visit, and a link revoked mid-session; the service worker leaving `record.html` alone |
 

@@ -45,3 +45,14 @@ test('an unknown task says so and goes back home', async ({ page }) => {
   await page.getByRole('button', { name: 'Go back' }).click()
   await expect(page.getByRole('heading', { name: 'CafeFluent' })).toBeVisible()
 })
+
+// The build stamp is both the version a teacher can read out over the phone and
+// the only way in to the admin page.
+test('the build stamp shows the version, and a double tap opens the admin page', async ({ page }) => {
+  await page.goto('/')
+  const stamp = page.getByText(/^\d{4}-\d{2}-\d{2} · [0-9a-f]+$/)
+  await expect(stamp).toBeVisible()
+
+  await stamp.dblclick()
+  await expect(page.getByLabel('Password')).toBeVisible()
+})

@@ -1,6 +1,7 @@
 import { test, expect, pauseClock } from './fixtures'
 import {
-  completeQuiz, correctAnswer, oneTaskPerType, questionCount, tasksOfType, waitForQuiz, wrongAnswer,
+  completeQuiz, correctAnswer, oneTaskPerType, orderSequence, questionCount, sequenceFor, stepHandle,
+  tasksOfType, variantOf, waitForQuiz, wrongAnswer,
 } from './helpers/quiz'
 
 test.beforeEach(async ({ page }) => {
@@ -11,8 +12,9 @@ test.beforeEach(async ({ page }) => {
 for (const quiz of oneTaskPerType()) {
   const { mod, task } = quiz
   const total = questionCount(quiz)
+  const name = variantOf(quiz)
 
-  test(`${task.type}: a perfect score is shown and saved`, async ({ page }) => {
+  test(`${name}: a perfect score is shown and saved`, async ({ page }) => {
     await page.goto(`/#/${mod.id}/${task.id}`)
     await waitForQuiz(page, quiz)
     await completeQuiz(page, quiz, { correct: true })
@@ -33,7 +35,7 @@ for (const quiz of oneTaskPerType()) {
   // Every quiz tells the learner how far through they are, in the same words.
   // `sequence-order` is one screen, so it has nothing to count.
   if (task.type !== 'sequence-order') {
-    test(`${task.type}: says which question this is`, async ({ page }) => {
+    test(`${name}: says which question this is`, async ({ page }) => {
       await page.goto(`/#/${mod.id}/${task.id}`)
       await waitForQuiz(page, quiz)
 
@@ -96,4 +98,59 @@ test('after answering, the diagram names the part', async ({ page }) => {
   answer = await correctAnswer(page, quiz, 1)
   await (await wrongAnswer(page, quiz, 1)).click()
   await expect(page.getByText(`✗ It was the ${answer.name}`)).toBeVisible()
+})
+
+// The whole point of the quiz: a step counts when it follows the step it should,
+// so getting one pair wrong costs that pair and not everything after it.
+test('sequence-order: scores the steps in order, and shows the right order', async ({ page }) => {
+  const quiz = tasksOfType('sequence-order')[0]
+  const steps = sequenceFor(quiz).steps
+  const total = steps.length
+  await page.goto(`/#/${quiz.mod.id}/${quiz.task.id}`)
+  await waitForQuiz(page, quiz)
+
+  await orderSequence(page, quiz)
+  // Swap the last two, which costs both of them.
+  await stepHandle(page, steps[total - 1].text).press('ArrowUp')
+  await page.getByRole('button', { name: 'Check my order' }).click()
+
+  await expect(page.getByText(`${total - 2} of ${total} in the right order`)).toBeVisible()
+  await expect(page.getByText('The right order', { exact: true })).toBeVisible()
+  await expect(page.getByRole('listitem')).toHaveText(steps.map(s => s.text))
+
+  await page.getByRole('button', { name: 'Continue' }).click()
+  await expect(page.getByText(`${total - 2}/${total}`)).toBeVisible()
+})
+
+// The steps are dragged on a phone, and each one's slot is worked out from the
+// pointer's position, so only a real pointer on a real layout tests it.
+test('sequence-order: a step dragged down the list lands where it was dropped', async ({ page }) => {
+  const quiz = tasksOfType('sequence-order')[0]
+  await page.goto(`/#/${quiz.mod.id}/${quiz.task.id}`)
+  await waitForQuiz(page, quiz)
+
+  const card = (position: number) => page.getByRole('main').locator(`[data-position="${position}"]`)
+  const dragged = (await card(1).getByRole('button', { name: /^Drag to reorder:/ }).getAttribute('aria-label'))!
+  // One slot, measured off the page rather than assumed.
+  const slot = (await card(2).boundingBox())!.y - (await card(1).boundingBox())!.y
+  const handle = (await page.getByRole('button', { name: dragged, exact: true }).boundingBox())!
+  const x = handle.x + handle.width / 2
+  const y = handle.y + handle.height / 2
+
+  await page.mouse.move(x, y)
+  await page.mouse.down()
+  await page.mouse.move(x, y + slot * 3, { steps: 10 })
+  await page.mouse.up()
+
+  await expect(card(4).getByRole('button', { name: dragged, exact: true })).toBeVisible()
+})
+
+test('says so when the quiz data will not load, and goes back', async ({ page }) => {
+  const quiz = tasksOfType('image-match')[0]
+  await page.route(`**${quiz.mod.dataUrl}`, route => route.abort())
+  await page.goto(`/#/${quiz.mod.id}/${quiz.task.id}`)
+
+  await expect(page.getByText('Could not load quiz data.')).toBeVisible()
+  await page.getByRole('button', { name: 'Go back' }).click()
+  await expect(page.getByRole('heading', { name: quiz.mod.title, exact: true, level: 1 })).toBeVisible()
 })
