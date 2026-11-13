@@ -711,7 +711,11 @@ function MicHelp({ fix, button }: { fix: MicFix; button: string }) {
       <ul style={styles.tips}>
         <li>On a computer, click the small icon on the left of the address bar, then turn the microphone on.</li>
         <li>On an iPhone or iPad, tap “aA” in the address bar, then Website Settings, then Microphone, then Allow.</li>
-        <li>On an Android phone, tap the icon on the left of the address bar, then Permissions, then Microphone.</li>
+        <li>
+          On an Android phone, tap the icon on the left of the address bar, then Permissions, then Microphone. If the
+          microphone is not there, tap the three dots at the top of the screen, then Settings, then Site settings, then
+          Microphone, and find this page in the list.
+        </li>
       </ul>
       <p>Then press {button}. You may need to load the page again first.</p>
     </div>
