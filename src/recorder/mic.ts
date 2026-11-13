@@ -102,3 +102,69 @@ export async function openMic(): Promise<Mic> {
   tap.port.onmessage = (e: MessageEvent<Float32Array>) => mic.onFrame(e.data)
   return mic
 }
+
+/** What the person has to change before the microphone will open, if anything. */
+export type MicFix = 'allow' | 'system' | null
+
+export interface MicProblem {
+  /** What went wrong, in plain words. Says nothing about which button to press. */
+  message: string
+  fix: MicFix
+}
+
+/**
+ * getUserMedia's own messages are written for developers ("Permission denied"),
+ * and the same one covers a blocked page, a microphone another app is holding
+ * and a device that isn't there. Say which it is, and whether a setting has to
+ * change before trying again is any use.
+ */
+export function micProblem(e: unknown): MicProblem {
+  // Read off the object rather than testing for Error: a DOMException thrown
+  // in another realm, or by jsdom, doesn't always pass instanceof.
+  const err = e as { name?: unknown; message?: unknown } | null | undefined
+  const name = typeof err?.name === 'string' ? err.name : ''
+  const detail = typeof err?.message === 'string' ? err.message : String(e)
+  switch (name) {
+    case 'NotAllowedError':
+    // Chrome before 64 and some Android browsers.
+    case 'PermissionDeniedError':
+      // The microphone is off for the whole browser in the computer's own
+      // settings. The page's setting is already yes, so changing it does
+      // nothing, and the browser never asks again.
+      if (/system/i.test(detail)) {
+        return { message: 'Your computer is not letting this browser use the microphone.', fix: 'system' }
+      }
+      // The question was closed without an answer, so it gets asked again.
+      if (/dismiss/i.test(detail)) {
+        return { message: 'The microphone question was closed before you answered it.', fix: null }
+      }
+      return { message: 'This page is not allowed to use the microphone.', fix: 'allow' }
+    case 'NotFoundError':
+    case 'DevicesNotFoundError':
+      return { message: 'No microphone was found. Plug one in, or turn it on in your computer’s sound settings.', fix: null }
+    case 'NotReadableError':
+    case 'TrackStartError':
+      return { message: 'The microphone is busy. Close anything else using it, like a video call.', fix: null }
+    case 'OverconstrainedError':
+      return { message: 'This microphone cannot be used for recording. Try another one.', fix: null }
+    case 'SecurityError':
+      return { message: 'The microphone can’t be used on this page. Open your link again from the message you were sent.', fix: null }
+    case 'AbortError':
+      return { message: 'The microphone did not start.', fix: null }
+  }
+  return { message: detail || 'The microphone did not start.', fix: null }
+}
+
+/**
+ * Whether the page has already been refused the microphone, so Start would
+ * fail without asking. Undefined where the browser won't say — Firefox, and
+ * Safari before 17 — and then the only way to find out is to open it.
+ */
+export async function micBlocked(): Promise<boolean | undefined> {
+  try {
+    const status = await navigator.permissions.query({ name: 'microphone' as PermissionName })
+    return status.state === 'denied'
+  } catch {
+    return undefined
+  }
+}

@@ -4,7 +4,7 @@
 // sent to the server from there (see uploader.ts).
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { openMic, type Mic } from '../recorder/mic'
+import { openMic, micProblem, micBlocked, type Mic, type MicFix } from '../recorder/mic'
 import { RecordingSession, measureNoise, SILENT_MIC_MS, WATCHDOG_INTERVAL_MS, type SessionEvent } from '../recorder/session'
 import { DEFAULT_SETTINGS, type DetectorSettings } from '../recorder/detector'
 import { applyGain, encodeWav, normaliseGainDb, peakDb } from '../recorder/wav'
@@ -72,6 +72,9 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   const [settings, setSettings] = useState<DetectorSettings>(DEFAULT_SETTINGS)
   const [stage, setStage] = useState<Stage>('setup')
   const [startError, setStartError] = useState<string | null>(null)
+  // Set with the error when a setting has to change before the microphone
+  // will open: trying again on its own gets the same refusal.
+  const [micFix, setMicFix] = useState<MicFix>(null)
   const [floorDb, setFloorDb] = useState<number | null>(null)
   const [level, setLevel] = useState(-100)
   const [recorded, setRecorded] = useState<Record<string, ClipInfo>>({})
@@ -107,6 +110,21 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     return () => {
       sessionRef.current?.stop()
       micRef.current?.close()
+    }
+  }, [])
+
+  // Say the page is blocked before Start is pressed, where the browser will
+  // tell us. Pressing Start would not ask again, so without this the first
+  // sign of it is an error on a button that looks like it should just work.
+  useEffect(() => {
+    let live = true
+    micBlocked().then((blocked) => {
+      if (!live || !blocked) return
+      setStartError(micProblem(new DOMException('', 'NotAllowedError')).message)
+      setMicFix('allow')
+    })
+    return () => {
+      live = false
     }
   }, [])
 
@@ -158,6 +176,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
   async function start() {
     if (!phrases || !speaker) return
     setStartError(null)
+    setMicFix(null)
     try {
       requestPersistentStorage()
       // What is on the server now, including what other people have recorded
@@ -183,7 +202,9 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
       // Back to the start card, which is where the message is shown: start() is
       // also reached from Review and from the finished card.
       setStage('setup')
-      setStartError(e instanceof Error ? e.message : String(e))
+      const problem = micProblem(e)
+      setStartError(problem.message)
+      setMicFix(problem.fix)
     }
   }
 
@@ -201,6 +222,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
     } catch {
       setStage('setup')
       setStartError(MIC_STOPPED_SETUP)
+      setMicFix(null)
       return
     }
     setFloorDb(floor)
@@ -251,12 +273,13 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
 
   async function resume() {
     setPauseReason(null)
+    setMicFix(null)
     try {
       await micRef.current?.revive()
     } catch (e) {
-      setPauseReason(
-        `The microphone could not start again: ${e instanceof Error ? e.message : e}. Check that nothing else is using it, then press Resume.`,
-      )
+      const problem = micProblem(e)
+      setPauseReason(`The microphone could not start again. ${problem.message}`)
+      setMicFix(problem.fix)
       return
     }
     sessionRef.current?.resume()
@@ -517,6 +540,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           </details>
 
           {startError && <p style={styles.error}>{startError}</p>}
+          <MicHelp fix={micFix} button="Start" />
           <div style={styles.buttons}>
             <button style={styles.primaryBtn} disabled={!phrases || !speaker || !micAvailable} onClick={() => start()}>
               Start
@@ -570,6 +594,7 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           </div>
 
           {pauseReason && <p style={styles.error}>{pauseReason}</p>}
+          <MicHelp fix={micFix} button="Resume" />
           {paused && !pauseReason && (
             <p style={styles.pausedHint}>
               Paused. Press <strong>Resume</strong> when you are ready. If you have finished for today, press{' '}
@@ -657,6 +682,38 @@ export default function RecordPage({ contributor }: { contributor: Contributor }
           )}
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * How to let the microphone in again. The browser only asks once, and after a
+ * No it refuses without asking, so the way back is its own settings and the
+ * person has to be told where they are.
+ */
+function MicHelp({ fix, button }: { fix: MicFix; button: string }) {
+  if (!fix) return null
+  if (fix === 'system') {
+    return (
+      <div style={styles.notice}>
+        <p>Turn the microphone on for your browser:</p>
+        <ul style={styles.tips}>
+          <li>On a Mac, open System Settings, then Privacy &amp; Security, then Microphone.</li>
+          <li>On Windows, open Settings, then Privacy &amp; security, then Microphone.</li>
+        </ul>
+        <p>Turn on your browser in that list, then press {button}.</p>
+      </div>
+    )
+  }
+  return (
+    <div style={styles.notice}>
+      <p>Let this page use your microphone:</p>
+      <ul style={styles.tips}>
+        <li>On a computer, click the small icon on the left of the address bar, then turn the microphone on.</li>
+        <li>On an iPhone or iPad, tap “aA” in the address bar, then Website Settings, then Microphone, then Allow.</li>
+        <li>On an Android phone, tap the icon on the left of the address bar, then Permissions, then Microphone.</li>
+      </ul>
+      <p>Then press {button}. You may need to load the page again first.</p>
     </div>
   )
 }

@@ -350,6 +350,13 @@ there is nothing for them to send us.
   last value and no clip is ever saved — so the page watches `Mic.isLive()` while recording
   and says that the microphone stopped. Resuming opens a new stream on the same audio
   context, from the tap, since both resuming audio and `getUserMedia` can need a gesture.
+- A microphone that won't open is explained in the contributor's words, not the browser's.
+  `getUserMedia` says "Permission denied" for a page the person said no to, for a browser
+  the computer blocks, and (in some browsers) for a microphone another app is holding, so
+  `micProblem()` in `src/recorder/mic.ts` turns the error's `name` into what went wrong,
+  and the start card adds the steps for changing that setting — the browser never asks a
+  second time, so trying again on its own is no use. `micBlocked()` reads the Permissions
+  API on load, where the browser answers, so a blocked page says so before Start is pressed.
 
 `record.html` is a separate entry point (`src/record/main.tsx`), not part of the app. The
 service worker neither caches it nor answers for it, so a link opened on a learner's
