@@ -454,6 +454,42 @@ test.describe('leaving the page and coming back', () => {
   })
 })
 
+test.describe('when the microphone is refused', () => {
+  /** getUserMedia's refusal, worded as the browser words it. */
+  async function refuseMic(page: Page, name: string, message: string) {
+    await page.addInitScript(
+      ({ name, message }) => {
+        navigator.mediaDevices.getUserMedia = async () => {
+          throw new DOMException(message, name)
+        }
+      },
+      { name, message },
+    )
+  }
+
+  test('says the page is blocked, and how to allow it', async ({ page }) => {
+    await refuseMic(page, 'NotAllowedError', 'Permission denied')
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await page.getByRole('button', { name: 'Start' }).click()
+
+    await expect(page.getByText('This page is not allowed to use the microphone.')).toBeVisible()
+    await expect(page.getByText(/click the small icon on the left of the address bar/)).toBeVisible()
+    // The developer wording the browser threw is not what the contributor reads.
+    await expect(page.getByText('Permission denied', { exact: true })).toHaveCount(0)
+  })
+
+  test('says a missing microphone is missing, with no setting to change', async ({ page }) => {
+    await refuseMic(page, 'NotFoundError', 'Requested device not found')
+    const contributor = recordings.add('Amira', { consented: true })
+    await open(page, contributor)
+    await page.getByRole('button', { name: 'Start' }).click()
+
+    await expect(page.getByText(/No microphone was found/)).toBeVisible()
+    await expect(page.getByText(/address bar/)).toHaveCount(0)
+  })
+})
+
 test.describe('a noisy room', () => {
   test.skip(({ browserName }) => browserName !== 'chromium', 'the fake microphone needs Chromium')
   test.beforeEach(async ({ page }) => {
