@@ -30,14 +30,12 @@ export const FINAL_EXAM: Exam = {
     {
       id: 'q1',
       ask: 'What is this bread called?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'bread', item: 'ciabatta' },
       answer: 'word',
     },
     {
       id: 'q2',
       ask: 'What is this bread called?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'bread', item: 'sourdough' },
       answer: 'word',
     },
@@ -53,14 +51,12 @@ export const FINAL_EXAM: Exam = {
     {
       id: 'q4',
       ask: 'What is this called?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'pain-au-chocolat' },
       answer: 'word',
     },
     {
       id: 'q5',
       ask: 'What is this called?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'cornish-pasty' },
       answer: 'word',
     },
@@ -96,14 +92,12 @@ export const FINAL_EXAM: Exam = {
     {
       id: 'q9',
       ask: 'Which allergen is this?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'allergens', item: 'sesame' },
       answer: 'word',
     },
     {
       id: 'q10',
       ask: 'Which allergen is this?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'allergens', item: 'lupin' },
       answer: 'word',
     },
@@ -137,14 +131,12 @@ export const FINAL_EXAM: Exam = {
       // drawing first — which is not what this question is for. The module's own
       // quiz gives the name alongside the picture for the same reason.
       ask: 'Which allergen is in oat milk?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'milk', item: 'oat' },
       answer: 'word',
     },
     {
       id: 'q15',
       ask: 'Which allergen is in almond milk?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'milk', item: 'almond' },
       answer: 'word',
     },
@@ -170,7 +162,6 @@ export const FINAL_EXAM: Exam = {
     {
       id: 'q18',
       ask: 'What is this called?',
-      guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'kitchen-equipment', item: 'saucer' },
       answer: 'word',
     },

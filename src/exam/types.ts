@@ -42,7 +42,12 @@ export interface ExamQuestion {
   id: string
   /** The question, at B1. */
   ask: string
-  /** How to answer — "One or two words is enough." Not what the answer is. */
+  /**
+   * How to answer — "Write each thing on a new line." Not what the answer is,
+   * and **never how long it should be**: the names on the paper run from one
+   * word ("Sesame") to five ("Scone (with jam and cream)"), so a hint about
+   * length makes a right answer look wrong to the person writing it.
+   */
   guidance?: string
   show: Prompt
   answer: AnswerKind
