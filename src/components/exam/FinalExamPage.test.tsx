@@ -111,6 +111,36 @@ describe('FinalExamPage', () => {
     expect(screen.getByRole('textbox')).toHaveValue('ciabatta')
   })
 
+  it('moves on when Enter is pressed in a one-line answer', async () => {
+    await start()
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ciabatta' } })
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' })
+
+    expect(await screen.findByText(/Question 2 of/)).toBeInTheDocument()
+  })
+
+  // Enter is how you start a new line there, so taking it would make the
+  // taller boxes impossible to use for the lists and sentences they are for.
+  it('does not move on when Enter is pressed in a box meant for more than a line', async () => {
+    await start()
+    // q8 is the first with a taller box: "What goes in a cappuccino?"
+    for (let i = 1; i < 8; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText(/Question 8 of/)).toBeInTheDocument()
+
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' })
+
+    expect(screen.getByText(/Question 8 of/)).toBeInTheDocument()
+  })
+
+  // Enter commits a candidate in Chinese, Japanese and Korean keyboards, so
+  // moving on then would throw away the word being typed.
+  it('does not move on while the keyboard is still composing a word', async () => {
+    await start()
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter', isComposing: true })
+
+    expect(screen.getByText(/Question 1 of/)).toBeInTheDocument()
+  })
+
   // The exam is half an hour of typing on a phone. The debounced save only
   // fires once typing stops, so without this the answers written in the last
   // few seconds before a call, an app switch, or iOS reclaiming a backgrounded
