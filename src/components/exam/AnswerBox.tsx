@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { ANSWER_LIMITS, ANSWER_ROWS, type AnswerKind } from '../../exam/types'
 
 interface Props {
@@ -6,6 +7,15 @@ interface Props {
   onChange: (value: string) => void
   /** Labels the box for screen readers; the question itself is above it. */
   label: string
+  /**
+   * Move on. Called when Enter is pressed in a one-line box, where Enter has no
+   * other meaning. Never called from the taller boxes: there Enter starts a new
+   * line, and a learner part way through a sentence must not be jumped past the
+   * question.
+   */
+  onDone?: () => void
+  /** What the phone's Enter key should say, when Enter does something. */
+  enterKeyHint?: 'next' | 'done'
 }
 
 /** Show the count only near the limit: a counter on screen the whole time reads as pressure. */
@@ -23,10 +33,28 @@ const WARN_WITHIN = 20
  * Nothing here validates what was typed. A learner may switch to a non-Latin
  * keyboard mid-answer, and the course leader is the one marking.
  */
-export default function AnswerBox({ kind, value, onChange, label }: Props) {
+export default function AnswerBox({ kind, value, onChange, label, onDone, enterKeyHint }: Props) {
   const limit = ANSWER_LIMITS[kind]
   const rows = ANSWER_ROWS[kind]
   const left = limit - value.length
+
+  // Ready to type as soon as the question appears, so answering is one less
+  // tap. A callback ref rather than an effect: it runs as the box appears, and
+  // the page gives each question its own box (`key`), so this happens again on
+  // every question rather than only on the first.
+  const focusOnShow = useCallback((el: HTMLInputElement | HTMLTextAreaElement | null) => {
+    el?.focus()
+  }, [])
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key !== 'Enter' || !onDone) return
+    // Enter also commits a candidate in Chinese, Japanese and Korean input
+    // methods. Moving on then would throw away the word being typed, so wait
+    // until the keyboard has finished with it.
+    if (e.nativeEvent.isComposing) return
+    e.preventDefault()
+    onDone()
+  }
 
   // Shared so the single-line and multi-line boxes can't drift apart.
   const common = {
@@ -43,11 +71,17 @@ export default function AnswerBox({ kind, value, onChange, label }: Props) {
   return (
     <div style={styles.wrap}>
       {rows === 1 ? (
-        // No form around it, so Enter does nothing here — which is what we want.
-        // Enter must never mean "next": in the boxes below it starts a new line.
-        <input type="text" {...common} style={styles.input} />
+        <input
+          type="text"
+          ref={focusOnShow}
+          {...common}
+          onKeyDown={handleKeyDown}
+          enterKeyHint={enterKeyHint}
+          style={styles.input}
+        />
       ) : (
-        <textarea {...common} rows={rows} style={{ ...styles.input, ...styles.textarea }} />
+        // No onKeyDown: here Enter is how you start a new line.
+        <textarea ref={focusOnShow} {...common} rows={rows} style={{ ...styles.input, ...styles.textarea }} />
       )}
       {left <= WARN_WITHIN && (
         <p style={styles.count} aria-live="polite">

@@ -103,6 +103,17 @@ export default function FinalExamPage() {
     setAnswers((prev) => ({ ...prev, [id]: value }))
   }
 
+  /** Begin, or pick up where they left off. */
+  function start() {
+    setPhase(answered > 0 ? 'review' : 'question')
+  }
+
+  /** On to the next question, or to the answers if that was the last. */
+  function goOn() {
+    if (index === exam.questions.length - 1) setPhase('review')
+    else setIndex(index + 1)
+  }
+
   function goToQuestion(i: number) {
     setIndex(i)
     setPhase('question')
@@ -149,6 +160,10 @@ export default function FinalExamPage() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing && name.trim()) start()
+            }}
+            enterKeyHint="go"
             style={styles.nameInput}
             autoCapitalize="words"
             autoCorrect="off"
@@ -161,7 +176,7 @@ export default function FinalExamPage() {
         <button
           style={{ ...styles.primary, ...(name.trim() ? {} : styles.disabled) }}
           disabled={!name.trim()}
-          onClick={() => setPhase(answered > 0 ? 'review' : 'question')}
+          onClick={start}
         >
           {answered > 0 ? 'Carry on' : 'Start the exam'}
         </button>
@@ -185,10 +200,14 @@ export default function FinalExamPage() {
         {question.guidance && <p style={styles.guidance}>{question.guidance}</p>}
 
         <AnswerBox
+          // Its own box per question, so the focus above lands on each in turn.
+          key={question.id}
           kind={question.answer}
           value={answers[question.id] ?? ''}
           onChange={(v) => setAnswer(question.id, v)}
           label={question.ask}
+          onDone={goOn}
+          enterKeyHint={last ? 'done' : 'next'}
         />
 
         <div style={styles.row}>
@@ -199,10 +218,7 @@ export default function FinalExamPage() {
           >
             Back
           </button>
-          <button
-            style={{ ...styles.primary, ...styles.inRow }}
-            onClick={() => (last ? setPhase('review') : setIndex(index + 1))}
-          >
+          <button style={{ ...styles.primary, ...styles.inRow }} onClick={goOn}>
             {last ? 'See my answers' : 'Next'}
           </button>
         </div>
