@@ -7,6 +7,9 @@ import { describe, it, expect } from 'vitest'
 import { MODULES } from '../src/data/modules'
 import { SENTENCE_VARIANTS } from '../src/data/sentenceVariants'
 import type { ModuleData, ModuleDef } from '../src/types'
+import { FINAL_EXAM } from '../src/data/finalExam'
+import { referenceProblems, referencedModules, resolvePrompt, type LoadedModules } from '../src/exam/content'
+import { ANSWER_LIMITS } from '../src/exam/types'
 
 const PUBLIC = join(import.meta.dirname, '..', 'public')
 
@@ -142,5 +145,49 @@ describe.each(MODULES.map(mod => [mod.id, mod] as const))('content for %s', (_, 
   it('has no duplicate item ids', () => {
     const ids = loadData(mod).items.map(item => item.id)
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([])
+  })
+})
+
+// --- The final exam ---------------------------------------------------------
+// The exam points at module content by id rather than by path, so the thing to
+// check is that every item, product and order it names is still there, and that
+// the picture or sound it resolves to is on disk. An item deleted from a module
+// should fail here, loudly and in the exam's own words — not in front of a
+// learner sitting the paper.
+
+describe('final exam', () => {
+  const loaded: LoadedModules = Object.fromEntries(
+    referencedModules(FINAL_EXAM.questions).map(id => {
+      const mod = MODULES.find(m => m.id === id)
+      if (!mod) throw new Error(`the exam names the "${id}" module, which this app does not have`)
+      return [id, loadData(mod)]
+    })
+  )
+
+  it('names only content that still exists', () => {
+    expect(referenceProblems(FINAL_EXAM.questions, loaded)).toEqual([])
+  })
+
+  it('has every picture and sound it will ask for', () => {
+    const missing: string[] = []
+    for (const question of FINAL_EXAM.questions) {
+      const prompt = resolvePrompt(question.show, loaded)
+      for (const path of [prompt?.image?.src, prompt?.audio]) {
+        if (path && !existsSync(join(PUBLIC, path))) missing.push(`${path} — ${question.id}`)
+      }
+    }
+    expect(missing).toEqual([])
+  })
+
+  it('has no duplicate question ids, which the sent message numbers by position', () => {
+    const ids = FINAL_EXAM.questions.map(q => q.id)
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([])
+  })
+
+  it('asks something, and says how long an answer should be, every time', () => {
+    const problems = FINAL_EXAM.questions
+      .filter(q => q.ask.trim() === '' || !(q.answer in ANSWER_LIMITS))
+      .map(q => q.id)
+    expect(problems).toEqual([])
   })
 })
