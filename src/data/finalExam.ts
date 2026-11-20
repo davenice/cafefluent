@@ -67,8 +67,10 @@ export const FINAL_EXAM: Exam = {
     // --- Coffee drinks -----------------------------------------------------
     {
       id: 'q6',
+      // As with q16 and q17, the two drink questions read identically: a line on
+      // one and not the other is itself a clue.
       ask: 'Which coffee drink is this?',
-      guidance: 'The picture is a cut through the cup. What is at the bottom went in first.',
+      guidance: 'The picture is a cut through the cup.',
       show: { kind: 'item-image', module: 'coffee-drinks', item: 'flat-white' },
       answer: 'word',
     },
@@ -129,20 +131,27 @@ export const FINAL_EXAM: Exam = {
     // --- Milk --------------------------------------------------------------
     {
       id: 'q14',
-      ask: 'Which allergen is in this milk?',
+      // Named, not shown. The milk pictures are drawings of cartons and bottles
+      // with no name on them, so a picture would ask the learner to identify the
+      // drawing first — which is not what this question is for. The module's own
+      // quiz gives the name alongside the picture for the same reason.
+      ask: 'Which allergen is in oat milk?',
       guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'milk', item: 'oat' },
       answer: 'word',
     },
     {
       id: 'q15',
-      ask: 'Which allergen is in this milk?',
+      ask: 'Which allergen is in almond milk?',
       guidance: 'One or two words is enough.',
       show: { kind: 'item-image', module: 'milk', item: 'almond' },
       answer: 'word',
     },
     {
       id: 'q16',
+      // q16 and q17 must read identically. One of these orders names no milk at
+      // all, and noticing that is the whole point — so anything said about one
+      // and not the other tells the learner which is which.
       ask: 'Listen to the order. Which milk do you use?',
       guidance: 'Write the name of the milk.',
       show: { kind: 'order-audio', module: 'milk', order: 'skinny-cappuccino' },
@@ -151,7 +160,7 @@ export const FINAL_EXAM: Exam = {
     {
       id: 'q17',
       ask: 'Listen to the order. Which milk do you use?',
-      guidance: 'Write the name of the milk. Careful — this order may have no milk in it.',
+      guidance: 'Write the name of the milk.',
       show: { kind: 'order-audio', module: 'milk', order: 'americano-no-milk' },
       answer: 'word',
     },
