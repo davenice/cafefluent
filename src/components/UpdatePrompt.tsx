@@ -9,7 +9,16 @@ const CHECK_INTERVAL_MS = 60 * 60 * 1000
 export default function UpdatePrompt() {
   const [dismissed, setDismissed] = useState(false)
   // Quiz progress is only saved on completion, so never offer a reload mid-task.
+  // The exam is its own route rather than a task, and is the worst place of all
+  // to offer one: a reload part way through swaps the bundle under someone who
+  // has been typing for half an hour.
+  //
+  // Both matches are read every render. Behind a `||` the second call would be
+  // skipped whenever the first matched, which changes the number of hooks
+  // between renders and throws as soon as you leave a task.
   const inTask = useMatch('/:moduleId/:taskId') !== null
+  const inExam = useMatch('/final-exam') !== null
+  const busy = inTask || inExam
 
   const {
     needRefresh: [needRefresh],
@@ -28,7 +37,7 @@ export default function UpdatePrompt() {
   // "Later" hides the bar for this session. The new worker keeps waiting while
   // this page is open; once the app is fully closed the browser activates it, so
   // the next launch is simply on the new version.
-  if (!needRefresh || dismissed || inTask) return null
+  if (!needRefresh || dismissed || busy) return null
 
   // The plugin only reloads after activation when the page was already controlled
   // by a worker. A hard-refreshed page is not, so reload on controllerchange ourselves,

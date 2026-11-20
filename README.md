@@ -63,6 +63,50 @@ fewer questions. Its result is kept apart from the modules' progress, as a last
 and a best score, since it is meant to be taken again and again and its length
 changes as modules are enabled.
 
+### The final exam
+
+Sat once, at the end of the course, at `/#/final-exam`. Unlike every other quiz
+the answers are **typed**, and nothing is marked by the app: the learner sends
+their answers to the course leader as a WhatsApp message, read by hand. There is
+no server involved.
+
+It is switched on and off on the admin page like a module, and listed separately
+on the home page, as the mixed quiz and the table game are. It is **not** in
+`MODULES` — it has no tasks, keeps no per-task progress, and is never drawn on
+by the mixed quiz. It is also deliberately left out of `ALL_MODULES` in
+`useEnabledModules.ts`, which is what the app falls back to when it cannot read
+the config at all: showing the exam to someone whose config merely failed to
+load would be worse than showing them nothing, so it appears only when the
+server names it. Like any module it stays reachable by its address whether it is
+switched on or not, which is what the admin page's "Preview exam" link uses.
+
+The paper is in `src/data/finalExam.ts` and is meant to stop changing: the
+message numbers its answers by position, so questions are added to the end and
+`version` is bumped rather than renumbering anything. Questions name module
+content by module and item id rather than by path, so a renamed picture keeps
+working while a deleted item fails `npm run check:content` in the exam's own
+words. Everything the paper names is fetched and checked before the exam will
+start, rather than breaking at question 14.
+
+Two things worth not undoing:
+
+**The update bar is suppressed during the exam** (`UpdatePrompt.tsx`), for the
+same reason it is suppressed mid-task but more so — a reload swaps the bundle
+under someone who has been typing for half an hour.
+
+**Answers are saved as they are typed, and again on `pagehide` and
+`visibilitychange`.** The debounce alone only fires once typing stops, so the
+lines written in the last seconds before a call, or before iOS reclaims a
+backgrounded PWA, would simply be gone.
+
+There is one way to send: copy the message, then paste it into WhatsApp. An
+"Open WhatsApp" button using the Web Share API was tried and removed — two
+buttons each looked like the way to send, and they wanted opposite things, since
+sharing hands WhatsApp the text and leaves nothing to paste. Copying is also the
+only step whose success the app can honestly report; the Web Share promise
+resolves when WhatsApp opens, not when the learner presses send. Nothing claims
+the answers arrived. The learner says that themselves.
+
 ### Deploying changes
 
 No manual version bump is needed. Every build regenerates `sw.js` with fresh precache
@@ -105,6 +149,7 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | `offline.spec.ts` | The last known module config is used offline, and a whole quiz — pictures, sound and all — can be done with no connection |
 | `contributors.spec.ts` | The admin page's Voice contributors section: listing, adding and the one-time link, copying it, stopping a link, and the recordings server failing or rejecting the password |
 | `record.spec.ts` | The contributor page: bad and missing links, consent, and (Chromium only, with a fake microphone) clips sent as recorded, kept while offline, sent on the next visit, and a link revoked mid-session; the service worker leaving `record.html` alone |
+| `exam.spec.ts` | The final exam: when it is offered and when it is hidden, the name gate, answers kept across a reload, the message it ends with, and no update bar mid-exam |
 
 Most tests import `test` from `e2e/fixtures.ts` rather than from Playwright. It installs the fake config API with every module enabled, and records every `new Audio(src)` the page makes, since headless browsers may never play the sound. The quiz tests answer from the module's `data.json`: `e2e/helpers/quiz.ts` works out the right answer from what is on screen, or from the audio file just asked for. They pause the page's clock (`pauseClock`) and move it on past the pause after each answer, so a 14-question quiz takes well under a second.
 

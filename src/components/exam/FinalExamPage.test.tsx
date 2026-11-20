@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, act } from '@testing-library/react'
+import { MemoryRouter } from 'react-router-dom'
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 import FinalExamPage from './FinalExamPage'
 import { MODULES } from '../../data/modules'
@@ -86,7 +87,7 @@ afterEach(() => {
 
 /** Render, and get past the start screen with a name typed in. */
 async function start(name = 'Fatima') {
-  render(<FinalExamPage />)
+  render(<FinalExamPage />, { wrapper: MemoryRouter })
   const field = await screen.findByLabelText('Your name')
   fireEvent.change(field, { target: { value: name } })
   fireEvent.click(screen.getByRole('button', { name: /Start the exam|Carry on/ }))
@@ -146,20 +147,20 @@ describe('FinalExamPage', () => {
       window.dispatchEvent(new Event('pagehide'))
     })
 
-    render(<FinalExamPage />)
+    render(<FinalExamPage />, { wrapper: MemoryRouter })
     expect(await screen.findByText('We kept your answers from last time.')).toBeInTheDocument()
     const fields = await screen.findAllByLabelText('Your name')
     expect(fields[fields.length - 1]).toHaveValue('Fatima')
   })
 
   it('will not start without a name, since it is the only thing naming the learner', async () => {
-    render(<FinalExamPage />)
+    render(<FinalExamPage />, { wrapper: MemoryRouter })
     expect(await screen.findByRole('button', { name: 'Start the exam' })).toBeDisabled()
   })
 
   it('says the exam cannot be opened rather than starting one that breaks part way', async () => {
     vi.stubGlobal('fetch', vi.fn(() => Promise.resolve({ ok: false, status: 500 } as Response)))
-    render(<FinalExamPage />)
+    render(<FinalExamPage />, { wrapper: MemoryRouter })
     expect(await screen.findByText('The exam cannot be opened.')).toBeInTheDocument()
   })
 

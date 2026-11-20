@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FINAL_EXAM } from '../../data/finalExam'
 import {
   loadModules,
@@ -24,6 +25,7 @@ type Phase = 'start' | 'question' | 'review' | 'send'
  * through a sentence must never be moved on.
  */
 export default function FinalExamPage() {
+  const navigate = useNavigate()
   const exam = FINAL_EXAM
 
   // Read once: reading again later would fight what is being typed.
@@ -128,6 +130,10 @@ export default function FinalExamPage() {
   if (phase === 'start') {
     return (
       <Screen>
+        {/* Only here and on the last screen: mid-exam it would be a tap away
+            from losing your place, and in an installed app on iOS there is no
+            browser back button to undo it. */}
+        <button style={styles.back} onClick={() => navigate('/')}>← Home</button>
         <h1 style={styles.title}>{exam.title}</h1>
         {exam.intro.map((line) => (
           <p key={line} style={styles.intro}>
@@ -255,6 +261,7 @@ export default function FinalExamPage() {
       sent={sent}
       onSent={() => setSent(true)}
       onBack={() => setPhase('review')}
+      onHome={() => navigate('/')}
       onClear={() => {
         clear()
         setName('')
@@ -292,6 +299,7 @@ function SendScreen({
   sent,
   onSent,
   onBack,
+  onHome,
   onClear,
 }: {
   message: string
@@ -300,6 +308,7 @@ function SendScreen({
   sent: boolean
   onSent: () => void
   onBack: () => void
+  onHome: () => void
   onClear: () => void
 }) {
   const [copied, setCopied] = useState<CopyState>('idle')
@@ -331,6 +340,9 @@ function SendScreen({
         </button>
         <button style={styles.quiet} onClick={onClear}>
           Clear my answers
+        </button>
+        <button style={styles.quiet} onClick={onHome}>
+          Back to the app
         </button>
       </Screen>
     )
@@ -434,6 +446,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 26,
     fontWeight: 700,
     color: 'var(--color-primary)',
+  },
+  back: {
+    fontSize: 14,
+    color: 'var(--color-muted)',
+    alignSelf: 'flex-start',
   },
   counter: {
     fontSize: 13,
