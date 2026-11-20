@@ -3,11 +3,9 @@ import { FINAL_EXAM } from '../data/finalExam'
 import {
   NO_NAME,
   SKIPPED,
-  WA_ME_SAFE_ENCODED,
   answeredCount,
   buildMessage,
   unanswered,
-  waMeLink,
 } from './message'
 import { ANSWER_LIMITS, type Exam } from './types'
 
@@ -69,20 +67,6 @@ describe('counting answers', () => {
   it('counts only the questions with something in them', () => {
     expect(answeredCount(exam, { a: 'one', b: '  ', c: '\n' })).toBe(1)
     expect(unanswered(exam, { a: 'one' })).toEqual(['b', 'c'])
-  })
-})
-
-describe('waMeLink', () => {
-  it('makes a link with no phone number in it, so the tutor’s number stays private', () => {
-    const link = waMeLink('1 ciabatta')
-    expect(link).toBe('https://wa.me/?text=1%20ciabatta')
-  })
-
-  it('refuses a message too long to survive a URL, leaving copy-and-paste to do it', () => {
-    // Newlines cost three characters each once encoded, which is what makes a
-    // long message outgrow the URL well before it outgrows WhatsApp.
-    const tooLong = 'a\n'.repeat(WA_ME_SAFE_ENCODED)
-    expect(waMeLink(tooLong)).toBeNull()
   })
 })
 

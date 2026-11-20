@@ -17,13 +17,6 @@ export const SKIPPED = '-'
 /** What a learner is called in the message when they somehow started without a name. */
 export const NO_NAME = 'No name'
 
-/**
- * Longest message we will put in a wa.me link. URL-encoding inflates this text
- * by about 1.4× (every newline becomes %0A), and ~2,083 characters is the only
- * URL length safe across browsers — so the encoded message has to fit inside it.
- */
-export const WA_ME_SAFE_ENCODED = 1800
-
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 // Formatted by hand rather than with toLocaleDateString, so the message reads
@@ -74,17 +67,4 @@ export function buildMessage(exam: Exam, name: string, answers: Answers, now: Da
     '',
     ...lines,
   ].join('\n')
-}
-
-/**
- * A wa.me link for this message, or null if it is too long to survive being put
- * in a URL. Null means the page offers only copy-and-paste, which has no such
- * limit — so a learner who wrote a lot is never the one who can't send.
- *
- * No phone number: WhatsApp shows its own contact picker, which keeps the
- * tutor's number out of a public bundle and out of a public repo.
- */
-export function waMeLink(message: string): string | null {
-  const text = encodeURIComponent(message)
-  return text.length <= WA_ME_SAFE_ENCODED ? `https://wa.me/?text=${text}` : null
 }

@@ -7,7 +7,7 @@ import {
   resolvePrompt,
   type LoadedModules,
 } from '../../exam/content'
-import { answeredCount, buildMessage, waMeLink, type Answers } from '../../exam/message'
+import { answeredCount, buildMessage, type Answers } from '../../exam/message'
 import { clear, hasWork, load, save, type ExamProgress } from '../../exam/storage'
 import AnswerBox from './AnswerBox'
 
@@ -238,7 +238,7 @@ export default function FinalExamPage() {
         </ol>
 
         <button style={styles.primary} onClick={() => setPhase('send')}>
-          Send my answers
+          I’ve finished answering
         </button>
         <button style={styles.quiet} onClick={() => goToQuestion(0)}>
           Back to question 1
@@ -272,13 +272,18 @@ export default function FinalExamPage() {
 type CopyState = 'idle' | 'done' | 'failed'
 
 /**
- * Copy leads, share follows, a wa.me link is the last resort.
+ * One way to send, on purpose: copy the answers, paste them into WhatsApp.
  *
- * Copy is first because it is the only step whose success can honestly be
- * reported: the clipboard write either happened on this device or it didn't.
- * `navigator.share` resolving means only that WhatsApp was handed the text —
- * the learner still has to pick a chat and press send — so nothing here claims
- * the answers arrived. The learner says that themselves.
+ * There was an "Open WhatsApp" button here too, using the Web Share API with a
+ * wa.me link behind it. It went because two buttons on one screen each looked
+ * like the way to send, and they wanted opposite things of the learner: sharing
+ * hands WhatsApp the text, so there would be nothing left to paste, while the
+ * line above the button was telling them to paste.
+ *
+ * Copying is also the only step whose success can honestly be reported — the
+ * write either happened on this device or it didn't. Nothing here claims the
+ * answers arrived, because nothing here can know. The learner says that
+ * themselves, at the bottom.
  */
 function SendScreen({
   message,
@@ -298,10 +303,6 @@ function SendScreen({
   onClear: () => void
 }) {
   const [copied, setCopied] = useState<CopyState>('idle')
-  const [shared, setShared] = useState(false)
-
-  const link = waMeLink(message)
-  const canShare = !!navigator.share && (navigator.canShare?.({ text: message }) ?? true)
 
   function copy() {
     // First statement, and nothing awaited before it: WebKit treats an awaited
@@ -315,14 +316,6 @@ function SendScreen({
       () => setCopied('done'),
       () => setCopied('failed')
     )
-  }
-
-  function share() {
-    const data = { text: message }
-    navigator.share?.(data).catch(() => {})
-    // Set now, not when the promise settles: on iOS it may never settle, and
-    // settling wouldn't mean the message was sent anyway.
-    setShared(true)
   }
 
   if (sent) {
@@ -362,19 +355,6 @@ function SendScreen({
       {copied === 'failed' && (
         <p style={styles.warn}>Press and hold the box above, choose Select All, then Copy.</p>
       )}
-
-      {canShare ? (
-        <button style={styles.secondary} onClick={share}>
-          Open WhatsApp
-        </button>
-      ) : link ? (
-        <a href={link} target="_blank" rel="noopener noreferrer" style={{ ...styles.secondary, ...styles.linkButton }}>
-          Open WhatsApp
-        </a>
-      ) : (
-        <p style={styles.muted}>Open WhatsApp yourself and paste your answers into a message to your tutor.</p>
-      )}
-      {shared && <p style={styles.muted}>Check that you pressed send in WhatsApp.</p>}
 
       <p style={styles.muted}>Or take a screenshot of the box above and send that to your tutor.</p>
 
@@ -597,10 +577,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
     fontWeight: 600,
     flex: 1,
-  },
-  linkButton: {
-    display: 'block',
-    textAlign: 'center',
   },
   quiet: {
     background: 'transparent',

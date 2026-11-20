@@ -167,7 +167,7 @@ describe('FinalExamPage', () => {
     await start()
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ciabatta' } })
     fireEvent.click(screen.getByRole('button', { name: 'See all my answers' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'Send my answers' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'I’ve finished answering' }))
 
     const box = (await screen.findByLabelText('Your answers')) as HTMLTextAreaElement
     expect(box.value).toContain('1 ciabatta')
