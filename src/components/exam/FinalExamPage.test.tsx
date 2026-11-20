@@ -111,6 +111,21 @@ describe('FinalExamPage', () => {
     expect(screen.getByRole('textbox')).toHaveValue('ciabatta')
   })
 
+  it('is ready to type in, on every question, without tapping the box first', async () => {
+    await start()
+    expect(screen.getByRole('textbox')).toHaveFocus()
+
+    // Tapping a button moves the focus to it, as a real browser does; jsdom
+    // does not do that on its own, and without it this test would pass on a
+    // box that simply never lost the focus it got on the first question.
+    const next = screen.getByRole('button', { name: 'Next' })
+    next.focus()
+    fireEvent.click(next)
+
+    await screen.findByText(/Question 2 of/)
+    expect(screen.getByRole('textbox')).toHaveFocus()
+  })
+
   it('moves on when Enter is pressed in a one-line answer', async () => {
     await start()
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ciabatta' } })

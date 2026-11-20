@@ -42,6 +42,22 @@ test('keeps what has been typed when the exam is left and opened again', async (
   await expect(page.getByText('ciabatta')).toBeVisible()
 })
 
+test('is ready to type in as soon as a question appears', async ({ page }) => {
+  await page.goto(`/#/${FINAL_EXAM.id}`)
+  await page.getByLabel('Your name').fill('Fatima')
+  await page.getByRole('button', { name: 'Start the exam' }).click()
+  await expect(page.getByText('Question 1 of 20')).toBeVisible()
+
+  // Typing with nothing tapped: it only lands if the box already has the focus.
+  await page.keyboard.type('ciabatta')
+  await expect(page.getByRole('textbox')).toHaveValue('ciabatta')
+
+  await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText('Question 2 of 20')).toBeVisible()
+  await page.keyboard.type('sourdough')
+  await expect(page.getByRole('textbox')).toHaveValue('sourdough')
+})
+
 test('Enter moves on from a one-line answer, but makes a new line in a longer one', async ({ page }) => {
   await page.goto(`/#/${FINAL_EXAM.id}`)
   // The name field too: one line, one thing to do next.

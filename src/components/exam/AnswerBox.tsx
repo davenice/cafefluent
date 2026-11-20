@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { ANSWER_LIMITS, ANSWER_ROWS, type AnswerKind } from '../../exam/types'
 
 interface Props {
@@ -37,6 +38,14 @@ export default function AnswerBox({ kind, value, onChange, label, onDone, enterK
   const rows = ANSWER_ROWS[kind]
   const left = limit - value.length
 
+  // Ready to type as soon as the question appears, so answering is one less
+  // tap. A callback ref rather than an effect: it runs as the box appears, and
+  // the page gives each question its own box (`key`), so this happens again on
+  // every question rather than only on the first.
+  const focusOnShow = useCallback((el: HTMLInputElement | HTMLTextAreaElement | null) => {
+    el?.focus()
+  }, [])
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key !== 'Enter' || !onDone) return
     // Enter also commits a candidate in Chinese, Japanese and Korean input
@@ -64,6 +73,7 @@ export default function AnswerBox({ kind, value, onChange, label, onDone, enterK
       {rows === 1 ? (
         <input
           type="text"
+          ref={focusOnShow}
           {...common}
           onKeyDown={handleKeyDown}
           enterKeyHint={enterKeyHint}
@@ -71,7 +81,7 @@ export default function AnswerBox({ kind, value, onChange, label, onDone, enterK
         />
       ) : (
         // No onKeyDown: here Enter is how you start a new line.
-        <textarea {...common} rows={rows} style={{ ...styles.input, ...styles.textarea }} />
+        <textarea ref={focusOnShow} {...common} rows={rows} style={{ ...styles.input, ...styles.textarea }} />
       )}
       {left <= WARN_WITHIN && (
         <p style={styles.count} aria-live="polite">

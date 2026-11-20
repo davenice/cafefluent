@@ -200,6 +200,8 @@ export default function FinalExamPage() {
         {question.guidance && <p style={styles.guidance}>{question.guidance}</p>}
 
         <AnswerBox
+          // Its own box per question, so the focus above lands on each in turn.
+          key={question.id}
           kind={question.answer}
           value={answers[question.id] ?? ''}
           onChange={(v) => setAnswer(question.id, v)}
