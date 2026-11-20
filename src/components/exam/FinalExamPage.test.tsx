@@ -126,6 +126,24 @@ describe('FinalExamPage', () => {
     expect(screen.getByRole('textbox')).toHaveFocus()
   })
 
+  // Two siblings sharing a key stops React reconciling them, and it inserts
+  // copies rather than updating: the play button multiplied on every keystroke.
+  it('keeps one play button on a listening question, however much is typed', async () => {
+    await start()
+    // q11 is the first question with a sound.
+    for (let i = 1; i < 11; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText(/Question 11 of/)).toBeInTheDocument()
+
+    const plays = () => screen.getAllByRole('button', { name: /Play the sound|Playing/ }).length
+    expect(plays()).toBe(1)
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'm' } })
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'mo' } })
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'mol' } })
+
+    expect(plays()).toBe(1)
+  })
+
   it('moves on when Enter is pressed in a one-line answer', async () => {
     await start()
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ciabatta' } })

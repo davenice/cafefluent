@@ -194,14 +194,18 @@ export default function FinalExamPage() {
         </p>
 
         {prompt.image && <PromptImage src={prompt.image.src} fit={prompt.image.fit} />}
-        {prompt.audio && <PlayButton src={prompt.audio} key={question.id} />}
+        {/* Keyed so each question gets its own, and **not** with the same key
+            as the answer box below: two siblings sharing a key stops React
+            reconciling them and it inserts copies instead of updating. */}
+        {prompt.audio && <PlayButton src={prompt.audio} key={`sound-${question.id}`} />}
 
         <h1 style={styles.ask}>{question.ask}</h1>
         {question.guidance && <p style={styles.guidance}>{question.guidance}</p>}
 
         <AnswerBox
           // Its own box per question, so the focus above lands on each in turn.
-          key={question.id}
+          // Distinct from the play button's key; see the note there.
+          key={`answer-${question.id}`}
           kind={question.answer}
           value={answers[question.id] ?? ''}
           onChange={(v) => setAnswer(question.id, v)}
