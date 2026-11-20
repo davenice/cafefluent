@@ -82,6 +82,21 @@ test('Enter moves on from a one-line answer, but makes a new line in a longer on
   await expect(box).toHaveValue('coffee\nmilk')
 })
 
+test('a listening question keeps one play button while the answer is typed', async ({ page }) => {
+  await page.goto(`/#/${FINAL_EXAM.id}`)
+  await page.getByLabel('Your name').fill('Fatima')
+  await page.getByRole('button', { name: 'Start the exam' }).click()
+  for (let i = 1; i < 11; i++) await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText('Question 11 of 20')).toBeVisible()
+
+  const play = page.getByRole('button', { name: /Play the sound|Playing/ })
+  await expect(play).toHaveCount(1)
+
+  await page.getByRole('textbox').pressSequentially('molluscs')
+
+  await expect(play).toHaveCount(1)
+})
+
 test('ends with the answers as one numbered message', async ({ page }) => {
   await page.goto(`/#/${FINAL_EXAM.id}`)
   await page.getByLabel('Your name').fill('Fatima')
