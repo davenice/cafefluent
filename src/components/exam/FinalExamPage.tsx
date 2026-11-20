@@ -193,13 +193,16 @@ export default function FinalExamPage() {
 
         <div style={styles.row}>
           <button
-            style={{ ...styles.secondary, ...(index === 0 ? styles.disabled : {}) }}
+            style={{ ...styles.secondary, ...styles.inRow, ...(index === 0 ? styles.disabled : {}) }}
             disabled={index === 0}
             onClick={() => setIndex(index - 1)}
           >
             Back
           </button>
-          <button style={styles.primary} onClick={() => (last ? setPhase('review') : setIndex(index + 1))}>
+          <button
+            style={{ ...styles.primary, ...styles.inRow }}
+            onClick={() => (last ? setPhase('review') : setIndex(index + 1))}
+          >
             {last ? 'See my answers' : 'Next'}
           </button>
         </div>
@@ -575,25 +578,41 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
     marginTop: 8,
   },
+  // Sized like the app's other buttons, in ScoreScreen. Note there is no
+  // `flex` here: the screen is a column, so a flexible button grows to fill
+  // every pixel left on it and stops reading as a button at all.
   primary: {
     background: 'var(--color-primary)',
     color: '#fff',
     borderRadius: 'var(--radius)',
-    padding: '15px 24px',
+    padding: '14px 32px',
     fontSize: 16,
     fontWeight: 600,
-    flex: 1,
-    marginTop: 4,
+    width: '100%',
+    maxWidth: 280,
+    alignSelf: 'center',
+    flexShrink: 0,
+    marginTop: 8,
   },
   secondary: {
     background: 'var(--color-surface)',
     color: 'var(--color-primary)',
     border: '2px solid var(--color-primary)',
     borderRadius: 'var(--radius)',
-    padding: '13px 24px',
+    padding: '12px 32px',
     fontSize: 16,
     fontWeight: 600,
+    width: '100%',
+    maxWidth: 280,
+    alignSelf: 'center',
+    flexShrink: 0,
+    marginTop: 8,
+  },
+  /** Spread onto a button sitting beside another, where sharing the width is the point. */
+  inRow: {
     flex: 1,
+    maxWidth: 'none',
+    marginTop: 0,
   },
   quiet: {
     background: 'transparent',
