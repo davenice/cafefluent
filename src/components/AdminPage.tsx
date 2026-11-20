@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { MODULES, DESCRIBE_GAME, MIXED_QUIZ } from '../data/modules'
 import { normaliseGameSettings, SECONDS_RANGE, TURNS_RANGE } from '../game/settings'
 import ContributorsSection from './ContributorsSection'
+import { FINAL_EXAM } from '../data/finalExam'
 
 const API_URL = import.meta.env.VITE_MODULES_API_URL as string
 
@@ -186,6 +187,25 @@ export default function AdminPage() {
           </label>
           {/* It draws on the modules that are on, so the preview shows what learners would get */}
           <Link to={`/${MIXED_QUIZ.id}`} style={styles.previewLink}>Preview quiz →</Link>
+        </div>
+
+        <h2 style={styles.sectionTitle}>Exam</h2>
+        <div style={styles.row}>
+          <label style={styles.rowToggle}>
+            <div style={styles.rowBody}>
+              <div style={styles.modTitle}>{FINAL_EXAM.title}</div>
+              <div style={styles.modDesc}>{FINAL_EXAM.description}</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={enabled.includes(FINAL_EXAM.id)}
+              onChange={() => toggleModule(FINAL_EXAM.id)}
+              style={styles.checkbox}
+            />
+          </label>
+          {/* Sit it yourself before the class does. Answers are kept per device,
+              so clear them on the last screen when you have finished looking. */}
+          <Link to={`/${FINAL_EXAM.id}`} style={styles.previewLink}>Preview exam →</Link>
         </div>
 
         <h2 style={styles.sectionTitle}>Table games</h2>

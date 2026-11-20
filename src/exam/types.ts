@@ -49,9 +49,16 @@ export interface ExamQuestion {
 }
 
 export interface Exam {
+  /** Switched on and off under this id, like a module. */
   id: string
+  /** On the home page, the admin page and the exam itself. */
   title: string
   description: string
+  /**
+   * The first line of the sent message. Names the app rather than the exam, so
+   * the course leader can tell what it is in a WhatsApp thread full of chat.
+   */
+  messageTitle: string
   /** Bumped if the questions ever change, so a message says which paper it answers. */
   version: string
   /** The start screen, a paragraph per line. */

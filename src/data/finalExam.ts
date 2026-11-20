@@ -15,8 +15,9 @@ import type { Exam } from '../exam/types'
 
 export const FINAL_EXAM: Exam = {
   id: 'final-exam',
-  title: 'CafeFluent exam',
-  description: 'The final exam. You write your answers and send them to your tutor.',
+  title: 'Final exam',
+  description: 'The last thing you do. You write your answers and send them to your tutor.',
+  messageTitle: 'CafeFluent exam',
   version: 'v1',
   intro: [
     'This is the final exam. There are 20 questions.',

@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import { MODULES, DESCRIBE_GAME, MIXED_QUIZ } from '../data/modules'
+import { FINAL_EXAM } from '../data/finalExam'
+import { load as loadExam } from '../exam/storage'
 import { getMixedProgress, getProgress } from '../hooks/useProgress'
 import { useEnabledModules } from '../hooks/useEnabledModules'
 import { isMixable } from './quiz/mixedQuestions'
@@ -13,6 +15,9 @@ export default function HomePage() {
   const showMixed =
     (enabledModules ?? []).includes(MIXED_QUIZ.id) && visibleModules.filter(isMixable).length >= 2
   const mixedBest = getMixedProgress()?.best
+  const showExam = (enabledModules ?? []).includes(FINAL_EXAM.id)
+  // Their own word that they sent it, so the card says where they got to.
+  const examSent = loadExam().sent
 
   return (
     <div style={styles.page}>
@@ -58,6 +63,19 @@ export default function HomePage() {
             {mixedBest
               ? <div style={styles.badge}>{mixedBest.score}/{mixedBest.total}</div>
               : <span style={styles.arrow}>›</span>}
+          </Link>
+        </section>
+      )}
+
+      {showExam && (
+        <section style={styles.games}>
+          <h2 style={styles.sectionTitle}>Exam</h2>
+          <Link to={`/${FINAL_EXAM.id}`} style={{ ...styles.card, ...styles.examCard }}>
+            <div style={styles.cardBody}>
+              <h2 style={styles.cardTitle}>{FINAL_EXAM.title}</h2>
+              <p style={styles.cardDesc}>{FINAL_EXAM.description}</p>
+            </div>
+            {examSent ? <div style={styles.badge}>Sent</div> : <span style={styles.arrow}>›</span>}
           </Link>
         </section>
       )}
@@ -140,6 +158,9 @@ const styles: Record<string, React.CSSProperties> = {
   // Not a module with tasks to complete, so it looks different from the module cards.
   gameCard: {
     borderLeft: '4px solid var(--color-accent)',
+  },
+  examCard: {
+    borderLeft: '4px solid var(--color-primary)',
   },
   arrow: {
     fontSize: 22,

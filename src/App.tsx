@@ -3,6 +3,7 @@ import HomePage from './components/HomePage'
 import ModulePage from './components/ModulePage'
 import QuizShell from './components/quiz/QuizShell'
 import MixedQuizPage from './components/quiz/MixedQuizPage'
+import FinalExamPage from './components/exam/FinalExamPage'
 import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
 import DescribeGamePage from './components/DescribeGamePage'
@@ -30,6 +31,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         {/* Before the module route, which otherwise matches anything. */}
         <Route path="/mixed-quiz" element={<MixedQuizPage />} />
+        <Route path="/final-exam" element={<FinalExamPage />} />
         <Route path="/:moduleId" element={<ModulePage />} />
         <Route path="/:moduleId/:taskId" element={<QuizShell />} />
         <Route path="/calibrate" element={<CalibratePage />} />

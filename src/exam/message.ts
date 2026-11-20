@@ -61,7 +61,7 @@ export function unanswered(exam: Exam, answers: Answers): string[] {
 export function buildMessage(exam: Exam, name: string, answers: Answers, now: Date = new Date()): string {
   const lines = exam.questions.map((q, i) => `${i + 1} ${oneLine(answers[q.id] ?? '') || SKIPPED}`)
   return [
-    exam.title,
+    exam.messageTitle,
     oneLine(name) || NO_NAME,
     `${formatDate(now)} · ${exam.version}`,
     '',

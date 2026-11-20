@@ -15,6 +15,7 @@ const SITTING = new Date('2026-11-19T10:30:00')
 const exam: Exam = {
   id: 'test-exam',
   title: 'Test exam',
+  messageTitle: 'Test exam',
   description: '',
   version: 'v1',
   intro: [],
