@@ -74,9 +74,12 @@ export const FINAL_EXAM: Exam = {
     },
     {
       id: 'q6',
+      // A customer's whole sentence, not the bare word. The guidance says
+      // nothing about replaying it: the play button already says "Tap to
+      // listen again" underneath itself.
       ask: 'Listen. Which allergen is this?',
-      guidance: 'You can play it again as many times as you like.',
-      show: { kind: 'item-audio', module: 'allergens', item: 'mustard' },
+      guidance: 'Write the name of the food.',
+      show: { kind: 'item-audio', module: 'allergens', item: 'mustard', variant: 'allergic' },
       answer: 'word',
     },
     {
@@ -100,9 +103,12 @@ export const FINAL_EXAM: Exam = {
     },
     {
       id: 'q10',
-      ask: 'Listen to the customer. What must they not eat?',
+      // Peanuts has no "I mustn't eat" clip recorded — its sentences are
+      // allergic, intolerant and cant-eat — and "I'm allergic to" is already
+      // q6's phrasing, so this one asks the question "I can't eat" fits.
+      ask: 'Listen to the customer. What can they not eat?',
       guidance: 'Write the name of the food.',
-      show: { kind: 'item-audio', module: 'allergens', item: 'nuts', variant: 'must-not-eat' },
+      show: { kind: 'item-audio', module: 'allergens', item: 'peanuts', variant: 'cant-eat' },
       answer: 'word',
     },
     {
