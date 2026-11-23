@@ -103,9 +103,15 @@ export default function FinalExamPage() {
     setAnswers((prev) => ({ ...prev, [id]: value }))
   }
 
-  /** Begin, or pick up where they left off. */
+  /**
+   * Begin, or pick up where they left off — at the first question with nothing
+   * in it. Never at the list of answers: that is read-only and has no way back
+   * to the questions, so someone returning mid-exam would be stranded there.
+   */
   function start() {
-    setPhase(answered > 0 ? 'review' : 'question')
+    const next = exam.questions.findIndex((q) => (answers[q.id] ?? '').trim() === '')
+    if (next === -1) setPhase('review')
+    else goToQuestion(next)
   }
 
   /** On to the next question, or to the answers if that was the last. */
@@ -193,7 +199,11 @@ export default function FinalExamPage() {
           Question {index + 1} of {exam.questions.length}
         </p>
 
-        {prompt.image && <PromptImage src={prompt.image.src} fit={prompt.image.fit} />}
+        {/* No key needed: the browser clears a reused <img> as soon as its src
+            changes, so the previous question's picture is never left on screen. */}
+        {prompt.image && (
+          <PromptImage src={prompt.image.src} fit={prompt.image.fit} legend={prompt.legend} />
+        )}
         {/* Keyed so each question gets its own, and **not** with the same key
             as the answer box below: two siblings sharing a key stops React
             reconciling them and it inserts copies instead of updating. */}
@@ -226,9 +236,6 @@ export default function FinalExamPage() {
             {last ? 'See my answers' : 'Next'}
           </button>
         </div>
-        <button style={styles.quiet} onClick={() => setPhase('review')}>
-          See all my answers
-        </button>
       </Screen>
     )
   }
@@ -238,7 +245,7 @@ export default function FinalExamPage() {
       <Screen>
         <h1 style={styles.title}>Your answers</h1>
         <p style={styles.muted}>
-          You have answered {answered} of {exam.questions.length}. Tap a question to change your answer.
+          You have answered {answered} of {exam.questions.length}. This is what your tutor will see.
         </p>
 
         <ol style={styles.list}>
@@ -249,7 +256,9 @@ export default function FinalExamPage() {
             const thumb = resolvePrompt(q.show, modules)?.image
             return (
               <li key={q.id}>
-                <button style={styles.reviewRow} onClick={() => goToQuestion(i)}>
+                {/* Not a button any more: once the last question is answered the
+                    paper is done, and the answers are only read back from here. */}
+                <div style={styles.reviewRow}>
                   <span style={styles.reviewNumber}>{i + 1}</span>
                   {thumb && (
                     <img src={thumb.src} alt="" style={{ ...styles.thumb, objectFit: thumb.fit }} />
@@ -260,17 +269,14 @@ export default function FinalExamPage() {
                       {text || 'Not answered'}
                     </span>
                   </span>
-                </button>
+                </div>
               </li>
             )
           })}
         </ol>
 
         <button style={styles.primary} onClick={() => setPhase('send')}>
-          I’ve finished answering
-        </button>
-        <button style={styles.quiet} onClick={() => goToQuestion(0)}>
-          Back to question 1
+          Send my answers
         </button>
       </Screen>
     )
@@ -409,12 +415,16 @@ function Screen({ children }: { children: React.ReactNode }) {
   return <div style={styles.page}>{children}</div>
 }
 
-function PromptImage({ src, fit }: { src: string; fit: 'cover' | 'contain' }) {
+function PromptImage({ src, fit, legend }: { src: string; fit: 'cover' | 'contain'; legend?: string }) {
   return (
-    <div style={styles.imageFrame}>
-      {/* No alt text that names the thing: the name is the answer. */}
-      <img src={src} alt="" style={{ ...styles.image, objectFit: fit }} />
-    </div>
+    <>
+      <div style={styles.imageFrame}>
+        {/* No alt text that names the thing: the name is the answer. */}
+        <img src={src} alt="" style={{ ...styles.image, objectFit: fit }} />
+      </div>
+      {/* How to read the picture, never what is in it. */}
+      {legend && <img src={legend} alt="" style={styles.legend} />}
+    </>
   )
 }
 
@@ -528,6 +538,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 'var(--radius-sm)',
     padding: 12,
     fontFamily: 'ui-monospace, monospace',
+  },
+  legend: {
+    width: '100%',
+    maxWidth: 360,
+    alignSelf: 'center',
+    display: 'block',
   },
   imageFrame: {
     width: '100%',

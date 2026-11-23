@@ -8,8 +8,17 @@
 // Questions point at content the modules already own, by module and item id
 // (see src/exam/content.ts). `scripts/content.test.ts` checks every reference.
 //
-// The ids are what the sent message numbers, so **never renumber or reorder
-// them** once a cohort has sat the paper. Add to the end, and bump `version`.
+// **The order is deliberate and the numbering is load-bearing.** The sent
+// message is a column of numbers, so a question's position is the only thing
+// telling the course leader which answer they are reading. The paper is laid
+// out so no two questions in a row come from the same module, which is what
+// stops it feeling like a set of category rounds — but it is one fixed shuffle,
+// not a per-learner one. Shuffling per learner would number every message
+// differently and leave nothing to mark against.
+//
+// So never reorder or renumber once a group has sat it. Add to the end, and
+// bump `version`: a learner's saved answers are thrown away when the version
+// changes, since they would otherwise land against the wrong questions.
 
 import type { Exam } from '../exam/types'
 
@@ -18,7 +27,7 @@ export const FINAL_EXAM: Exam = {
   title: 'Final exam',
   description: 'The last thing you do. You write your answers and send them to your tutor.',
   messageTitle: 'CafeFluent exam',
-  version: 'v1',
+  version: 'v2',
   intro: [
     'This is the final exam. There are 20 questions.',
     'You type your answers. Nothing is marked by the app — your tutor reads your answers.',
@@ -26,161 +35,142 @@ export const FINAL_EXAM: Exam = {
     'At the end you send your answers to your tutor on WhatsApp.',
   ],
   questions: [
-    // --- Bread -------------------------------------------------------------
     {
       id: 'q1',
-      ask: 'What is this bread called?',
-      show: { kind: 'item-image', module: 'bread', item: 'ciabatta' },
-      answer: 'word',
-    },
-    {
-      id: 'q2',
       ask: 'What is this bread called?',
       show: { kind: 'item-image', module: 'bread', item: 'sourdough' },
       answer: 'word',
     },
     {
-      id: 'q3',
-      ask: 'Which bread do you use to make this?',
-      guidance: 'Write the name of the bread.',
-      show: { kind: 'product-image', module: 'bread', product: 'panini' },
-      answer: 'word',
-    },
-
-    // --- Cakes and snacks --------------------------------------------------
-    {
-      id: 'q4',
-      ask: 'What is this called?',
-      show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'pain-au-chocolat' },
-      answer: 'word',
-    },
-    {
-      id: 'q5',
-      ask: 'What is this called?',
-      show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'cornish-pasty' },
-      answer: 'word',
-    },
-
-    // --- Coffee drinks -----------------------------------------------------
-    {
-      id: 'q6',
-      // As with q16 and q17, the two drink questions read identically: a line on
-      // one and not the other is itself a clue.
-      ask: 'Which coffee drink is this?',
-      guidance: 'The picture is a cut through the cup.',
-      show: { kind: 'item-image', module: 'coffee-drinks', item: 'flat-white' },
-      answer: 'word',
-    },
-    {
-      id: 'q7',
-      ask: 'Which coffee drink is this?',
-      guidance: 'The picture is a cut through the cup.',
-      show: { kind: 'item-image', module: 'coffee-drinks', item: 'macchiato' },
-      answer: 'word',
-    },
-    {
-      id: 'q8',
-      // No picture: for this module the picture is a drawing of the ingredients,
-      // so showing it would give the answer away.
-      ask: 'What goes in a cappuccino?',
-      guidance: 'Write each thing on a new line.',
-      show: { kind: 'none' },
-      answer: 'list',
-    },
-
-    // --- Allergens ---------------------------------------------------------
-    {
-      id: 'q9',
+      id: 'q2',
       ask: 'Which allergen is this?',
       show: { kind: 'item-image', module: 'allergens', item: 'sesame' },
       answer: 'word',
     },
     {
-      id: 'q10',
-      ask: 'Which allergen is this?',
-      show: { kind: 'item-image', module: 'allergens', item: 'lupin' },
+      id: 'q3',
+      // The drink pictures are cut-throughs drawn in a notation the module
+      // teaches with a key, and the key is shown alongside — without it the
+      // question is about reading the drawing rather than knowing the drink.
+      ask: 'Which coffee drink is this?',
+      guidance: 'The picture is a cut through the cup.',
+      show: { kind: 'item-image', module: 'coffee-drinks', item: 'cappuccino' },
       answer: 'word',
     },
     {
-      id: 'q11',
+      id: 'q4',
+      // Named rather than shown: the milk pictures are drawings of cartons with
+      // no name on them, so a picture would ask the learner to identify the
+      // drawing first. The module's own quiz gives the name with the picture.
+      ask: 'Which allergen is in oat milk?',
+      show: { kind: 'none' },
+      answer: 'word',
+    },
+    {
+      id: 'q5',
+      ask: 'What is this called?',
+      show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'pain-au-chocolat' },
+      answer: 'word',
+    },
+    {
+      id: 'q6',
       ask: 'Listen. Which allergen is this?',
       guidance: 'You can play it again as many times as you like.',
-      show: { kind: 'item-audio', module: 'allergens', item: 'molluscs' },
+      show: { kind: 'item-audio', module: 'allergens', item: 'mustard' },
       answer: 'word',
     },
     {
-      id: 'q12',
+      id: 'q7',
+      ask: 'What is the informal name for this bread-based dish?',
+      show: { kind: 'product-image', module: 'bread', product: 'butty' },
+      answer: 'word',
+    },
+    {
+      id: 'q8',
+      ask: 'How do you make a mocha?',
+      guidance: 'Write one step on each line.',
+      show: { kind: 'none' },
+      answer: 'list',
+    },
+    {
+      id: 'q9',
+      ask: 'What is this called?',
+      show: { kind: 'item-image', module: 'kitchen-equipment', item: 'saucer' },
+      answer: 'word',
+    },
+    {
+      id: 'q10',
       ask: 'Listen to the customer. What must they not eat?',
       guidance: 'Write the name of the food.',
       show: { kind: 'item-audio', module: 'allergens', item: 'nuts', variant: 'must-not-eat' },
       answer: 'word',
     },
     {
-      id: 'q13',
-      ask: 'Listen to the customer. What can they not have?',
-      guidance: 'Write the name of the food.',
-      show: { kind: 'item-audio', module: 'allergens', item: 'crustaceans', variant: 'cant-have' },
-      answer: 'word',
-    },
-
-    // --- Milk --------------------------------------------------------------
-    {
-      id: 'q14',
-      // Named, not shown. The milk pictures are drawings of cartons and bottles
-      // with no name on them, so a picture would ask the learner to identify the
-      // drawing first — which is not what this question is for. The module's own
-      // quiz gives the name alongside the picture for the same reason.
-      ask: 'Which allergen is in oat milk?',
-      show: { kind: 'item-image', module: 'milk', item: 'oat' },
+      id: 'q11',
+      ask: 'What is this called?',
+      show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'millionaires-shortbread' },
       answer: 'word',
     },
     {
-      id: 'q15',
-      ask: 'Which allergen is in almond milk?',
-      show: { kind: 'item-image', module: 'milk', item: 'almond' },
-      answer: 'word',
-    },
-    {
-      id: 'q16',
-      // q16 and q17 must read identically. One of these orders names no milk at
-      // all, and noticing that is the whole point — so anything said about one
-      // and not the other tells the learner which is which.
+      id: 'q12',
+      // q12 and q18 must read identically. One of the two orders names no milk
+      // at all, and noticing that is the point — so anything said about one and
+      // not the other tells the learner which is which.
       ask: 'Listen to the order. Which milk do you use?',
       guidance: 'Write the name of the milk.',
       show: { kind: 'order-audio', module: 'milk', order: 'skinny-cappuccino' },
       answer: 'word',
     },
     {
+      id: 'q13',
+      ask: 'Which coffee drink is this?',
+      guidance: 'The picture is a cut through the cup.',
+      show: { kind: 'item-image', module: 'coffee-drinks', item: 'cortado' },
+      answer: 'word',
+    },
+    {
+      id: 'q14',
+      ask: 'Which allergen is in almond milk?',
+      show: { kind: 'none' },
+      answer: 'word',
+    },
+    {
+      id: 'q15',
+      ask: 'What is the name of this bread-based dish?',
+      show: { kind: 'product-image', module: 'bread', product: 'panini' },
+      answer: 'word',
+    },
+    {
+      id: 'q16',
+      ask: 'What is this called?',
+      show: { kind: 'item-image', module: 'cakes-and-snacks', item: 'flapjack' },
+      answer: 'word',
+    },
+    {
       id: 'q17',
+      ask: 'Which allergen is this?',
+      show: { kind: 'item-image', module: 'allergens', item: 'gluten' },
+      answer: 'word',
+    },
+    {
+      id: 'q18',
       ask: 'Listen to the order. Which milk do you use?',
       guidance: 'Write the name of the milk.',
       show: { kind: 'order-audio', module: 'milk', order: 'americano-no-milk' },
       answer: 'word',
     },
-
-    // --- Kitchen equipment -------------------------------------------------
-    {
-      id: 'q18',
-      ask: 'What is this called?',
-      show: { kind: 'item-image', module: 'kitchen-equipment', item: 'saucer' },
-      answer: 'word',
-    },
-
-    // --- Writing -----------------------------------------------------------
-    // The two things typing can test that tapping cannot.
     {
       id: 'q19',
-      ask: 'You are making a coffee with milk. Write the steps in the right order.',
-      guidance: 'Write one step on each line. You do not need every step.',
+      ask: 'What goes in an americano?',
+      guidance: 'Write each thing on a new line.',
       show: { kind: 'none' },
       answer: 'list',
     },
     {
       id: 'q20',
-      ask: 'A customer tells you they are allergic to nuts. They want to buy a cake. What do you say to them?',
-      guidance: 'Write one or two sentences.',
-      show: { kind: 'none' },
-      answer: 'sentence',
+      ask: 'What is the name of this bread-based dish?',
+      show: { kind: 'product-image', module: 'bread', product: 'toasty' },
+      answer: 'word',
     },
   ],
 }

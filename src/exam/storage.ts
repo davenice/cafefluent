@@ -8,6 +8,7 @@
 // and with site data blocked, and a learner mid-exam is the worst possible
 // moment to find that out.
 
+import { FINAL_EXAM } from '../data/finalExam'
 import type { Answers } from './message'
 
 const KEY = 'cafefluent/final-exam'
@@ -21,11 +22,18 @@ export interface ExamProgress {
 
 export const EMPTY: ExamProgress = { name: '', answers: {}, sent: false }
 
+/**
+ * What was typed before, or nothing if it was typed against a different paper.
+ * Answers are stored per question id, and the questions move when the paper is
+ * revised, so keeping them across a new version would show someone their answer
+ * to one question under another.
+ */
 export function load(): ExamProgress {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return EMPTY
-    const saved = JSON.parse(raw) as Partial<ExamProgress>
+    const saved = JSON.parse(raw) as Partial<ExamProgress> & { version?: string }
+    if (saved.version !== FINAL_EXAM.version) return EMPTY
     return {
       name: typeof saved.name === 'string' ? saved.name : '',
       // Anything that isn't a string is dropped rather than shown back as "[object Object]".
@@ -41,7 +49,7 @@ export function load(): ExamProgress {
 
 export function save(progress: ExamProgress): void {
   try {
-    localStorage.setItem(KEY, JSON.stringify(progress))
+    localStorage.setItem(KEY, JSON.stringify({ ...progress, version: FINAL_EXAM.version }))
   } catch {
     // Nothing to do: the page holds the answers in memory either way, and the
     // message on screen is what actually gets sent.

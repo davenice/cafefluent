@@ -39,7 +39,11 @@ test('keeps what has been typed when the exam is left and opened again', async (
   await expect(page.getByText('We kept your answers from last time.')).toBeVisible()
   await expect(page.getByLabel('Your name')).toHaveValue('Fatima')
   await page.getByRole('button', { name: 'Carry on' }).click()
-  await expect(page.getByText('ciabatta')).toBeVisible()
+
+  // Picks up at the first question with nothing in it, not back at the start.
+  await expect(page.getByText('Question 2 of 20')).toBeVisible()
+  await page.getByRole('button', { name: 'Back' }).click()
+  await expect(page.getByRole('textbox')).toHaveValue('ciabatta')
 })
 
 test('is ready to type in as soon as a question appears', async ({ page }) => {
@@ -86,8 +90,10 @@ test('a listening question keeps one play button while the answer is typed', asy
   await page.goto(`/#/${FINAL_EXAM.id}`)
   await page.getByLabel('Your name').fill('Fatima')
   await page.getByRole('button', { name: 'Start the exam' }).click()
-  for (let i = 1; i < 11; i++) await page.getByRole('button', { name: 'Next' }).click()
-  await expect(page.getByText('Question 11 of 20')).toBeVisible()
+  // Found rather than hardcoded: the paper gets reordered.
+  const first = FINAL_EXAM.questions.findIndex((q) => q.show.kind.endsWith('audio')) + 1
+  for (let i = 1; i < first; i++) await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText(`Question ${first} of 20`)).toBeVisible()
 
   const play = page.getByRole('button', { name: /Play the sound|Playing/ })
   await expect(play).toHaveCount(1)
@@ -97,14 +103,44 @@ test('a listening question keeps one play button while the answer is typed', asy
   await expect(play).toHaveCount(1)
 })
 
+test('shows the key with a coffee drink, so the picture can be read', async ({ page }) => {
+  await page.goto(`/#/${FINAL_EXAM.id}`)
+  await page.getByLabel('Your name').fill('Fatima')
+  await page.getByRole('button', { name: 'Start the exam' }).click()
+
+  const drink = FINAL_EXAM.questions.findIndex(
+    (q) => q.show.kind === 'item-image' && q.show.module === 'coffee-drinks'
+  ) + 1
+  for (let i = 1; i < drink; i++) await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText(`Question ${drink} of 20`)).toBeVisible()
+
+  // The drink and the key to the notation it is drawn in.
+  await expect(page.locator('img[src*="coffee-drinks"]')).toHaveCount(2)
+  await expect(page.locator('img[src$="key.svg"]')).toBeVisible()
+})
+
+test('the answers cannot be changed once the paper is finished', async ({ page }) => {
+  await page.goto(`/#/${FINAL_EXAM.id}`)
+  await page.getByLabel('Your name').fill('Fatima')
+  await page.getByRole('button', { name: 'Start the exam' }).click()
+  await page.getByRole('textbox').fill('ciabatta')
+  for (let i = 0; i < 20; i++) await page.getByRole('button', { name: /^(Next|See my answers)$/ }).click()
+
+  await expect(page.getByText('Your answers')).toBeVisible()
+  // Nothing on this screen goes back to a question: the only way on is to send.
+  await expect(page.getByRole('button', { name: /Back|question 1|ciabatta/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Send my answers' })).toBeVisible()
+})
+
 test('ends with the answers as one numbered message', async ({ page }) => {
   await page.goto(`/#/${FINAL_EXAM.id}`)
   await page.getByLabel('Your name').fill('Fatima')
   await page.getByRole('button', { name: 'Start the exam' }).click()
   await page.getByRole('textbox').fill('ciabatta')
 
-  await page.getByRole('button', { name: 'See all my answers' }).click()
-  await page.getByRole('button', { name: 'I’ve finished answering' }).click()
+  // 19 Nexts to reach the last question, then one more to leave it.
+  for (let i = 0; i < 20; i++) await page.getByRole('button', { name: /^(Next|See my answers)$/ }).click()
+  await page.getByRole('button', { name: 'Send my answers' }).click()
 
   const message = page.getByLabel('Your answers')
   // Named for the app, not the exam, so it is recognisable in a WhatsApp thread.

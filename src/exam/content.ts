@@ -43,6 +43,13 @@ export async function loadModules(ids: string[]): Promise<LoadedModules> {
 /** What a question shows: a picture, a sound, or nothing. */
 export interface ResolvedPrompt {
   image?: { src: string; fit: 'cover' | 'contain' }
+  /**
+   * The module's key to the notation its pictures are drawn in, where it has
+   * one. The coffee drinks are cut-throughs of a cup, and without the key the
+   * question asks whether you can read the drawing rather than whether you know
+   * the drink — which is why the module's own picture quiz shows it too.
+   */
+  legend?: string
   audio?: string
 }
 
@@ -62,11 +69,11 @@ export function resolvePrompt(show: Prompt, loaded: LoadedModules): ResolvedProm
   switch (show.kind) {
     case 'item-image': {
       const item = data.items.find((i) => i.id === show.item)
-      return item ? { image: { src: `${mod.imageBase}${item.image}`, fit } } : null
+      return item ? { image: { src: `${mod.imageBase}${item.image}`, fit }, ...legendOf(mod) } : null
     }
     case 'product-image': {
       const product = data.products?.find((p) => p.id === show.product)
-      return product ? { image: { src: `${mod.imageBase}${product.image}`, fit } } : null
+      return product ? { image: { src: `${mod.imageBase}${product.image}`, fit }, ...legendOf(mod) } : null
     }
     case 'item-audio': {
       const item = data.items.find((i) => i.id === show.item)
@@ -95,6 +102,10 @@ export function referenceProblems(questions: ExamQuestion[], loaded: LoadedModul
     }
   }
   return problems
+}
+
+function legendOf(mod: ModuleDef): { legend?: string } {
+  return mod.imageLegend ? { legend: `${mod.imageBase}${mod.imageLegend}` } : {}
 }
 
 function reference(show: Prompt): string {

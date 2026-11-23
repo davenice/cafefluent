@@ -130,9 +130,10 @@ describe('FinalExamPage', () => {
   // copies rather than updating: the play button multiplied on every keystroke.
   it('keeps one play button on a listening question, however much is typed', async () => {
     await start()
-    // q11 is the first question with a sound.
-    for (let i = 1; i < 11; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
-    expect(await screen.findByText(/Question 11 of/)).toBeInTheDocument()
+    // Found rather than hardcoded: the paper gets reordered.
+    const first = FINAL_EXAM.questions.findIndex((q) => q.show.kind.endsWith('audio')) + 1
+    for (let i = 1; i < first; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText(new RegExp(`Question ${first} of`))).toBeInTheDocument()
 
     const plays = () => screen.getAllByRole('button', { name: /Play the sound|Playing/ }).length
     expect(plays()).toBe(1)
@@ -230,8 +231,10 @@ describe('FinalExamPage', () => {
   it('builds the message from the answers, one numbered line each', async () => {
     await start()
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'ciabatta' } })
-    fireEvent.click(screen.getByRole('button', { name: 'See all my answers' }))
-    fireEvent.click(await screen.findByRole('button', { name: 'I’ve finished answering' }))
+    // The answers are only reached by finishing the paper now.
+    // 19 Nexts to reach the last question, then one more to leave it.
+    for (let i = 0; i < 20; i++) fireEvent.click(screen.getByRole('button', { name: /Next|See my answers/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Send my answers' }))
 
     const box = (await screen.findByLabelText('Your answers')) as HTMLTextAreaElement
     expect(box.value).toContain('1 ciabatta')
