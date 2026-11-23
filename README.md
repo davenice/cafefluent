@@ -99,6 +99,18 @@ under someone who has been typing for half an hour.
 lines written in the last seconds before a call, or before iOS reclaims a
 backgrounded PWA, would simply be gone.
 
+**On paper.** `/#/final-exam/print`, linked from the admin page, is the same
+paper laid out for a printer: every question, its picture, and ruled space to
+write in. For a learner with no phone, or a day the app will not cooperate.
+
+It is the blank paper only — no answers on it — so the listening questions say
+*"Your tutor will read this out"* rather than printing the phrase. What the
+clips say is perfectly reconstructable from the content, but the thing being
+asked for *is* the food the phrase names, so printing it would print the answer.
+Read aloud it stays a listening question. The `@media print` rules are the one
+piece of this feature that lives in `src/index.css`, since a media query cannot
+be an inline style.
+
 There is one way to send: copy the message, then paste it into WhatsApp. An
 "Open WhatsApp" button using the Web Share API was tried and removed — two
 buttons each looked like the way to send, and they wanted opposite things, since
@@ -149,7 +161,7 @@ The e2e build points `VITE_MODULES_API_URL` at `https://modules.test/` (see `.en
 | `offline.spec.ts` | The last known module config is used offline, and a whole quiz — pictures, sound and all — can be done with no connection |
 | `contributors.spec.ts` | The admin page's Voice contributors section: listing, adding and the one-time link, copying it, stopping a link, and the recordings server failing or rejecting the password |
 | `record.spec.ts` | The contributor page: bad and missing links, consent, and (Chromium only, with a fake microphone) clips sent as recorded, kept while offline, sent on the next visit, and a link revoked mid-session; the service worker leaving `record.html` alone |
-| `exam.spec.ts` | The final exam: when it is offered and when it is hidden, the name gate, answers kept across a reload, the message it ends with, and no update bar mid-exam |
+| `exam.spec.ts` | The final exam: when it is offered and when it is hidden, the name gate, answers kept across a reload, the message it ends with, no update bar mid-exam, and the printable paper |
 
 Most tests import `test` from `e2e/fixtures.ts` rather than from Playwright. It installs the fake config API with every module enabled, and records every `new Audio(src)` the page makes, since headless browsers may never play the sound. The quiz tests answer from the module's `data.json`: `e2e/helpers/quiz.ts` works out the right answer from what is on screen, or from the audio file just asked for. They pause the page's clock (`pauseClock`) and move it on past the pause after each answer, so a 14-question quiz takes well under a second.
 

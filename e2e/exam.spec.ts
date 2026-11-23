@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures'
-import { FakeConfigApi } from './fakeConfigApi'
+import { FakeConfigApi, TEST_ADMIN_KEY } from './fakeConfigApi'
 import { FINAL_EXAM } from '../src/data/finalExam'
 
 test('is offered on the home page once it is switched on', async ({ page }) => {
@@ -130,6 +130,37 @@ test('the answers cannot be changed once the paper is finished', async ({ page }
   // Nothing on this screen goes back to a question: the only way on is to send.
   await expect(page.getByRole('button', { name: /Back|question 1|ciabatta/ })).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Send my answers' })).toBeVisible()
+})
+
+test.describe('on paper', () => {
+  test('prints every question, with room to write and no answers on it', async ({ page }) => {
+    await page.goto(`/#/${FINAL_EXAM.id}/print`)
+    await expect(page.getByText('End of the exam.')).toBeVisible()
+
+    await expect(page.locator('.exam-question')).toHaveCount(FINAL_EXAM.questions.length)
+    await expect(page.getByText('Name', { exact: false }).first()).toBeVisible()
+
+    // Every picture the paper shows actually loaded.
+    const broken = await page.locator('.exam-paper img').evaluateAll((imgs) =>
+      imgs.filter((i) => !(i as HTMLImageElement).complete || (i as HTMLImageElement).naturalWidth === 0).length
+    )
+    expect(broken).toBe(0)
+
+    // The listening questions are read out, not printed: printing the phrase
+    // would print the answer, since the answer is the food it names.
+    const listening = FINAL_EXAM.questions.filter((q) => q.show.kind.endsWith('audio')).length
+    await expect(page.getByText('Your tutor will read this out.')).toHaveCount(listening)
+    await expect(page.getByText('allergic to mustard')).toHaveCount(0)
+    await expect(page.getByText('skinny cappuccino')).toHaveCount(0)
+  })
+
+  test('is reached from the admin page', async ({ page }) => {
+    await page.goto('/#/admin')
+    await page.getByLabel('Password').fill(TEST_ADMIN_KEY)
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    await page.getByRole('link', { name: /Print the exam/ }).click()
+    await expect(page.getByText('End of the exam.')).toBeVisible()
+  })
 })
 
 test('ends with the answers as one numbered message', async ({ page }) => {

@@ -4,6 +4,7 @@ import ModulePage from './components/ModulePage'
 import QuizShell from './components/quiz/QuizShell'
 import MixedQuizPage from './components/quiz/MixedQuizPage'
 import FinalExamPage from './components/exam/FinalExamPage'
+import PrintablePaper from './components/exam/PrintablePaper'
 import CalibratePage from './components/CalibratePage'
 import AdminPage from './components/AdminPage'
 import DescribeGamePage from './components/DescribeGamePage'
@@ -16,6 +17,7 @@ function BuildStamp() {
   const navigate = useNavigate()
   return (
     <p
+      className="screen-only"
       style={{ position: 'fixed', bottom: 6, right: 10, fontSize: 10, color: 'rgba(0,0,0,0.2)', userSelect: 'none' }}
       onDoubleClick={() => navigate('/admin')}
     >
@@ -32,6 +34,8 @@ export default function App() {
         {/* Before the module route, which otherwise matches anything. */}
         <Route path="/mixed-quiz" element={<MixedQuizPage />} />
         <Route path="/final-exam" element={<FinalExamPage />} />
+        {/* Static segments outrank /:moduleId/:taskId, so this wins over it. */}
+        <Route path="/final-exam/print" element={<PrintablePaper />} />
         <Route path="/:moduleId" element={<ModulePage />} />
         <Route path="/:moduleId/:taskId" element={<QuizShell />} />
         <Route path="/calibrate" element={<CalibratePage />} />

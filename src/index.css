@@ -63,3 +63,42 @@ button {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.15; }
 }
+
+/* --- Printing the exam paper -------------------------------------------- */
+/* Only the paper itself goes on the page: the app's own chrome, and the
+   controls that print it, are all screen-only. Media queries cannot be written
+   as inline styles, which is why these few rules live here rather than beside
+   the component. */
+@media print {
+  .screen-only {
+    display: none !important;
+  }
+
+  html, body {
+    background: #fff;
+  }
+
+  /* The phone-width column the app lays itself out in is not what a sheet of
+     paper wants. */
+  #root {
+    max-width: none;
+    display: block;
+  }
+
+  .exam-paper {
+    max-width: none;
+    padding: 0;
+  }
+
+  /* Keep a question's picture, its wording and its answer lines together. */
+  .exam-question {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Pictures are the question, so they have to come out as they look. */
+  .exam-paper img {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

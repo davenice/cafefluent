@@ -206,6 +206,8 @@ export default function AdminPage() {
           {/* Sit it yourself before the class does. Answers are kept per device,
               so clear them on the last screen when you have finished looking. */}
           <Link to={`/${FINAL_EXAM.id}`} style={styles.previewLink}>Preview exam →</Link>
+          {/* For a learner with no phone, or a day the app will not cooperate. */}
+          <Link to={`/${FINAL_EXAM.id}/print`} style={styles.previewLink}>Print the exam →</Link>
         </div>
 
         <h2 style={styles.sectionTitle}>Table games</h2>
