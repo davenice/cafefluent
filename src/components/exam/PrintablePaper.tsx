@@ -56,6 +56,11 @@ export default function PrintablePaper() {
   }
   if (!modules) return <p style={styles.loading}>Loading the paper…</p>
 
+  // Worked out rather than written down, so it stays true when the paper moves.
+  const listening = exam.questions
+    .map((q, i) => (q.show.kind.endsWith('audio') ? i + 1 : 0))
+    .filter((n) => n > 0)
+
   return (
     <div className="exam-paper" style={styles.page}>
       <div className="screen-only" style={styles.bar}>
@@ -66,8 +71,9 @@ export default function PrintablePaper() {
           Back to admin
         </button>
         <p style={styles.hint}>
-          Print to paper, or choose Save as PDF. The listening questions need you to read the phrase
-          out — they are marked on the paper.
+          Print to paper, or choose Save as PDF. You read the phrase out for{' '}
+          {listening.length > 0 ? `question${listening.length > 1 ? 's' : ''} ${listNumbers(listening)}` : 'no questions'}
+          , which {listening.length === 1 ? 'is' : 'are'} grouped at the front so you can do them in one go.
         </p>
       </div>
 
@@ -88,6 +94,12 @@ export default function PrintablePaper() {
       <p style={styles.end}>End of the exam. Give this paper to your tutor.</p>
     </div>
   )
+}
+
+/** "1, 2, 3 and 4" */
+function listNumbers(numbers: number[]): string {
+  if (numbers.length < 2) return numbers.join('')
+  return `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
 }
 
 /** How much room to leave for the answer, in ruled lines. */

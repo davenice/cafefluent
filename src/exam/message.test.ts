@@ -77,6 +77,38 @@ describe('the exam paper itself', () => {
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([])
   })
 
+  // On paper the course leader reads these out, so they are grouped at the
+  // front: four phrases read once, rather than the room interrupted four times.
+  it('puts every listening question first', () => {
+    const listening = FINAL_EXAM.questions.map((q, i) => (q.show.kind.endsWith('audio') ? i : -1))
+      .filter((i) => i >= 0)
+    expect(listening.length).toBeGreaterThan(0)
+    expect(listening).toEqual(listening.map((_, i) => i))
+  })
+
+  // What stops the rest reading as a set of category rounds.
+  it('does not put two questions from the same module next to each other', () => {
+    const moduleOf = (q: (typeof FINAL_EXAM.questions)[number]) =>
+      'module' in q.show ? q.show.module : null
+    const together = FINAL_EXAM.questions
+      .slice(1)
+      .map((q, i) => [FINAL_EXAM.questions[i], q] as const)
+      // The listening block is deliberately allowed to repeat a module.
+      .filter(([, q]) => !q.show.kind.endsWith('audio'))
+      .filter(([a, b]) => moduleOf(a) !== null && moduleOf(a) === moduleOf(b))
+      .map(([a, b]) => `${a.id} and ${b.id}`)
+    expect(together).toEqual([])
+  })
+
+  it('does not put two questions worded the same next to each other', () => {
+    const same = FINAL_EXAM.questions
+      .slice(1)
+      .map((q, i) => [FINAL_EXAM.questions[i], q] as const)
+      .filter(([a, b]) => a.ask === b.ask)
+      .map(([a, b]) => `${a.id} and ${b.id}`)
+    expect(same).toEqual([])
+  })
+
   it('asks a question and says how to answer it, every time', () => {
     for (const q of FINAL_EXAM.questions) {
       expect(q.ask.trim(), q.id).not.toBe('')

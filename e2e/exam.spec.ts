@@ -1,6 +1,7 @@
 import { test, expect } from './fixtures'
 import { FakeConfigApi, TEST_ADMIN_KEY } from './fakeConfigApi'
 import { FINAL_EXAM } from '../src/data/finalExam'
+import { ANSWER_ROWS } from '../src/exam/types'
 
 test('is offered on the home page once it is switched on', async ({ page }) => {
   await page.goto('/')
@@ -73,16 +74,17 @@ test('Enter moves on from a one-line answer, but makes a new line in a longer on
   await page.getByRole('textbox').press('Enter')
   await expect(page.getByText('Question 2 of 20')).toBeVisible()
 
-  // q8 is the first with a box meant for a list.
-  for (let i = 2; i < 8; i++) await page.getByRole('button', { name: 'Next' }).click()
-  await expect(page.getByText('Question 8 of 20')).toBeVisible()
+  // Found rather than hardcoded: the paper gets reordered.
+  const tall = FINAL_EXAM.questions.findIndex((q) => ANSWER_ROWS[q.answer] > 1) + 1
+  for (let i = 2; i < tall; i++) await page.getByRole('button', { name: 'Next' }).click()
+  await expect(page.getByText(`Question ${tall} of 20`)).toBeVisible()
 
   const box = page.getByRole('textbox')
   await box.fill('coffee')
   await box.press('Enter')
   await box.pressSequentially('milk')
 
-  await expect(page.getByText('Question 8 of 20')).toBeVisible()
+  await expect(page.getByText(`Question ${tall} of 20`)).toBeVisible()
   await expect(box).toHaveValue('coffee\nmilk')
 })
 

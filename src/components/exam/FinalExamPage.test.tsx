@@ -5,6 +5,7 @@ import FinalExamPage from './FinalExamPage'
 import { MODULES } from '../../data/modules'
 import { FINAL_EXAM } from '../../data/finalExam'
 import { referencedModules } from '../../exam/content'
+import { ANSWER_ROWS } from '../../exam/types'
 import type { AllergenItem, ModuleData, OrderItem, ProductItem } from '../../types'
 
 const KEY = 'cafefluent/final-exam'
@@ -157,13 +158,14 @@ describe('FinalExamPage', () => {
   // taller boxes impossible to use for the lists and sentences they are for.
   it('does not move on when Enter is pressed in a box meant for more than a line', async () => {
     await start()
-    // q8 is the first with a taller box: "What goes in a cappuccino?"
-    for (let i = 1; i < 8; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
-    expect(await screen.findByText(/Question 8 of/)).toBeInTheDocument()
+    // Found rather than hardcoded: the paper gets reordered.
+    const tall = FINAL_EXAM.questions.findIndex((q) => ANSWER_ROWS[q.answer] > 1) + 1
+    for (let i = 1; i < tall; i++) fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(await screen.findByText(new RegExp(`Question ${tall} of`))).toBeInTheDocument()
 
     fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Enter' })
 
-    expect(screen.getByText(/Question 8 of/)).toBeInTheDocument()
+    expect(screen.getByText(new RegExp(`Question ${tall} of`))).toBeInTheDocument()
   })
 
   // Enter commits a candidate in Chinese, Japanese and Korean keyboards, so
