@@ -75,6 +75,10 @@ export default function PrintablePaper() {
           {listening.length > 0 ? `question${listening.length > 1 ? 's' : ''} ${listNumbers(listening)}` : 'no questions'}
           , which {listening.length === 1 ? 'is' : 'are'} grouped at the front so you can do them in one go.
         </p>
+        <p style={styles.hint}>
+          The address and date at the foot of each page come from the browser, not from here. Turn
+          off “Headers and footers” in the print dialog to lose them — it is remembered next time.
+        </p>
       </div>
 
       <header style={styles.header}>
