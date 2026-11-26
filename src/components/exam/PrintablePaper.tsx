@@ -240,6 +240,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   answer: {
     flex: '0 0 240px',
+    // Dropped clear of the question's own line, so the top edge of the box is
+    // not read as an underline for the last words of the question.
+    marginTop: 10,
     display: 'flex',
     flexDirection: 'column',
     border: '1px solid #666',
