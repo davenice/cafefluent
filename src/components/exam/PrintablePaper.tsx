@@ -86,17 +86,24 @@ export default function PrintablePaper() {
           way to get a running head: `position: fixed` is honoured on every page
           by some and only the first by others, and the @page margin boxes the
           spec provides for this are implemented by nobody. */}
+      {/* Printed once, at the top of the first page only, because it sits
+          outside the table. */}
+      <header style={styles.header}>
+        <h1 style={styles.title}>{exam.title}</h1>
+        <p style={styles.meta}>
+          {exam.questions.length} questions · {exam.version}
+        </p>
+      </header>
+
       <table style={styles.sheet}>
         <thead>
           <tr>
+            {/* One line, and only the part that has to be on every sheet. It
+                cannot be limited to odd pages — a thead repeats on all of them
+                and no selector reaches "this element on an even page" — so the
+                answer is to make it cost almost nothing when it repeats. */}
             <th style={styles.runningHead}>
-              <span style={styles.title}>{exam.title}</span>
-              <span style={styles.meta}>
-                {exam.questions.length} questions · {exam.version}
-              </span>
-              <span style={styles.nameLine}>
-                Name ______________________________ Date ______________
-              </span>
+              Name ______________________________ Date ______________
             </th>
           </tr>
         </thead>
@@ -221,27 +228,24 @@ const styles: Record<string, React.CSSProperties> = {
     width: '100%',
     borderCollapse: 'collapse',
   },
+  header: {
+    marginBottom: 10,
+  },
   runningHead: {
     display: 'block',
     textAlign: 'left',
-    borderBottom: '2px solid #000',
-    paddingBottom: 10,
-    marginBottom: 4,
+    fontSize: 14,
+    fontWeight: 400,
+    borderBottom: '1px solid #000',
+    paddingBottom: 6,
   },
   title: {
-    display: 'block',
     fontSize: 24,
     fontWeight: 700,
   },
   meta: {
-    display: 'block',
     fontSize: 13,
     marginTop: 2,
-  },
-  nameLine: {
-    display: 'block',
-    fontSize: 15,
-    marginTop: 12,
   },
   cell: {
     display: 'block',
