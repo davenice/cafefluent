@@ -201,6 +201,13 @@ const styles: Record<string, React.CSSProperties> = {
     // Kept whole: a picture on one page and its answer lines on the next is no
     // use to anyone.
     breakInside: 'avoid',
+    // Air under the last rule. Without it a question with no picture and a
+    // one-word answer collapses to about a centimetre, and the paper reads as
+    // a jumble of tall and tiny questions rather than a list.
+    paddingBottom: 22,
+    // A floor, so a bare one-word question between two with pictures does not
+    // read as an afterthought. Anything with a picture is well past it.
+    minHeight: 110,
   },
   ask: {
     fontSize: 16,
@@ -241,10 +248,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lines: {
     marginLeft: 28,
-    marginTop: 12,
+    // Clear of the question, so the first rule is somewhere to write rather
+    // than an underline for what was asked.
+    marginTop: 22,
     display: 'flex',
     flexDirection: 'column',
-    gap: 18,
+    // About 9mm between rules. The 5mm this started at was fine as a drawing
+    // and impossible to write in: an adult's handwriting is 7-8mm tall before
+    // the descenders, and these are ESOL learners writing carefully.
+    gap: 33,
   },
   line: {
     borderBottom: '1px solid #999',
