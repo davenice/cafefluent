@@ -135,6 +135,10 @@ test('the answers cannot be changed once the paper is finished', async ({ page }
 })
 
 test.describe('on paper', () => {
+  // Printed from a laptop, onto A4. The rest of the suite runs at phone size,
+  // where the paper deliberately stacks its two columns instead of squashing.
+  test.use({ viewport: { width: 900, height: 1200 } })
+
   test('prints every question, with room to write and no answers on it', async ({ page }) => {
     await page.goto(`/#/${FINAL_EXAM.id}/print`)
     await expect(page.getByText('End of the exam.')).toBeVisible()
@@ -147,6 +151,17 @@ test.describe('on paper', () => {
       imgs.filter((i) => !(i as HTMLImageElement).complete || (i as HTMLImageElement).naturalWidth === 0).length
     )
     expect(broken).toBe(0)
+
+    // Somewhere to write, beside each question rather than under it: a rule
+    // running the full width read as a separator between questions, which is
+    // now what the full-width rules actually are.
+    const boxes = await page.locator('.exam-question').evaluateAll((qs) =>
+      qs.map((q) => {
+        const [prompt, answer] = (q.firstElementChild as HTMLElement).children
+        return answer.getBoundingClientRect().left > prompt.getBoundingClientRect().left
+      })
+    )
+    expect(boxes.filter(Boolean)).toHaveLength(FINAL_EXAM.questions.length)
 
     // The listening questions are read out, not printed: printing the phrase
     // would print the answer, since the answer is the food it names.

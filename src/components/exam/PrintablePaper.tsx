@@ -102,9 +102,20 @@ function listNumbers(numbers: number[]): string {
   return `${numbers.slice(0, -1).join(', ')} and ${numbers[numbers.length - 1]}`
 }
 
-/** How much room to leave for the answer, in ruled lines. */
-const LINES: Record<AnswerKind, number> = { word: 1, line: 1, sentence: 3, list: 4 }
+/** How many rows of writing the answer gets. */
+const ROWS: Record<AnswerKind, number> = { word: 1, line: 1, sentence: 3, list: 4 }
 
+/** Height of one row of writing, in px. About 9mm — adult handwriting with its descenders. */
+const ROW = 34
+
+/**
+ * One question, with somewhere to write beside it.
+ *
+ * The answer used to be ruled lines running the full width underneath, which
+ * read as a rule between questions rather than as a place to put anything. So
+ * the writing area is now a bounded box to the right of the question, and the
+ * full-width rule is what it already looked like: the separator.
+ */
 function Question({
   question,
   number,
@@ -115,26 +126,38 @@ function Question({
   modules: LoadedModules
 }) {
   const prompt = resolvePrompt(question.show, modules) ?? {}
+  const rows = ROWS[question.answer]
   return (
     <li className="exam-question" style={styles.question}>
-      <p style={styles.ask}>
-        <span style={styles.number}>{number}</span>
-        {question.ask}
-      </p>
-      {question.guidance && <p style={styles.guidance}>{question.guidance}</p>}
+      <div style={styles.row}>
+        <div style={styles.prompt}>
+          <p style={styles.ask}>
+            <span style={styles.number}>{number}</span>
+            {question.ask}
+          </p>
+          {question.guidance && <p style={styles.guidance}>{question.guidance}</p>}
 
-      {prompt.image && (
-        <div style={styles.pictures}>
-          <img src={prompt.image.src} alt="" style={styles.picture} />
-          {prompt.legend && <img src={prompt.legend} alt="" style={styles.legend} />}
+          {prompt.image && (
+            <div style={styles.pictures}>
+              <img src={prompt.image.src} alt="" style={styles.picture} />
+              {prompt.legend && <img src={prompt.legend} alt="" style={styles.legend} />}
+            </div>
+          )}
+          {prompt.audio && <p style={styles.listen}>Your tutor will read this out.</p>}
         </div>
-      )}
-      {prompt.audio && <p style={styles.listen}>Your tutor will read this out.</p>}
 
-      <div style={styles.lines}>
-        {Array.from({ length: LINES[question.answer] }, (_, n) => (
-          <span key={n} style={styles.line} />
-        ))}
+        <div style={{ ...styles.answer, height: rows * ROW }}>
+          {Array.from({ length: rows }, (_, n) => (
+            <span
+              key={n}
+              style={{
+                flex: 1,
+                // Faint guides inside the box; the box's own edge closes the last row.
+                borderBottom: n < rows - 1 ? '1px solid #d4d4d4' : 'none',
+              }}
+            />
+          ))}
+        </div>
       </div>
     </li>
   )
@@ -195,19 +218,32 @@ const styles: Record<string, React.CSSProperties> = {
     listStyle: 'none',
     display: 'flex',
     flexDirection: 'column',
-    gap: 28,
+    gap: 20,
   },
   question: {
-    // Kept whole: a picture on one page and its answer lines on the next is no
+    // Kept whole: a picture on one page and its answer box on the next is no
     // use to anyone.
     breakInside: 'avoid',
-    // Air under the last rule. Without it a question with no picture and a
-    // one-word answer collapses to about a centimetre, and the paper reads as
-    // a jumble of tall and tiny questions rather than a list.
-    paddingBottom: 22,
-    // A floor, so a bare one-word question between two with pictures does not
-    // read as an afterthought. Anything with a picture is well past it.
-    minHeight: 110,
+    // Now genuinely a separator, which is what it always looked like.
+    borderBottom: '1px solid #bbb',
+    paddingBottom: 20,
+  },
+  row: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 20,
+    // Stacks instead of squashing if this is ever opened on a phone.
+    flexWrap: 'wrap',
+  },
+  prompt: {
+    flex: '1 1 300px',
+  },
+  answer: {
+    flex: '0 0 240px',
+    display: 'flex',
+    flexDirection: 'column',
+    border: '1px solid #666',
+    borderRadius: 2,
   },
   ask: {
     fontSize: 16,
@@ -245,22 +281,6 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: '100%',
     display: 'block',
     marginTop: 6,
-  },
-  lines: {
-    marginLeft: 28,
-    // Clear of the question, so the first rule is somewhere to write rather
-    // than an underline for what was asked.
-    marginTop: 22,
-    display: 'flex',
-    flexDirection: 'column',
-    // About 9mm between rules. The 5mm this started at was fine as a drawing
-    // and impossible to write in: an adult's handwriting is 7-8mm tall before
-    // the descenders, and these are ESOL learners writing carefully.
-    gap: 33,
-  },
-  line: {
-    borderBottom: '1px solid #999',
-    height: 1,
   },
   loading: {
     padding: 32,

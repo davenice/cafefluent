@@ -64,6 +64,13 @@ button {
   50%      { opacity: 0.15; }
 }
 
+/* The printable paper is a sheet of A4, not a phone. #root is a 480px column
+   for the app, which would squash the paper's two columns into one on screen
+   and show something quite different from what comes out of the printer. */
+#root:has(.exam-paper) {
+  max-width: none;
+}
+
 /* --- Printing the exam paper -------------------------------------------- */
 /* Only the paper itself goes on the page: the app's own chrome, and the
    controls that print it, are all screen-only. Media queries cannot be written
