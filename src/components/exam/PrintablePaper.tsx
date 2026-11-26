@@ -81,19 +81,35 @@ export default function PrintablePaper() {
         </p>
       </div>
 
-      <header style={styles.header}>
-        <h1 style={styles.title}>{exam.title}</h1>
-        <p style={styles.meta}>
-          {exam.questions.length} questions · {exam.version}
-        </p>
-        <p style={styles.nameLine}>Name _______________________________ Date _______________</p>
-      </header>
-
-      <ol style={styles.list}>
-        {exam.questions.map((q, i) => (
-          <Question key={q.id} question={q} number={i + 1} modules={modules} />
-        ))}
-      </ol>
+      {/* A table so the heading repeats. A thead is reprinted at the top of
+          every page by every browser that matters, which is the only reliable
+          way to get a running head: `position: fixed` is honoured on every page
+          by some and only the first by others, and the @page margin boxes the
+          spec provides for this are implemented by nobody. */}
+      <table style={styles.sheet}>
+        <thead>
+          <tr>
+            <th style={styles.runningHead}>
+              <span style={styles.title}>{exam.title}</span>
+              <span style={styles.meta}>
+                {exam.questions.length} questions · {exam.version}
+              </span>
+              <span style={styles.nameLine}>
+                Name ______________________________ Date ______________
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {exam.questions.map((q, i) => (
+            <tr key={q.id}>
+              <td style={styles.cell}>
+                <Question question={q} number={i + 1} modules={modules} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
 
       <p style={styles.end}>End of the exam. Give this paper to your tutor.</p>
     </div>
@@ -132,7 +148,7 @@ function Question({
   const prompt = resolvePrompt(question.show, modules) ?? {}
   const rows = ROWS[question.answer]
   return (
-    <li className="exam-question" style={styles.question}>
+    <div className="exam-question" style={styles.question}>
       <div style={styles.row}>
         <div style={styles.prompt}>
           <p style={styles.ask}>
@@ -163,7 +179,7 @@ function Question({
           ))}
         </div>
       </div>
-    </li>
+    </div>
   )
 }
 
@@ -201,28 +217,35 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--color-muted)',
     lineHeight: 1.5,
   },
-  header: {
+  sheet: {
+    width: '100%',
+    borderCollapse: 'collapse',
+  },
+  runningHead: {
+    display: 'block',
+    textAlign: 'left',
     borderBottom: '2px solid #000',
-    paddingBottom: 12,
-    marginBottom: 20,
+    paddingBottom: 10,
+    marginBottom: 4,
   },
   title: {
-    fontSize: 26,
+    display: 'block',
+    fontSize: 24,
     fontWeight: 700,
   },
   meta: {
+    display: 'block',
     fontSize: 13,
     marginTop: 2,
   },
   nameLine: {
+    display: 'block',
     fontSize: 15,
-    marginTop: 16,
+    marginTop: 12,
   },
-  list: {
-    listStyle: 'none',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 20,
+  cell: {
+    display: 'block',
+    paddingTop: 16,
   },
   question: {
     // Kept whole: a picture on one page and its answer box on the next is no
