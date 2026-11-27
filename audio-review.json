@@ -5,6 +5,101 @@
     "db6f0b"
   ],
   "phrases": {
+    "allergens/celery_allergic.wav": {
+      "pick": "170bdb",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:29:27.244Z"
+    },
+    "allergens/celery_intolerant.wav": {
+      "pick": "d77e2b",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:29:31.525Z"
+    },
+    "allergens/celery_must-not-eat.wav": {
+      "pick": "3c1d96",
+      "bad": [
+        "170bdb",
+        "72ec77",
+        "a6eb6e",
+        "d77e2b",
+        "generated"
+      ],
+      "updated": "2026-11-27T09:30:22.308Z"
+    },
+    "allergens/celery_name.wav": {
+      "pick": "d77e2b",
+      "bad": [
+        "170bdb",
+        "bd49e8",
+        "generated"
+      ],
+      "updated": "2026-11-27T09:29:09.857Z"
+    },
+    "allergens/gluten_allergy-to.wav": {
+      "pick": "170bdb",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:31:04.705Z"
+    },
+    "allergens/gluten_cant-eat.wav": {
+      "pick": "72ec77",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:34:09.715Z"
+    },
+    "allergens/gluten_intolerant.wav": {
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:31:06.993Z"
+    },
+    "allergens/gluten_name.wav": {
+      "pick": "72ec77",
+      "bad": [
+        "a6eb6e",
+        "generated"
+      ],
+      "updated": "2026-11-27T09:30:37.653Z"
+    },
+    "allergens/mustard_allergic.wav": {
+      "pick": "3c1d96",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:32:04.890Z"
+    },
+    "allergens/mustard_must-not-eat.wav": {
+      "pick": "3c1d96",
+      "bad": [
+        "170bdb",
+        "72ec77",
+        "a6eb6e",
+        "d77e2b",
+        "generated"
+      ],
+      "updated": "2026-11-27T09:36:53.661Z"
+    },
+    "allergens/peanuts_allergic.wav": {
+      "pick": "a6eb6e",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:34:43.815Z"
+    },
+    "allergens/peanuts_cant-eat.wav": {
+      "bad": [
+        "170bdb",
+        "bd49e8",
+        "generated"
+      ],
+      "updated": "2026-11-27T09:33:10.987Z"
+    },
     "bread/wrap_name.wav": {
       "bad": [
         "a6eb6e"
@@ -22,6 +117,20 @@
         "170bdb"
       ],
       "updated": "2026-10-23T07:54:00.725Z"
+    },
+    "milk/americano-no-milk_name.wav": {
+      "pick": "3c1d96",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:35:35.615Z"
+    },
+    "milk/skinny-cappuccino_name.wav": {
+      "pick": "3c1d96",
+      "bad": [
+        "generated"
+      ],
+      "updated": "2026-11-27T09:35:37.362Z"
     }
   }
 }

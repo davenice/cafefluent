@@ -167,7 +167,7 @@ test.describe('on paper', () => {
     // would print the answer, since the answer is the food it names.
     const listening = FINAL_EXAM.questions.filter((q) => q.show.kind.endsWith('audio')).length
     await expect(page.getByText('Your tutor will read this out.')).toHaveCount(listening)
-    await expect(page.getByText('allergic to mustard')).toHaveCount(0)
+    await expect(page.getByText('allergic to peanuts')).toHaveCount(0)
     await expect(page.getByText('skinny cappuccino')).toHaveCount(0)
   })
 
