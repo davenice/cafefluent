@@ -19,9 +19,9 @@ import type { AnswerKind, ExamQuestion } from '../../exam/types'
  *
  * The listening questions say the tutor will read the phrase out rather than
  * printing it. What the clips say is perfectly reconstructable from the content
- * ("I can't eat peanuts"), but the thing being asked for *is* the food named in
- * the phrase, so printing it would be printing the answer. Read aloud it stays a
- * listening question, and arguably a better one than a recording.
+ * ("I'm allergic to peanuts"), but the thing being asked for *is* the food
+ * named in the phrase, so printing it would be printing the answer. Read aloud
+ * it stays a listening question, and arguably a better one than a recording.
  */
 export default function PrintablePaper() {
   const navigate = useNavigate()
